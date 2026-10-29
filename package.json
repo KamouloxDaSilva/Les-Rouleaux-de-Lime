@@ -5,10 +5,10 @@
   "type": "module",
   "description": "PWA mobile-first pour la gestion d'un restaurant de gỏi cuốn",
   "scripts": {
-  "dev": "vite",
-  "build": "npx vite build",
-  "preview": "vite preview"
-}
+    "dev": "vite",
+    "build": "npx vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
