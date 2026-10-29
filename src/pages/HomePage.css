@@ -1,0 +1,70 @@
+/* src/pages/HomePage.css */
+.home-page {
+  padding: 16px;
+  padding-bottom: 88px;
+  background: #FFF8E7;
+  color: #1A1A1A;
+  min-height: 100vh;
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+}
+
+.home-greeting { margin-bottom: 16px; }
+.home-greeting h2 { font-family: 'Baloo 2', system-ui, sans-serif; color: #0B7A75; font-size: 1.6rem; margin: 0 0 4px; }
+.home-greeting p { color: #6B6B6B; margin: 0; }
+
+.home-summary { margin-top: 24px; }
+.home-summary h3,
+.home-history h3 {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #35B6E9;
+  font-size: 1.15rem;
+  margin: 0 0 12px;
+  border-left: 4px solid #F5A623;
+  padding-left: 8px;
+}
+
+/* Grille de résumé */
+.summary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.summary-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 4px solid transparent;
+}
+.summary-card--revenue { border-left-color: #35B6E9; }
+.summary-card--expenses { border-left-color: #6B6B6B; }
+.summary-card--foodcost { border-left-color: #F5A623; }
+.summary-card--profit { border-left-color: #0B7A75; }
+
+.card-label { font-size: 0.75rem; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.02em; }
+.card-value { font-family: 'Baloo 2', system-ui, sans-serif; font-size: 1.15rem; font-weight: 700; color: #1A1A1A; }
+.text-success { color: #0B7A75; }
+
+/* Détails du jour */
+.home-details { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+.home-detail-card { background: #FFFFFF; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.home-detail-label { font-size: 0.8rem; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.02em; }
+.home-detail-value { font-weight: 600; color: #0B7A75; }
+.home-detail-notes { color: #1A1A1A; font-weight: 400; font-style: italic; }
+
+/* État vide */
+.home-empty-state { margin-top: 24px; background: #FFFFFF; border: 2px dashed #E0D6B8; border-radius: 12px; padding: 24px; text-align: center; }
+.home-empty-state h4 { font-family: 'Baloo 2', system-ui, sans-serif; color: #F5A623; font-size: 1.15rem; margin: 0 0 8px; }
+.home-empty-state p { color: #6B6B6B; margin: 0; font-size: 0.95rem; }
+
+/* Historique */
+.home-history { margin-top: 24px; }
+.history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.history-item { background: #FFFFFF; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.history-item-main { display: flex; flex-direction: column; gap: 2px; }
+.history-date { font-weight: 600; color: #1A1A1A; text-transform: capitalize; }
+.history-weather { font-size: 0.8rem; color: #6B6B6B; }
+.history-revenue { font-family: 'Baloo 2', system-ui, sans-serif; font-weight: 700; color: #0B7A75; white-space: nowrap; }

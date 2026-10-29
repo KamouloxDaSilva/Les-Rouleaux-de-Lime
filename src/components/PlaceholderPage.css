@@ -1,0 +1,23 @@
+/* src/components/PlaceholderPage.css */
+.placeholder-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-md);
+  padding: var(--space-xl) var(--space-md);
+  min-height: 60vh;
+}
+
+.placeholder-title {
+  font-size: 1.5rem;
+  color: var(--color-teal);
+}
+
+.placeholder-text {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  max-width: 320px;
+  line-height: 1.5;
+}

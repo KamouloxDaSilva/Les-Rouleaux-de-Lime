@@ -1,0 +1,53 @@
+/* --- Ajouts pour les onglets --- */
+.menu-tabs {
+  display: flex;
+  background: #F0E5C8;
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.menu-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6B6B6B;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.menu-tab--active {
+  background: #FFFFFF;
+  color: #0B7A75;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* --- Cartes Ingrédients --- */
+.ingredient-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-left: 4px solid #35B6E9;
+}
+.ingredient-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ingredient-main h3 {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1.1rem;
+  margin: 0;
+  color: #1A1A1A;
+}
+.ingredient-meta {
+  font-size: 0.85rem;
+  color: #6B6B6B;
+}

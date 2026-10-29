@@ -1,0 +1,28 @@
+/* src/components/Clock.css */
+.clock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) 0;
+}
+
+.clock-time {
+  font-family: var(--font-title);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-teal);
+  line-height: 1;
+  /* Empêche l'heure de "sauter" quand les chiffres changent */
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-date {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  /* Met une majuscule au premier mot (ex: "Jeudi" au lieu de "jeudi") */
+  text-transform: capitalize;
+  text-align: center;
+}

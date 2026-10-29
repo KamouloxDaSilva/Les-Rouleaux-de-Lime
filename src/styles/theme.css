@@ -1,0 +1,34 @@
+/* src/styles/theme.css */
+:root {
+  /* Couleurs de la charte */
+  --color-orange: #F5A623;
+  --color-blue: #35B6E9;
+  --color-teal: #0B7A75;
+  --color-cream: #FFF8E7;
+  
+  /* Couleurs de texte et fond */
+  --color-text: #1F2937;
+  --color-text-muted: #6B7280;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+
+  /* Polices */
+  --font-title: 'Baloo 2', cursive;
+  --font-body: 'Be Vietnam Pro', sans-serif;
+
+  /* Espacements (mobile-first) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Arrondis */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-full: 9999px;
+
+  /* Layout PWA */
+  --header-height: 64px;
+  --nav-height: 64px;
+}

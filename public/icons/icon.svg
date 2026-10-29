@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Les Rouleaux de Lime">
+  <rect width="512" height="512" fill="#F5A623"/>
+  <g transform="translate(256 256) rotate(-25)">
+    <rect x="-75" y="-150" width="150" height="300" rx="75" ry="75" fill="#FFF8E7"/>
+    <path d="M -50 -70 Q 0 -100 50 -70" stroke="#0B7A75" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <circle cx="0" cy="60" r="24" fill="#35B6E9"/>
+  </g>
+</svg>

@@ -1,0 +1,87 @@
+/* src/components/BottomNav.css */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+
+  /* Gestion de la barre home iPhone + hauteur de base */
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+
+  display: flex;
+  align-items: stretch;
+
+  background-color: var(--color-surface);
+  border-top: 1px solid rgba(11, 122, 117, 0.1);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+
+  /* Centre la nav sur PC (cohérent avec .app-container) */
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+
+  padding: var(--space-xs) 2px;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+
+  /* Évite que le texte soit trop long (ex: "Chiffre d'affaires" en label) */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-item:active {
+  background-color: rgba(245, 166, 35, 0.08);
+}
+
+.nav-item--active {
+  color: var(--color-teal);
+  font-weight: 700;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.nav-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Ajoute ceci à la fin de ton fichier src/pages/HomePage.css, ClosingPage.css, MenuPage.css, ExpensesPage.css, SettingsPage.css */
+/* Pour que le contenu ne soit pas caché par la nav */
+.main-content {
+  padding-bottom: env(safe-area-inset-bottom);
+}

@@ -1,0 +1,263 @@
+/* src/pages/ClosingPage.css */
+.closing-page {
+  padding: 16px;
+  /* Laisse de la place pour la barre fixe en bas + nav basse */
+  padding-bottom: 160px;
+  background: #FFF8E7;
+  color: #1A1A1A;
+  min-height: 100vh;
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+}
+
+.closing-title {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #0B7A75;
+  font-size: 1.6rem;
+  margin: 8px 0 16px;
+}
+
+.closing-feedback {
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+.closing-feedback--success {
+  background: #D9F2EE;
+  color: #0B7A75;
+  border: 1px solid #0B7A75;
+}
+.closing-feedback--error {
+  background: #FDE2E2;
+  color: #B00020;
+  border: 1px solid #B00020;
+}
+
+.closing-info {
+  background: #FFF3CD;
+  color: #8A6D3B;
+  border: 1px solid #F5A623;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.closing-section {
+  background: #FFFFFF;
+  border: 1px solid #F0E5C8;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.closing-section-title {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #35B6E9;
+  font-size: 1.15rem;
+  margin: 0 0 10px;
+}
+
+.closing-label {
+  display: block;
+  font-weight: 600;
+  color: #0B7A75;
+  margin-bottom: 8px;
+}
+
+.closing-date-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E0D6B8;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #FFF8E7;
+}
+
+.closing-weather-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.closing-weather-btn {
+  padding: 10px 12px;
+  border: 1px solid #0B7A75;
+  background: #FFFFFF;
+  color: #0B7A75;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.closing-weather-btn--active {
+  background: #0B7A75;
+  color: #FFFFFF;
+}
+
+/* Liste des plats */
+.closing-sales-header {
+  display: grid;
+  grid-template-columns: 1fr 100px 100px;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #6B6B6B;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+.closing-sales-header span:first-child {
+  text-align: left;
+}
+.closing-sales-header span:not(:first-child) {
+  text-align: center;
+}
+
+.closing-dishes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.closing-dish {
+  background: #FFF8E7;
+  border-radius: 8px;
+  padding: 10px;
+}
+.closing-dish-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.closing-dish-name {
+  font-weight: 600;
+}
+.closing-dish-price {
+  font-size: 0.85rem;
+  color: #6B6B6B;
+}
+.closing-dish-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Stepper +/- */
+.qty-stepper {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #E0D6B8;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+.qty-btn {
+  width: 36px;
+  border: none;
+  background: #35B6E9;
+  color: #FFFFFF;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.qty-btn:active {
+  filter: brightness(0.9);
+}
+.qty-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 8px 4px;
+  background: #FFFFFF;
+  outline: none;
+  /* Enlève les flèches natives */
+  -moz-appearance: textfield;
+}
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Notes */
+.closing-notes {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E0D6B8;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #FFF8E7;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+/* Barre de sauvegarde fixe */
+.closing-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* Au-dessus de la nav basse (qui fait environ 64px) */
+  bottom: 64px;
+  background: #FFFFFF;
+  border-top: 1px solid #F0E5C8;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+.closing-total {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.closing-total-label {
+  font-size: 0.75rem;
+  color: #6B6B6B;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.closing-total-value {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0B7A75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Bouton principal */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary {
+  background: #F5A623;
+  color: #1A1A1A;
+}
+.btn-primary:hover {
+  filter: brightness(0.95);
+}
