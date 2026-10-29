@@ -6,7 +6,7 @@
   "description": "PWA mobile-first pour la gestion d'un restaurant de gỏi cuốn",
   "scripts": {
     "dev": "vite",
-    "build": "npx vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -17,8 +17,5 @@
     "@vitejs/plugin-react": "^4.3.1",
     "vite": "^5.4.8",
     "vite-plugin-pwa": "^0.20.5"
-  },
-  "engines": {
-    "node": ">=20"
   }
 }
