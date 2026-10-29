@@ -1,9 +1,9 @@
 {
-  "name": "les-rouleaux-de-lime",
+  "name": "burihagio",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "PWA mobile-first pour la gestion d'un restaurant de gỏi cuốn",
+  "description": "PWA mobile-first pour la gestion d'un restaurant",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

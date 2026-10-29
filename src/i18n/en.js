@@ -1,6 +1,6 @@
 // src/i18n/en.js
 export default {
-  app: { name: 'Les Rouleaux de Lime' },
+  app: { name: 'Burihagio' },
   nav: { home: 'Home', closing: 'Closing', menu: 'Menu', expenses: 'Employees', settings: 'Settings' },
   home: { greeting: 'Hello!', subtitle: 'What are we eating today?', todaySummary: 'Today\'s Summary', revenue: 'Revenue', expenses: 'Fixed costs', laborCost: 'Labor cost', foodCost: 'Food cost', profit: 'Net profit', weatherLabel: 'Weather', notesLabel: 'Notes', noClosingTitle: 'No closing', noClosingDesc: 'Go to Closing tab.', historyTitle: 'History' },
   menu: { title: 'Menu', tabs: { dishes: 'Dishes', ingredients: 'Ingredients' }, addDish: 'Add', empty: 'No dishes', confirmDelete: 'Delete?', dish: { name: 'Name', category: 'Category', price: 'Price', foodCost: 'Cost', margin: 'Margin', active: 'Active' }, recipe: { title: 'Recipe', addIngredient: 'Add', selectIngredient: 'Select', totalCost: 'Total' }, ingredients: { add: 'Add', empty: 'None', confirmDelete: 'Delete?', name: 'Name', unit: 'Unit', unitCost: 'Cost', supplier: 'Supplier' } },

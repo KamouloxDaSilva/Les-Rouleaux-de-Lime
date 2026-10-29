@@ -1,6 +1,6 @@
 // src/i18n/vi.js
 export default {
-  app: { name: 'Les Rouleaux de Lime' },
+  app: { name: 'Burihagio' },
   nav: { home: 'Trang chủ', closing: 'Chốt ngày', menu: 'Thực đơn', expenses: 'Nhân viên', settings: 'Cài đặt' },
   home: { greeting: 'Xin chào !', subtitle: 'Hôm nay ăn gì?', todaySummary: 'Tóm tắt hôm nay', revenue: 'Doanh thu', expenses: 'Chi phí cố định', laborCost: 'Lương nhân viên', foodCost: 'Giá vốn', profit: 'Lợi nhuận', weatherLabel: 'Thời tiết', notesLabel: 'Ghi chú', noClosingTitle: 'Chưa chốt ngày', noClosingDesc: 'Hãy chốt ngày.', historyTitle: 'Lịch sử gần đây' },
   menu: { title: 'Thực đơn', tabs: { dishes: 'Món ăn', ingredients: 'Nguyên liệu' }, addDish: 'Thêm món', empty: 'Chưa có món', confirmDelete: 'Xóa món?', dish: { name: 'Tên', category: 'Danh mục', price: 'Giá bán', foodCost: 'Giá vốn', margin: 'Lợi nhuận', active: 'Đang bán' }, recipe: { title: 'Công thức', addIngredient: 'Thêm nguyên liệu', selectIngredient: 'Chọn', totalCost: 'Tổng giá vốn' }, ingredients: { add: 'Thêm nguyên liệu', empty: 'Chưa có', confirmDelete: 'Xóa?', name: 'Tên', unit: 'Đơn vị', unitCost: 'Đơn giá', supplier: 'Nhà cung cấp' } },

@@ -7,7 +7,7 @@ function getDateOffset(daysAgo = 0) {
 }
 
 export function createDefaultFixtures() {
-  const restaurant = createRestaurant({ id: FIXTURE_RESTAURANT_ID, name: 'Les Rouleaux de Lime', currency: 'VND', timezone: 'Asia/Ho_Chi_Minh' });
+  const restaurant = createRestaurant({ id: FIXTURE_RESTAURANT_ID, name: 'Burihagio', currency: 'VND', timezone: 'Asia/Ho_Chi_Minh' });
   const rid = restaurant.id;
 
   const ingredients = [

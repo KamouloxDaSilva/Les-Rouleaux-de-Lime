@@ -1,6 +1,6 @@
 // src/i18n/fr.js
 export default {
-  app: { name: 'Les Rouleaux de Lime' },
+  app: { name: 'Burihagio' },
   nav: { home: 'Accueil', closing: 'Clôture', menu: 'Menu', expenses: 'Employés', settings: 'Réglages' },
   home: { greeting: 'Bonjour !', subtitle: 'Qu\'est-ce qu\'on mange aujourd\'hui ?', todaySummary: 'Résumé du jour', revenue: 'CA', expenses: 'Charges fixes', laborCost: 'Salaires', foodCost: 'Coût matière', profit: 'Bénéfice net', weatherLabel: 'Météo', notesLabel: 'Notes', noClosingTitle: 'Non clôturé', noClosingDesc: 'Allez dans Clôture.', historyTitle: 'Historique' },
   menu: { title: 'Menu', tabs: { dishes: 'Plats', ingredients: 'Ingrédients' }, addDish: 'Ajouter', empty: 'Aucun plat', confirmDelete: 'Supprimer ?', dish: { name: 'Nom', category: 'Catégorie', price: 'Prix', foodCost: 'Coût', margin: 'Marge', active: 'En vente' }, recipe: { title: 'Recette', addIngredient: 'Ajouter', selectIngredient: 'Choisir', totalCost: 'Total' }, ingredients: { add: 'Ajouter', empty: 'Aucun', confirmDelete: 'Supprimer ?', name: 'Nom', unit: 'Unité', unitCost: 'Prix', supplier: 'Fournisseur' } },

@@ -11,8 +11,8 @@ export default defineConfig({
         enabled: true
       },
       manifest: {
-        name: 'Les Rouleaux de Lime',
-        short_name: 'Rouleaux',
+        name: 'Burihagio',
+        short_name: 'Burihagio',
         description: 'Gestion de restaurant',
         theme_color: '#FFF8E7',
         background_color: '#FFF8E7',
@@ -20,32 +20,14 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: 'https://placehold.co/192x192/0B7A75/FFF/png?text=R',
+            src: '/icon.png',
             sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
+            type: 'image/png'
           },
           {
-            src: 'https://placehold.co/512x512/0B7A75/FFF/png?text=R',
+            src: '/icon.png',
             sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          }
-        ],
-        screenshots: [
-          {
-            src: 'https://placehold.co/540x720/FFF8E7/0B7A75/png?text=App+Mobile',
-            sizes: '540x720',
-            type: 'image/png',
-            form_factor: 'narrow',
-            label: 'Application mobile'
-          },
-          {
-            src: 'https://placehold.co/1280x720/FFF8E7/0B7A75/png?text=App+Desktop',
-            sizes: '1280x720',
-            type: 'image/png',
-            form_factor: 'wide',
-            label: 'Application de bureau'
+            type: 'image/png'
           }
         ]
       }
