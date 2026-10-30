@@ -69,3 +69,24 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   align-items: center;
   justify-content: center;
 }
+
+/* =========================================================
+   Chantier 11-A — Feedback tactile global
+   Effet uniforme : scale(0.95) + ombre réduite
+   Couvre : button:active global + .tap-feedback pour div cliquables
+   (team-card, planning-day-card, kpi-card, etc.)
+   ========================================================= */
+button:active:not(:disabled),
+.tap-feedback:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Respect de la préférence système (accessibilité) */
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled),
+  .tap-feedback:active {
+    transform: none;
+    box-shadow: none;
+  }
+}

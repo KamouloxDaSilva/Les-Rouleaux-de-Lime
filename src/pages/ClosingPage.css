@@ -1,7 +1,7 @@
 /* src/pages/ClosingPage.css */
 .closing-page {
   padding: 16px;
-  padding-bottom: 160px; /* Espace pour le footer fixe */
+  padding-bottom: 160px;
   background: var(--color-cream);
   min-height: 100vh;
 }
@@ -11,6 +11,7 @@
   color: var(--color-blue);
   font-size: 1.6rem;
   margin: 8px 0 16px;
+  text-align: center; /* Chantier 11-A */
 }
 
 /* --- Grille du haut (Calendrier + Météo) --- */
@@ -35,7 +36,7 @@
   margin-bottom: 12px;
 }
 
-/* --- CALENDRIER CUSTOM (Repère visuel Image 1) --- */
+/* --- CALENDRIER CUSTOM --- */
 .custom-calendar {
   background: #FFF;
   border-radius: 16px;
@@ -71,9 +72,7 @@
   cursor: pointer;
   border-radius: 50%;
 }
-.calendar-nav-btn:active {
-  background: #F0F0F0;
-}
+.calendar-nav-btn:active { background: #F0F0F0; }
 
 .calendar-weekdays {
   display: grid;
@@ -105,15 +104,8 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-
-.calendar-day.empty {
-  visibility: hidden;
-}
-
-.calendar-day.weekend {
-  color: var(--color-orange);
-}
-
+.calendar-day.empty { visibility: hidden; }
+.calendar-day.weekend { color: var(--color-orange); }
 .calendar-day.selected {
   background: var(--color-blue);
   color: #FFF;
@@ -121,12 +113,8 @@
   box-shadow: 0 4px 8px rgba(60, 145, 166, 0.3);
 }
 
-/* --- Météo (Style Widgets) --- */
-.weather-options-row {
-  display: flex;
-  gap: 8px;
-}
-
+/* --- Météo --- */
+.weather-options-row { display: flex; gap: 8px; }
 .weather-btn-clean {
   flex: 1;
   display: flex;
@@ -141,8 +129,6 @@
 }
 .weather-btn-clean .weather-icon { font-size: 1.4rem; }
 .weather-btn-clean .weather-label { font-size: 0.65rem; font-weight: 700; color: var(--color-text-muted); text-align: center; }
-
-/* Effets au clic / actif */
 .weather-btn-clean.active {
   background: var(--color-blue);
   border-color: var(--color-blue);
@@ -203,7 +189,6 @@
 .dish-name { font-weight: 600; font-size: 0.95rem; color: var(--color-text); }
 .dish-price { font-size: 0.8rem; color: var(--color-text-muted); }
 
-/* Stepper (Boutons Bleus #3C91A6) */
 .qty-stepper {
   display: flex;
   align-items: center;
@@ -216,7 +201,7 @@
 .qty-btn {
   width: 36px;
   height: 36px;
-  background: var(--color-blue); /* Changement de couleur #3C91A6 */
+  background: var(--color-blue);
   color: #FFF;
   font-size: 1.2rem;
   font-weight: 700;
@@ -236,12 +221,8 @@
   -moz-appearance: textfield;
 }
 .qty-input::-webkit-outer-spin-button,
-.qty-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* Notes */
 .closing-notes {
   width: 100%;
   padding: 12px;
@@ -252,12 +233,11 @@
   font-family: inherit;
 }
 
-/* Footer fixe */
 .closing-footer-fixed {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 70px; /* Au-dessus de la nav */
+  bottom: 70px;
   background: #FFF;
   padding: 12px 16px;
   display: flex;
@@ -274,7 +254,6 @@
 .closing-total span { font-size: 0.75rem; color: var(--color-text-muted); }
 .closing-total strong { font-size: 1.3rem; color: var(--color-orange); }
 
-/* Animation de Feedback */
 .closing-feedback {
   padding: 12px;
   border-radius: 8px;

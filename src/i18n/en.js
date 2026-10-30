@@ -16,6 +16,10 @@ export default {
     noClosingTitle: 'No closing',
     noClosingDesc: 'Go to Closing tab.',
     historyTitle: 'History',
+    // Chantier 11-A — i18n HomePage
+    days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    actions: { call: 'Call', close: 'Close', expense: 'Expense' },
+    locale: 'en-US',
   },
   menu: {
     title: 'Menu',
@@ -94,7 +98,6 @@ export default {
     planningDetail: 'Day details',
     freq: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' },
     days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    // Nouvelles clés
     costIngredients: 'Ingredient Costs',
     employeeDays: 'Days / week',
     planningTasks: 'Daily tasks',
@@ -150,6 +153,9 @@ export default {
     noChartData: 'No revenue in this period',
     units: { sold: 'sold' },
   },
-  common: { save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', add: 'Add', close: 'Close', error: 'Error', success: 'Success', loading: 'Loading…' },
+  common: {
+    save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete',
+    add: 'Add', close: 'Close', back: 'Back', error: 'Error', success: 'Success', loading: 'Loading…',
+  },
   languages: { vi: 'Tiếng Việt', fr: 'Français', en: 'English' },
 };

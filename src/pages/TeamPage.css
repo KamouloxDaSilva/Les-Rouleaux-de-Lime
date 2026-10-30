@@ -1,5 +1,5 @@
 /* =========================================================
-   TeamPage — Refonte (Chantier 7)
+   TeamPage — Refonte (Chantier 7) + polish 11-A
    Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
    ========================================================= */
 
@@ -15,35 +15,28 @@
   margin: 0 auto;
 }
 
+/* Header — Chantier 11-A : grille 1fr auto 1fr */
 .team-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
 }
 
+.team-header .back-button {
+  grid-column: 1;
+  justify-self: start;
+}
+
 .team-title {
+  grid-column: 2;
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
   margin: 0;
+  text-align: center;
 }
-
-.btn-back {
-  background: transparent;
-  border: none;
-  color: #3C91A6;
-  font-weight: 700;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s;
-}
-.btn-back:hover { background: rgba(60, 145, 166, 0.1); }
 
 /* --- DASHBOARD --- */
 .team-grid {
@@ -62,7 +55,7 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   transition: transform 0.15s ease;
 }
-.team-card:active { transform: scale(0.97); }
+.team-card:active { transform: scale(0.95); }
 .team-card h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
 .team-card p { margin: 0; font-size: 0.85rem; opacity: 0.9; }
 .team-card .icon { font-size: 2rem; margin-bottom: 4px; }
@@ -104,10 +97,7 @@
   background: #FFFFFF;
 }
 
-.row-inputs {
-  display: flex;
-  gap: 10px;
-}
+.row-inputs { display: flex; gap: 10px; }
 .row-inputs > * { flex: 1; }
 
 .btn-primary {
@@ -123,14 +113,10 @@
   box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
   transition: transform 0.15s;
 }
-.btn-primary:active { transform: scale(0.97); }
+.btn-primary:active { transform: scale(0.95); }
 
 /* --- LISTES D'ÉLÉMENTS --- */
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.list { display: flex; flex-direction: column; gap: 12px; }
 .list-item {
   display: flex;
   justify-content: space-between;
@@ -140,24 +126,17 @@
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(44, 44, 44, 0.04);
 }
-.list-item-info h4 {
-  margin: 0 0 4px;
-  font-size: 1rem;
-  font-weight: 700;
-}
-.list-item-info p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #7A7A7A;
-}
+.list-item-info h4 { margin: 0 0 4px; font-size: 1rem; font-weight: 700; }
+.list-item-info p { margin: 0; font-size: 0.85rem; color: #7A7A7A; }
 .btn-edit {
   background: transparent;
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  color: #FF9800; /* Icône crayon orange comme sur l'image */
+  color: #FF9800;
   padding: 8px;
   border-radius: 8px;
+  transition: transform 0.15s ease;
 }
 .btn-edit:hover { background: rgba(255, 152, 0, 0.1); }
 .btn-delete {
@@ -167,6 +146,7 @@
   cursor: pointer;
   color: #E53E3E;
   padding: 8px;
+  transition: transform 0.15s ease;
 }
 
 /* --- CHARGES FIXES --- */
@@ -193,9 +173,7 @@
   padding-bottom: 8px;
   margin-bottom: 4px;
 }
-.total-card-row.sub {
-  opacity: 0.85;
-}
+.total-card-row.sub { opacity: 0.85; }
 
 /* --- PLANNING CALENDRIER --- */
 .planning-week {
@@ -240,28 +218,15 @@
 .planning-day-card.active.weekend .day-label { color: #FFF; }
 
 /* Détails du planning */
-.planning-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.planning-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.planning-content { display: flex; flex-direction: column; gap: 16px; }
+.planning-row { display: flex; align-items: center; gap: 12px; }
 .planning-row label {
   font-weight: 600;
   font-size: 0.9rem;
   color: #4A4A4A;
   min-width: 80px;
 }
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
+.tasks-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .task-item {
   display: flex;
   justify-content: space-between;
@@ -285,11 +250,7 @@
 }
 .ingredient-info h4 { margin: 0 0 4px; font-size: 1rem; }
 .ingredient-info p { margin: 0; font-size: 0.8rem; color: #7A7A7A; }
-.ingredient-price {
-  font-weight: 700;
-  color: #3C91A6;
-  font-size: 0.95rem;
-}
+.ingredient-price { font-weight: 700; color: #3C91A6; font-size: 0.95rem; }
 
 /* --- FILTRES CATÉGORIES --- */
 .filter-pills {

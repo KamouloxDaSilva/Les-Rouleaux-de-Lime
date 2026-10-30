@@ -1,7 +1,9 @@
+// src/pages/TeamPage.jsx
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
 import { getActiveRestaurant, createEmployee, createFixedCost, createIngredient, MENU_CATEGORIES } from '../data/model';
 import { loadDataset, saveDataset } from '../data/storage';
+import BackButton from '../components/BackButton';
 import './TeamPage.css';
 
 const CATEGORY_EMOJI = { dish: '🥗', drink: '🥤', dessert: '🍰', sauce: '🥫' };
@@ -9,15 +11,15 @@ const CATEGORY_EMOJI = { dish: '🥗', drink: '🥤', dessert: '🍰', sauce: '�
 export default function TeamPage() {
   const { t, formatCurrency } = useI18n();
   const [dataset, setDataset] = useState(null);
-  const [view, setView] = useState('dashboard'); 
-  
+  const [view, setView] = useState('dashboard');
+
   // Planning state
   const [selectedDay, setSelectedDay] = useState(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
 
   // Forms state
   const [empForm, setEmpForm] = useState({ id: null, name: '', role: '', salary_type: 'monthly', amount: '', days_per_week: 5 });
   const [costForm, setCostForm] = useState({ id: null, name: '', amount: '', frequency: 'monthly' });
-  
+
   // Ingrédients state
   const [activeCategory, setActiveCategory] = useState('dish');
   const [ingForm, setIngForm] = useState({ id: null, name: '', category: 'dish', unit: 'g', unit_cost: '', supplier: '' });
@@ -32,6 +34,12 @@ export default function TeamPage() {
   function commit(next) {
     setDataset(next);
     saveDataset(next);
+  }
+
+  function handleBack() {
+    setView('dashboard');
+    setIsEditingIng(false);
+    setIngForm({ id: null, name: '', category: activeCategory, unit: 'g', unit_cost: '', supplier: '' });
   }
 
   // --- GESTION EMPLOYÉS ---
@@ -62,10 +70,13 @@ export default function TeamPage() {
   }
 
   function editEmployee(emp) {
-    setEmpForm({ 
-      id: emp.id, name: emp.name, role: emp.role, salary_type: emp.salary_type, 
+    setEmpForm({
+      id: emp.id,
+      name: emp.name,
+      role: emp.role,
+      salary_type: emp.salary_type,
       amount: emp.salary_type === 'monthly' ? emp.monthly_salary : emp.hourly_rate,
-      days_per_week: emp.days_per_week || 5
+      days_per_week: emp.days_per_week || 5,
     });
   }
 
@@ -80,10 +91,19 @@ export default function TeamPage() {
     e.preventDefault();
     const amount = Number(costForm.amount);
     if (costForm.id) {
-      const nextCosts = dataset.fixed_costs.map(c => c.id === costForm.id ? { ...c, name: costForm.name, amount, frequency: costForm.frequency } : c);
+      const nextCosts = dataset.fixed_costs.map(c =>
+        c.id === costForm.id
+          ? { ...c, name: costForm.name, amount, frequency: costForm.frequency }
+          : c
+      );
       commit({ ...dataset, fixed_costs: nextCosts });
     } else {
-      const newCost = createFixedCost({ restaurant_id: restaurant.id, name: costForm.name, amount, frequency: costForm.frequency });
+      const newCost = createFixedCost({
+        restaurant_id: restaurant.id,
+        name: costForm.name,
+        amount,
+        frequency: costForm.frequency,
+      });
       commit({ ...dataset, fixed_costs: [...dataset.fixed_costs, newCost] });
     }
     setCostForm({ id: null, name: '', amount: '', frequency: 'monthly' });
@@ -119,10 +139,21 @@ export default function TeamPage() {
     e.preventDefault();
     const cost = Number(ingForm.unit_cost);
     if (ingForm.id) {
-      const nextIngs = dataset.ingredients.map(i => i.id === ingForm.id ? { ...i, name: ingForm.name, category: ingForm.category, unit: ingForm.unit, unit_cost: cost, supplier: ingForm.supplier } : i);
+      const nextIngs = dataset.ingredients.map(i =>
+        i.id === ingForm.id
+          ? { ...i, name: ingForm.name, category: ingForm.category, unit: ingForm.unit, unit_cost: cost, supplier: ingForm.supplier }
+          : i
+      );
       commit({ ...dataset, ingredients: nextIngs });
     } else {
-      const newIng = createIngredient({ restaurant_id: restaurant.id, name: ingForm.name, category: ingForm.category, unit: ingForm.unit, unit_cost: cost, supplier: ingForm.supplier });
+      const newIng = createIngredient({
+        restaurant_id: restaurant.id,
+        name: ingForm.name,
+        category: ingForm.category,
+        unit: ingForm.unit,
+        unit_cost: cost,
+        supplier: ingForm.supplier,
+      });
       commit({ ...dataset, ingredients: [...dataset.ingredients, newIng] });
     }
     setIngForm({ id: null, name: '', category: activeCategory, unit: 'g', unit_cost: '', supplier: '' });
@@ -145,11 +176,7 @@ export default function TeamPage() {
   return (
     <div className="team-page">
       <header className="team-header">
-        {view !== 'dashboard' && (
-          <button className="btn-back" onClick={() => { setView('dashboard'); setIsEditingIng(false); setIngForm({ id: null, name: '', category: activeCategory, unit: 'g', unit_cost: '', supplier: '' }); }}>
-            ←
-          </button>
-        )}
+        {view !== 'dashboard' && <BackButton onClick={handleBack} />}
         <h1 className="team-title">
           {view === 'dashboard' ? t('team.title') : t(`team.${view === 'ingredients' ? 'costIngredients' : view}`)}
         </h1>
@@ -185,24 +212,62 @@ export default function TeamPage() {
       {view === 'employees' && (
         <div className="section-container">
           <form className="card form-card" onSubmit={saveEmployee}>
-            <input className="form-input" type="text" placeholder={t('team.name')} value={empForm.name} onChange={e => setEmpForm({...empForm, name: e.target.value})} required />
-            <input className="form-input" type="text" placeholder={t('team.role')} value={empForm.role} onChange={e => setEmpForm({...empForm, role: e.target.value})} />
-            
+            <input
+              className="form-input"
+              type="text"
+              placeholder={t('team.name')}
+              value={empForm.name}
+              onChange={e => setEmpForm({ ...empForm, name: e.target.value })}
+              required
+            />
+            <input
+              className="form-input"
+              type="text"
+              placeholder={t('team.role')}
+              value={empForm.role}
+              onChange={e => setEmpForm({ ...empForm, role: e.target.value })}
+            />
+
             <div className="row-inputs">
-              <select className="form-select" value={empForm.salary_type} onChange={e => setEmpForm({...empForm, salary_type: e.target.value})}>
+              <select
+                className="form-select"
+                value={empForm.salary_type}
+                onChange={e => setEmpForm({ ...empForm, salary_type: e.target.value })}
+              >
                 <option value="monthly">{t('team.monthly')}</option>
                 <option value="hourly">{t('team.hourly')}</option>
               </select>
-              <input className="form-input" type="number" placeholder={t('team.amount')} value={empForm.amount} onChange={e => setEmpForm({...empForm, amount: e.target.value})} required />
+              <input
+                className="form-input"
+                type="number"
+                placeholder={t('team.amount')}
+                value={empForm.amount}
+                onChange={e => setEmpForm({ ...empForm, amount: e.target.value })}
+                required
+              />
             </div>
 
-            <input className="form-input" type="number" min="1" max="7" placeholder={t('team.employeeDays')} value={empForm.days_per_week} onChange={e => setEmpForm({...empForm, days_per_week: e.target.value})} required />
-            
+            <input
+              className="form-input"
+              type="number"
+              min="1"
+              max="7"
+              placeholder={t('team.employeeDays')}
+              value={empForm.days_per_week}
+              onChange={e => setEmpForm({ ...empForm, days_per_week: e.target.value })}
+              required
+            />
+
             <button type="submit" className="btn-primary" style={{ marginTop: '4px' }}>
               {empForm.id ? t('common.edit') : t('common.add')}
             </button>
             {empForm.id && (
-              <button type="button" className="btn-ghost" style={{ marginTop: '8px', width: '100%', color: '#7A7A7A', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setEmpForm({ id: null, name: '', role: '', salary_type: 'monthly', amount: '', days_per_week: 5 })}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ marginTop: '8px', width: '100%', color: '#7A7A7A', background: 'none', border: 'none', cursor: 'pointer' }}
+                onClick={() => setEmpForm({ id: null, name: '', role: '', salary_type: 'monthly', amount: '', days_per_week: 5 })}
+              >
                 {t('common.cancel')}
               </button>
             )}
@@ -213,7 +278,9 @@ export default function TeamPage() {
               <div key={emp.id} className="list-item">
                 <div className="list-item-info">
                   <h4>{emp.name}</h4>
-                  <p>{emp.role || '-'} · {formatCurrency(emp.salary_type === 'monthly' ? emp.monthly_salary : emp.hourly_rate)} / {emp.salary_type === 'monthly' ? t('team.monthly').toLowerCase() : t('team.hourly').toLowerCase()} · {emp.days_per_week}j/sem</p>
+                  <p>
+                    {emp.role || '-'} · {formatCurrency(emp.salary_type === 'monthly' ? emp.monthly_salary : emp.hourly_rate)} / {emp.salary_type === 'monthly' ? t('team.monthly').toLowerCase() : t('team.hourly').toLowerCase()} · {emp.days_per_week}j/sem
+                  </p>
                 </div>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   <button className="btn-edit" onClick={() => editEmployee(emp)}>✏️</button>
@@ -229,18 +296,42 @@ export default function TeamPage() {
       {view === 'costs' && (
         <div className="section-container">
           <form className="card form-card" onSubmit={saveCost}>
-            <input className="form-input" type="text" placeholder={t('team.name')} value={costForm.name} onChange={e => setCostForm({...costForm, name: e.target.value})} required />
+            <input
+              className="form-input"
+              type="text"
+              placeholder={t('team.name')}
+              value={costForm.name}
+              onChange={e => setCostForm({ ...costForm, name: e.target.value })}
+              required
+            />
             <div className="row-inputs">
-              <input className="form-input" type="number" placeholder={t('team.amount')} value={costForm.amount} onChange={e => setCostForm({...costForm, amount: e.target.value})} required />
-              <select className="form-select" value={costForm.frequency} onChange={e => setCostForm({...costForm, frequency: e.target.value})}>
+              <input
+                className="form-input"
+                type="number"
+                placeholder={t('team.amount')}
+                value={costForm.amount}
+                onChange={e => setCostForm({ ...costForm, amount: e.target.value })}
+                required
+              />
+              <select
+                className="form-select"
+                value={costForm.frequency}
+                onChange={e => setCostForm({ ...costForm, frequency: e.target.value })}
+              >
                 <option value="monthly">{t('team.freq.monthly')}</option>
                 <option value="weekly">{t('team.freq.weekly')}</option>
                 <option value="daily">{t('team.freq.daily')}</option>
               </select>
             </div>
-            <button type="submit" className="btn-primary">{costForm.id ? t('common.edit') : t('team.addFixedCost')}</button>
+            <button type="submit" className="btn-primary">
+              {costForm.id ? t('common.edit') : t('team.addFixedCost')}
+            </button>
             {costForm.id && (
-              <button type="button" style={{ background: 'none', border: 'none', color: '#7A7A7A', marginTop: '8px', cursor: 'pointer' }} onClick={() => setCostForm({ id: null, name: '', amount: '', frequency: 'monthly' })}>
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', color: '#7A7A7A', marginTop: '8px', cursor: 'pointer' }}
+                onClick={() => setCostForm({ id: null, name: '', amount: '', frequency: 'monthly' })}
+              >
                 {t('common.cancel')}
               </button>
             )}
@@ -259,7 +350,7 @@ export default function TeamPage() {
                 </div>
               </div>
             ))}
-            
+
             <div className="total-card">
               <div className="total-card-row main">
                 <span>{t('team.totalExpenses')}</span>
@@ -282,8 +373,12 @@ export default function TeamPage() {
               const isWeekend = index === 5 || index === 6;
               const isActive = selectedDay === index;
               return (
-                <div key={day} className={`planning-day-card ${isActive ? 'active' : ''} ${isWeekend ? 'weekend' : ''}`} onClick={() => setSelectedDay(index)}>
-                  <span className="day-label">{day.substring(0,3)}</span>
+                <div
+                  key={day}
+                  className={`planning-day-card ${isActive ? 'active' : ''} ${isWeekend ? 'weekend' : ''}`}
+                  onClick={() => setSelectedDay(index)}
+                >
+                  <span className="day-label">{day.substring(0, 3)}</span>
                   <span className="day-number">{index + 12}</span>
                 </div>
               );
@@ -299,9 +394,11 @@ export default function TeamPage() {
               <label>{t('team.closeTime')}</label>
               <input type="time" defaultValue="20:00" className="form-input" />
             </div>
-            
+
             <div style={{ marginTop: '12px' }}>
-              <label style={{ fontWeight: 600, fontSize: '0.9rem', color: '#4A4A4A' }}>{t('team.planningTasks')}</label>
+              <label style={{ fontWeight: 600, fontSize: '0.9rem', color: '#4A4A4A' }}>
+                {t('team.planningTasks')}
+              </label>
               <div className="tasks-list">
                 <div className="task-item">
                   <span>🧹 Nettoyage cuisine</span>
@@ -326,45 +423,103 @@ export default function TeamPage() {
         <div className="section-container">
           {isEditingIng ? (
             <form className="card form-card" onSubmit={saveIngredient}>
-              <h3 style={{ margin: '0 0 8px', fontSize: '1.1rem' }}>{ingForm.id ? t('common.edit') : t('menu.ingredients.add')}</h3>
-              <input className="form-input" type="text" placeholder={t('menu.ingredients.name')} value={ingForm.name} onChange={e => setIngForm({ ...ingForm, name: e.target.value })} required />
-              <select className="form-select" value={ingForm.category} onChange={e => setIngForm({ ...ingForm, category: e.target.value })}>
-                {MENU_CATEGORIES.map(cat => <option key={cat} value={cat}>{CATEGORY_EMOJI[cat]} {t(`menu.sections.${cat}`)}</option>)}
+              <h3 style={{ margin: '0 0 8px', fontSize: '1.1rem' }}>
+                {ingForm.id ? t('common.edit') : t('menu.ingredients.add')}
+              </h3>
+              <input
+                className="form-input"
+                type="text"
+                placeholder={t('menu.ingredients.name')}
+                value={ingForm.name}
+                onChange={e => setIngForm({ ...ingForm, name: e.target.value })}
+                required
+              />
+              <select
+                className="form-select"
+                value={ingForm.category}
+                onChange={e => setIngForm({ ...ingForm, category: e.target.value })}
+              >
+                {MENU_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>
+                    {CATEGORY_EMOJI[cat]} {t(`menu.sections.${cat}`)}
+                  </option>
+                ))}
               </select>
               <div className="row-inputs">
-                <input className="form-input" type="text" placeholder={t('menu.ingredients.unit')} value={ingForm.unit} onChange={e => setIngForm({ ...ingForm, unit: e.target.value })} required />
-                <input className="form-input" type="number" placeholder={t('menu.ingredients.unitCost')} value={ingForm.unit_cost} onChange={e => setIngForm({ ...ingForm, unit_cost: e.target.value })} required />
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder={t('menu.ingredients.unit')}
+                  value={ingForm.unit}
+                  onChange={e => setIngForm({ ...ingForm, unit: e.target.value })}
+                  required
+                />
+                <input
+                  className="form-input"
+                  type="number"
+                  placeholder={t('menu.ingredients.unitCost')}
+                  value={ingForm.unit_cost}
+                  onChange={e => setIngForm({ ...ingForm, unit_cost: e.target.value })}
+                  required
+                />
               </div>
-              <input className="form-input" type="text" placeholder={t('menu.ingredients.supplier')} value={ingForm.supplier} onChange={e => setIngForm({ ...ingForm, supplier: e.target.value })} />
+              <input
+                className="form-input"
+                type="text"
+                placeholder={t('menu.ingredients.supplier')}
+                value={ingForm.supplier}
+                onChange={e => setIngForm({ ...ingForm, supplier: e.target.value })}
+              />
               <button type="submit" className="btn-primary">{t('common.save')}</button>
-              <button type="button" style={{ background: 'none', border: 'none', color: '#7A7A7A', marginTop: '8px', cursor: 'pointer' }} onClick={() => setIsEditingIng(false)}>{t('common.cancel')}</button>
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', color: '#7A7A7A', marginTop: '8px', cursor: 'pointer' }}
+                onClick={() => setIsEditingIng(false)}
+              >
+                {t('common.cancel')}
+              </button>
             </form>
           ) : (
             <>
               <div className="filter-pills">
                 {MENU_CATEGORIES.map(cat => (
-                  <button key={cat} className={`filter-pill ${activeCategory === cat ? 'active' : ''}`} onClick={() => setActiveCategory(cat)}>
+                  <button
+                    key={cat}
+                    className={`filter-pill ${activeCategory === cat ? 'active' : ''}`}
+                    onClick={() => setActiveCategory(cat)}
+                  >
                     {CATEGORY_EMOJI[cat]} {t(`menu.sections.${cat}`)}
                   </button>
                 ))}
               </div>
-              <button className="btn-primary" style={{ marginBottom: '16px', width: '100%' }} onClick={() => { setIngForm({ id: null, name: '', category: activeCategory, unit: 'g', unit_cost: '', supplier: '' }); setIsEditingIng(true); }}>
+              <button
+                className="btn-primary"
+                style={{ marginBottom: '16px', width: '100%' }}
+                onClick={() => {
+                  setIngForm({ id: null, name: '', category: activeCategory, unit: 'g', unit_cost: '', supplier: '' });
+                  setIsEditingIng(true);
+                }}
+              >
                 + {t('menu.ingredients.add')}
               </button>
-              
+
               <div className="list">
-                {dataset.ingredients.filter(i => i.category === activeCategory).map(ing => (
-                  <div key={ing.id} className="ingredient-card">
-                    <div className="ingredient-info">
-                      <h4>{ing.name}</h4>
-                      <p>{formatCurrency(ing.unit_cost)} / {ing.unit} {ing.supplier && `· ${ing.supplier}`}</p>
+                {dataset.ingredients
+                  .filter(i => i.category === activeCategory)
+                  .map(ing => (
+                    <div key={ing.id} className="ingredient-card">
+                      <div className="ingredient-info">
+                        <h4>{ing.name}</h4>
+                        <p>
+                          {formatCurrency(ing.unit_cost)} / {ing.unit} {ing.supplier && `· ${ing.supplier}`}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button className="btn-edit" onClick={() => editIngredient(ing)}>✏️</button>
+                        <button className="btn-delete" onClick={() => deleteIngredient(ing.id)}>🗑️</button>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button className="btn-edit" onClick={() => editIngredient(ing)}>✏️</button>
-                      <button className="btn-delete" onClick={() => deleteIngredient(ing.id)}>🗑️</button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </>
           )}

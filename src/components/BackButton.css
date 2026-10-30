@@ -1,0 +1,29 @@
+ srccomponentsBackButton.css — Chantier 11-A 
+.back-button {
+  display inline-flex;
+  align-items center;
+  justify-content center;
+  width 40px;
+  height 40px;
+  border-radius 50%;
+  background #3C91A6;
+  color #FFFFFF;
+  border none;
+  font-size 1.25rem;
+  font-weight 700;
+  line-height 1;
+  cursor pointer;
+  box-shadow 0 4px 10px rgba(60, 145, 166, 0.3);
+  transition transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.back-buttonactive {
+  transform scale(0.95);
+  box-shadow 0 2px 6px rgba(60, 145, 166, 0.4);
+}
+
+@media (prefers-reduced-motion reduce) {
+  .back-button {
+    transition none;
+  }
+}

@@ -16,6 +16,10 @@ export default {
     noClosingTitle: 'Chưa chốt ngày',
     noClosingDesc: 'Hãy chốt ngày.',
     historyTitle: 'Lịch sử gần đây',
+    // Chantier 11-A — i18n HomePage
+    days: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+    actions: { call: 'Gọi', close: 'Chốt ngày', expense: 'Chi phí' },
+    locale: 'vi-VN',
   },
   menu: {
     title: 'Thực đơn',
@@ -94,7 +98,6 @@ export default {
     planningDetail: 'Chi tiết ngày',
     freq: { daily: 'Ngày', weekly: 'Tuần', monthly: 'Tháng' },
     days: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'],
-    // Nouvelles clés
     costIngredients: 'Chi phí nguyên liệu',
     employeeDays: 'Số ngày/tuần',
     planningTasks: 'Công việc trong ngày',
@@ -164,6 +167,9 @@ export default {
     noChartData: 'Chưa có doanh thu trong kỳ này',
     units: { sold: 'đã bán' },
   },
-  common: { save: 'Lưu', cancel: 'Hủy', edit: 'Sửa', delete: 'Xóa', add: 'Thêm', close: 'Đóng', error: 'Lỗi', success: 'Thành công', loading: 'Đang tải…' },
+  common: {
+    save: 'Lưu', cancel: 'Hủy', edit: 'Sửa', delete: 'Xóa',
+    add: 'Thêm', close: 'Đóng', back: 'Quay lại', error: 'Lỗi', success: 'Thành công', loading: 'Đang tải…',
+  },
   languages: { vi: 'Tiếng Việt', fr: 'Français', en: 'English' },
 };

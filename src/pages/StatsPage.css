@@ -11,6 +11,7 @@
   color: var(--color-blue);
   font-size: 1.6rem;
   margin: 8px 0 16px;
+  text-align: center; /* Chantier 11-A */
 }
 
 /* --- KPI CARDS --- */
@@ -33,7 +34,7 @@
   cursor: pointer;
   transition: transform 0.1s;
 }
-.kpi-card:active { transform: scale(0.98); }
+.kpi-card:active { transform: scale(0.95); }
 
 .kpi-icon {
   width: 36px; height: 36px;
@@ -76,11 +77,7 @@
 .chart-title { font-size: 1rem; font-weight: 700; color: var(--color-text); margin: 0 0 16px 0; }
 
 /* --- DONUT CHART --- */
-.donut-container {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
+.donut-container { display: flex; align-items: center; gap: 20px; }
 .donut-chart {
   width: 130px; height: 130px;
   border-radius: 50%;
@@ -137,7 +134,6 @@
   margin-top: 8px;
   text-transform: capitalize;
 }
-/* Tooltip au survol */
 .bar-wrapper:hover .bar { background: var(--color-orange); }
 .bar-tooltip {
   position: absolute;
