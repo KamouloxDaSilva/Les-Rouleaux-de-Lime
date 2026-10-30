@@ -94,6 +94,15 @@ export default {
     planningDetail: 'Day details',
     freq: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' },
     days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    // Nouvelles clés
+    costIngredients: 'Ingredient Costs',
+    employeeDays: 'Days / week',
+    planningTasks: 'Daily tasks',
+    addTask: 'Add task',
+    noTasks: 'No tasks',
+    taskPlaceholder: 'Enter a task...',
+    yearlyCost: 'Yearly cost',
+    fixedCostsYearly: 'Yearly total',
   },
   placeholder: { comingSoon: 'Coming soon...' },
   settings: {
@@ -121,24 +130,7 @@ export default {
     alreadyClosed: 'Already closed.',
   },
   stats: {
-    // --- NOUVELLES CLÉS (Chantier 10) ---
     title: 'Statistics',
-    overview: 'Overview',
-    topSales: 'Top Sales',
-    lowSales: 'Lowest Sales',
-    totalRevenue: 'Total Revenue',
-    totalProfit: 'Gross Profit',
-    itemsSold: 'Items Sold',
-    salesByCategory: 'Sales by Category',
-    last7Days: 'Last 7 Days',
-    total: 'Total',
-    sold: 'sold',
-    revenueDetails: 'Revenue Details',
-    profitDetails: 'Profit Details',
-    itemsDetails: 'Items Sold Details',
-    modalPlaceholder: 'Graphical details for this statistic will be added soon.',
-    
-    // --- ANCIENNES CLÉS CONSERVÉES ---
     periods: { week: 'Week', month: 'Month', year: 'Year' },
     summary: {
       title: 'Overview',

@@ -1,142 +1,319 @@
-.team-page { 
-  padding: 10px 0; 
-  font-family: var(--font-body);
-}
-h1, h2 { 
-  font-family: var(--font-title); 
-  font-size: 1.6rem; 
-  margin-bottom: 16px; 
-  color: var(--color-text);
-}
-.btn-back { 
-  color: var(--color-blue); 
-  font-weight: 700; 
-  margin-bottom: 16px; 
-  display: inline-block;
+/* =========================================================
+   TeamPage — Refonte (Chantier 7)
+   Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
+   ========================================================= */
+
+.team-page {
+  padding: 16px;
+  padding-bottom: 96px;
+  background: #FAEBD5;
+  min-height: 100vh;
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  color: #2C2C2C;
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
-/* --- DASHBOARD --- */
-.team-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 12px; 
+.team-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
-.team-card { 
-  border-radius: var(--radius-md); 
-  padding: 20px; 
-  color: #FFF; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 8px; 
+
+.team-title {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.btn-back {
+  background: transparent;
+  border: none;
+  color: #3C91A6;
+  font-weight: 700;
+  font-size: 1.2rem;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
 }
-.team-card h3 { color: #FFF; font-size: 1rem; }
-.team-card p { font-size: 0.8rem; opacity: 0.9; }
-.team-card .icon { font-size: 2rem; }
+.btn-back:hover { background: rgba(60, 145, 166, 0.1); }
+
+/* --- DASHBOARD --- */
+.team-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.team-card {
+  border-radius: 20px;
+  padding: 20px 16px;
+  color: #FFF;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  transition: transform 0.15s ease;
+}
+.team-card:active { transform: scale(0.97); }
+.team-card h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.team-card p { margin: 0; font-size: 0.85rem; opacity: 0.9; }
+.team-card .icon { font-size: 2rem; margin-bottom: 4px; }
 .card-blue { background: linear-gradient(135deg, #3C91A6, #5BB2C7); }
 .card-orange { background: linear-gradient(135deg, #FF9800, #FFB74D); }
 .card-green { background: linear-gradient(135deg, #43A047, #66BB6A); }
+.card-purple { background: linear-gradient(135deg, #8E44AD, #9B59B6); }
 
-/* --- FORMULAIRES & LISTES --- */
-.form-card { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 12px; 
-  margin-bottom: 24px; 
-}
-.form-card input, .form-card select { 
-  padding: 12px; 
-  border: 1px solid #DDD; 
-  border-radius: var(--radius-sm); 
-  outline: none; 
-}
-.salary-row { display: flex; gap: 8px; }
-.salary-row select { flex: 1; }
-.salary-row input { flex: 1; }
-.form-actions { display: flex; gap: 8px; }
-.btn-ghost { padding: 10px; border-radius: var(--radius-sm); font-weight: 600; color: var(--color-text-muted); }
-
-.list { display: flex; flex-direction: column; gap: 12px; }
-.list-item { display: flex; justify-content: space-between; align-items: center; }
-.sub { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; }
-.btn-edit { font-size: 1.2rem; padding: 8px; }
-
-.total-card { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  background: var(--color-blue); 
-  color: #FFF; 
-  font-weight: 700; 
-  font-size: 1.1rem; 
-  margin-top: 12px;
+/* --- CARTES & FORMULAIRES GLOBAUX --- */
+.card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(44, 44, 44, 0.05);
+  margin-bottom: 16px;
 }
 
-/* --- PLANNING (Style Image) --- */
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #EBEBEB;
+  border-radius: 12px;
+  background: #F9F9F9;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #2C2C2C;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus {
+  border-color: #3C91A6;
+  background: #FFFFFF;
+}
+
+.row-inputs {
+  display: flex;
+  gap: 10px;
+}
+.row-inputs > * { flex: 1; }
+
+.btn-primary {
+  background: #FF9800;
+  color: #FFFFFF;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+  transition: transform 0.15s;
+}
+.btn-primary:active { transform: scale(0.97); }
+
+/* --- LISTES D'ÉLÉMENTS --- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFFFF;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.04);
+}
+.list-item-info h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.list-item-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #7A7A7A;
+}
+.btn-edit {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #FF9800; /* Icône crayon orange comme sur l'image */
+  padding: 8px;
+  border-radius: 8px;
+}
+.btn-edit:hover { background: rgba(255, 152, 0, 0.1); }
+.btn-delete {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #E53E3E;
+  padding: 8px;
+}
+
+/* --- CHARGES FIXES --- */
+.total-card {
+  background: #3C91A6;
+  color: #FFF;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.total-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+.total-card-row.main {
+  font-size: 1.2rem;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+.total-card-row.sub {
+  opacity: 0.85;
+}
+
+/* --- PLANNING CALENDRIER --- */
 .planning-week {
   display: flex;
   justify-content: space-between;
   gap: 6px;
   margin-bottom: 20px;
-  background: transparent;
-  overflow-x: auto;
-  padding-bottom: 8px;
 }
-
 .planning-day-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface);
-  padding: 12px 14px;
+  background: #FFFFFF;
+  padding: 12px 0;
   border-radius: 16px;
-  min-width: 50px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   border: 2px solid transparent;
 }
-
 .planning-day-card .day-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: var(--color-text);
+  color: #7A7A7A;
 }
-
-.planning-day-card .day-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #E0E0E0;
-  margin-top: 8px;
+.planning-day-card .day-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2C2C2C;
+  margin-top: 4px;
 }
-
-/* Jour Actif (Bleu) */
 .planning-day-card.active {
-  background: #5B6CE1; /* Bleu de l'image */
-  box-shadow: 0 6px 15px rgba(91, 108, 225, 0.3);
+  background: #3C91A6;
+  border-color: #3C91A6;
+  box-shadow: 0 6px 15px rgba(60, 145, 166, 0.3);
 }
-.planning-day-card.active .day-label { color: #FFF; }
-.planning-day-card.active .day-dot { background: #FFF; opacity: 0.7; }
-
-/* Week-end (Rouge) */
-.planning-day-card.weekend .day-label { color: #E53E3E; }
-.planning-day-card.weekend .day-dot { background: #FC8181; }
+.planning-day-card.active .day-label,
+.planning-day-card.active .day-number { color: #FFF; }
+.planning-day-card.weekend .day-label { color: #FF9800; }
+.planning-day-card.active.weekend .day-label { color: #FFF; }
 
 /* Détails du planning */
-.planning-detail { padding: 20px; }
-.planning-detail h3 { font-size: 1.1rem; margin-bottom: 16px; color: var(--color-text); }
-.planning-content { display: flex; flex-direction: column; gap: 12px; }
-.planning-row { display: flex; align-items: center; gap: 12px; }
-.planning-row label { flex: 1; font-weight: 600; font-size: 0.9rem; color: var(--color-text-muted); }
-.time-input, .tasks-input { 
-  padding: 10px; 
-  border: 1px solid #DDD; 
-  border-radius: 8px; 
-  font-family: inherit; 
-  font-size: 1rem; 
-  background: #FAFAFA;
+.planning-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-.tasks-input { width: 100%; resize: vertical; }
+.planning-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.planning-row label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #4A4A4A;
+  min-width: 80px;
+}
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #F9F9F9;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+/* --- INGRÉDIENTS (Coût) --- */
+.ingredient-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFFFF;
+  padding: 14px 16px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.04);
+  border-left: 4px solid #FF9800;
+}
+.ingredient-info h4 { margin: 0 0 4px; font-size: 1rem; }
+.ingredient-info p { margin: 0; font-size: 0.8rem; color: #7A7A7A; }
+.ingredient-price {
+  font-weight: 700;
+  color: #3C91A6;
+  font-size: 0.95rem;
+}
+
+/* --- FILTRES CATÉGORIES --- */
+.filter-pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  scrollbar-width: none;
+}
+.filter-pills::-webkit-scrollbar { display: none; }
+.filter-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  border: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  white-space: nowrap;
+  color: #7A7A7A;
+}
+.filter-pill.active {
+  background: #3C91A6;
+  color: #FFFFFF;
+}

@@ -38,7 +38,24 @@ function migrateFromV4(dataset) {
     };
   });
 
-  next.schema_version = SCHEMA_VERSION;
+  next.schema_version = 5; // On passe à la v5, la v6 s'occupera de la suite
+  return next;
+}
+
+// Migration v5 → v6 : ajout de "days_per_week" (nombre de jours travaillés) pour les employés
+function migrateFromV5(dataset) {
+  if (!dataset || typeof dataset !== 'object') return dataset;
+  const next = { ...dataset };
+
+  next.employees = (next.employees || []).map(emp => {
+    if (!emp || typeof emp !== 'object') return emp;
+    return {
+      ...emp,
+      days_per_week: Number.isFinite(emp.days_per_week) ? emp.days_per_week : 5, // 5 jours par défaut
+    };
+  });
+
+  next.schema_version = SCHEMA_VERSION; // Passe à la v6
   return next;
 }
 
@@ -48,7 +65,7 @@ export function loadDataset() {
 
   let raw = null;
 
-  // 1) Version courante (v5)
+  // 1) Version courante (v6)
   try { raw = storage.getItem(STORAGE_KEY); } catch (e) { return createEmptyDataset(); }
   if (raw) {
     try {
@@ -60,25 +77,41 @@ export function loadDataset() {
     raw = null;
   }
 
-  // 2) Migration depuis v4
-  try { raw = storage.getItem('rdl.dataset.v4'); } catch (e) { raw = null; }
+  // 2) Migration depuis v5 (version juste avant ce chantier)
+  try { raw = storage.getItem('rdl.dataset.v5'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      const migrated = migrateFromV4(parsed);
+      const migrated = migrateFromV5(parsed);
       if (!migrated.planning) migrated.planning = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
       return migrated;
     } catch (e) { raw = null; }
   }
 
-  // 3) Migration depuis v3
+  // 3) Migration depuis v4
+  try { raw = storage.getItem('rdl.dataset.v4'); } catch (e) { raw = null; }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      // On chaîne les migrations : v4 -> v5 -> v6
+      const migrated = migrateFromV5(migrateFromV4(parsed));
+      if (!migrated.planning) migrated.planning = [];
+      try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
+      return migrated;
+    } catch (e) { raw = null; }
+  }
+
+  // 4) Migration depuis v3
   try { raw = storage.getItem('rdl.dataset.v3'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      if (!parsed.planning) parsed.planning = [];
-      return migrateFromV4(parsed);
+      // On chaîne les migrations : v3 -> v4 (via logique) -> v5 -> v6
+      const migrated = migrateFromV5(migrateFromV4(parsed));
+      if (!migrated.planning) migrated.planning = [];
+      try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
+      return migrated;
     } catch (e) { return createEmptyDataset(); }
   }
 
@@ -110,9 +143,14 @@ export function importDatasetFromJSON(text) {
   if (typeof text !== 'string' || !text.trim()) return { ok: false, errors: ['contenu vide'] };
   let parsed = null;
   try { parsed = JSON.parse(text); } catch (e) { return { ok: false, errors: ['JSON invalide'] }; }
-  if (!parsed.planning) parsed.planning = [];
-  // Applique la même migration si l'utilisateur importe un vieux fichier
-  const migrated = migrateFromV4(parsed);
+  
+  // Applique la même chaîne de migration si l'utilisateur importe un vieux fichier
+  let migrated = parsed;
+  if (parsed.schema_version < 5) migrated = migrateFromV4(parsed);
+  if (parsed.schema_version < 6) migrated = migrateFromV5(migrated);
+  
+  if (!migrated.planning) migrated.planning = [];
+  
   const { ok, errors } = validateDataset(migrated);
   if (!ok) return { ok: false, errors };
   return { ok: true, dataset: migrated };

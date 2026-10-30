@@ -94,6 +94,15 @@ export default {
     planningDetail: 'Détails de la journée',
     freq: { daily: 'Jour', weekly: 'Semaine', monthly: 'Mois' },
     days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+    // Nouvelles clés
+    costIngredients: 'Coût Ingrédients',
+    employeeDays: 'Jours / semaine',
+    planningTasks: 'Tâches du jour',
+    addTask: 'Ajouter une tâche',
+    noTasks: 'Aucune tâche',
+    taskPlaceholder: 'Saisir une tâche...',
+    yearlyCost: 'Coût annuel',
+    fixedCostsYearly: 'Total annuel',
   },
   placeholder: { comingSoon: 'En développement...' },
   settings: {

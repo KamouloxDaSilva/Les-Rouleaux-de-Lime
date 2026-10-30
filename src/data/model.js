@@ -1,5 +1,5 @@
 // src/data/model.js
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const CURRENCY_DEFAULT = 'VND';
 export const TIMEZONE_DEFAULT = 'Asia/Ho_Chi_Minh';
@@ -104,6 +104,7 @@ export function createEmployee(input = {}) {
     salary_type: input.salary_type || 'monthly',
     hourly_rate: Number.isFinite(input.hourly_rate) ? input.hourly_rate : 0,
     monthly_salary: Number.isFinite(input.monthly_salary) ? input.monthly_salary : 0,
+    days_per_week: Number.isFinite(input.days_per_week) ? input.days_per_week : 5,
     active: input.active !== false,
     createdAt: input.createdAt || ts,
     updatedAt: ts,

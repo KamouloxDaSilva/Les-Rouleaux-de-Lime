@@ -94,6 +94,15 @@ export default {
     planningDetail: 'Chi tiết ngày',
     freq: { daily: 'Ngày', weekly: 'Tuần', monthly: 'Tháng' },
     days: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'],
+    // Nouvelles clés
+    costIngredients: 'Chi phí nguyên liệu',
+    employeeDays: 'Số ngày/tuần',
+    planningTasks: 'Công việc trong ngày',
+    addTask: 'Thêm công việc',
+    noTasks: 'Không có công việc',
+    taskPlaceholder: 'Nhập công việc...',
+    yearlyCost: 'Chi phí năm',
+    fixedCostsYearly: 'Tổng chi phí năm',
   },
   placeholder: { comingSoon: 'Đang phát triển...' },
   settings: {
@@ -121,7 +130,6 @@ export default {
     alreadyClosed: 'Đã chốt.',
   },
   stats: {
-    // --- NOUVELLES CLÉS (Chantier 10) ---
     title: 'Thống kê',
     overview: 'Tổng quan',
     topSales: 'Bán chạy nhất',
@@ -137,8 +145,6 @@ export default {
     profitDetails: 'Chi tiết lợi nhuận',
     itemsDetails: 'Chi tiết món đã bán',
     modalPlaceholder: 'Chi tiết đồ thị của thống kê này sẽ sớm được cập nhật.',
-    
-    // --- ANCIENNES CLÉS CONSERVÉES ---
     periods: { week: 'Tuần', month: 'Tháng', year: 'Năm' },
     summary: {
       title: 'Tổng quan',

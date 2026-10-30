@@ -145,8 +145,8 @@ export function createDefaultFixtures() {
 
   // ---------------- EMPLOYÉS ----------------
   const employees = [
-    createEmployee({ id: 'emp-1', restaurant_id: rid, name: 'Lan', hourly_rate: 25000, active: true }),
-    createEmployee({ id: 'emp-2', restaurant_id: rid, name: 'Hùng', hourly_rate: 30000, active: true }),
+    createEmployee({ id: 'emp-1', restaurant_id: rid, name: 'Lan', hourly_rate: 25000, active: true, days_per_week: 5 }),
+    createEmployee({ id: 'emp-2', restaurant_id: rid, name: 'Hùng', hourly_rate: 30000, active: true, days_per_week: 6 }),
   ];
 
   const shifts = [
