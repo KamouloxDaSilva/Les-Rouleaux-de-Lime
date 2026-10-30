@@ -2,7 +2,7 @@
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Home', closing: 'Closing', menu: 'Menu', team: 'Team', settings: 'Settings', stats: 'Stats' },
-  home: {
+    home: {
     greeting: 'Hello!',
     subtitle: 'What are we eating today?',
     todaySummary: 'Today\'s Summary',
@@ -18,8 +18,20 @@ export default {
     historyTitle: 'History',
     // Chantier 11-A — i18n HomePage
     days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    actions: { call: 'Call', close: 'Close', expense: 'Expense' },
+    actions: { call: 'Call', close: 'Close', expense: 'Expense', stats: 'View Stats' },
     locale: 'en-US',
+    // Chantier 11-D — Timeline
+    timeline: { weekOf: 'Week of' },
+    summary: {
+      revenue: 'Revenue',
+      margin: 'Margin',
+      itemsSold: 'Items',
+    },
+    empty: {
+      title: 'Not closed yet',
+      desc: 'No sales recorded for this day.',
+      cta: 'Go to Closing',
+    },
   },
   menu: {
     title: 'Menu',

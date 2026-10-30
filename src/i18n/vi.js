@@ -2,7 +2,7 @@
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Trang chủ', closing: 'Chốt ngày', menu: 'Thực đơn', team: 'Đội ngũ', settings: 'Cài đặt', stats: 'Thống kê' },
-  home: {
+    home: {
     greeting: 'Xin chào !',
     subtitle: 'Hôm nay ăn gì?',
     todaySummary: 'Tóm tắt hôm nay',
@@ -18,8 +18,20 @@ export default {
     historyTitle: 'Lịch sử gần đây',
     // Chantier 11-A — i18n HomePage
     days: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-    actions: { call: 'Gọi', close: 'Chốt ngày', expense: 'Chi phí' },
+    actions: { call: 'Gọi', close: 'Chốt ngày', expense: 'Chi phí', stats: 'Thống kê' },
     locale: 'vi-VN',
+    // Chantier 11-D — Timeline
+    timeline: { weekOf: 'Tuần từ' },
+    summary: {
+      revenue: 'Doanh thu',
+      margin: 'Lợi nhuận',
+      itemsSold: 'Số món',
+    },
+    empty: {
+      title: 'Chưa chốt ngày',
+      desc: 'Chưa có dữ liệu bán hàng cho ngày này.',
+      cta: 'Đi tới Chốt ngày',
+    },
   },
   menu: {
     title: 'Thực đơn',

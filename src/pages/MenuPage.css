@@ -1,479 +1,257 @@
-/* =========================================================
-   MenuPage — Version finale (Chantier 8 Session 3 + 11-A polish + 11-C anim)
-   Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
-   ========================================================= */
+/* src/pages/HomePage.css */
 
-.menu-page {
-  box-sizing: border-box;
-  padding: 16px;
-  padding-bottom: 96px;
-  background: #FAEBD5;
-  min-height: 100vh;
-  max-width: 720px;
-  margin: 0 auto;
-  color: #2C2C2C;
-  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+.home-page {
+  padding-top: 10px;
 }
 
-/* ---------------- Header (Chantier 11-A : grille 1fr auto 1fr) ---------------- */
-.menu-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+/* ---------- Header ---------- */
+.home-header { text-align: center; }
+.home-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 16px; }
+.home-header h1 span { color: var(--color-orange, #FF9800); }
+
+/* ---------- Timeline ---------- */
+.timeline {
+  margin-bottom: 20px;
+  padding: 12px 10px 14px;
+  background: var(--color-surface, #FFFFFF);
+  border-radius: var(--radius-md, 16px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 
-.menu-title {
-  grid-column: 2;
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 1.6rem;
+.timeline__caption {
+  font-size: 0.68rem;
   font-weight: 700;
-  color: #2C2C2C;
-  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #8A8A8A);
+  margin-bottom: 10px;
   text-align: center;
 }
 
-.menu-add-btn {
-  grid-column: 3;
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #FF9800;
-  color: #FFFFFF;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
-}
-
-.menu-add-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(255, 152, 0, 0.4);
-}
-
-.menu-add-plus {
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
-/* ---------------- Feedback ---------------- */
-.menu-feedback {
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
-}
-.menu-feedback--error { background: #FDE0E0; color: #8B1E1E; }
-.menu-feedback--success { background: #E3F6E8; color: #1F6A34; }
-
-/* ---------------- Tabs Plats / Ingrédients ---------------- */
-.menu-tabs {
+.timeline__days {
   display: flex;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.6);
-  padding: 5px;
-  border-radius: 14px;
-  margin-bottom: 16px;
+  gap: 4px;
 }
 
-.menu-tab {
+.day-card {
   flex: 1;
-  padding: 10px;
-  border: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #6B6B6B;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.menu-tab--active {
-  background: #FFFFFF;
-  color: #3C91A6;
-  box-shadow: 0 2px 6px rgba(60, 145, 166, 0.18);
-}
-
-/* ---------------- Pills 4 catégories ---------------- */
-.menu-categories {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  margin-bottom: 16px;
-  scrollbar-width: none;
-}
-.menu-categories::-webkit-scrollbar { display: none; }
-
-.category-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: #FFFFFF;
-  color: #2C2C2C;
-  border: 2px solid transparent;
-  border-radius: 999px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.category-pill__emoji { font-size: 1.05rem; }
-
-.category-pill__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  background: rgba(60, 145, 166, 0.12);
-  color: #3C91A6;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.category-pill--active {
-  background: #3C91A6;
-  color: #FFFFFF;
-  border-color: #3C91A6;
-  box-shadow: 0 4px 10px rgba(60, 145, 166, 0.35);
-}
-
-.category-pill--active .category-pill__count {
-  background: rgba(255, 255, 255, 0.25);
-  color: #FFFFFF;
-}
-
-/* ---------------- Liste ---------------- */
-.menu-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-/* ---------------- Badge catégorie ---------------- */
-.category-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background: rgba(60, 145, 166, 0.12);
-  color: #3C91A6;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* ---------------- Carte plat (VALIDÉE Chantier 7 — NE PAS TOUCHER) ---------------- */
-.dish-card {
-  position: relative;
+  align-items: stretch;
   background: #FFFFFF;
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.06);
-  border-left: 5px solid #3C91A6;
-  /* Chantier 11-C — fadeInUp global (keyframes dans global.css) */
-  animation: fadeInUp 0.25s ease-out both;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
-.dish-card--inactive { opacity: 0.55; border-left-color: #B0B0B0; }
 
-.dish-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.dish-card__title-block {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.dish-card__emoji { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
-.dish-card__name {
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 1.15rem;
+.day-card__label {
+  padding: 6px 0;
+  font-size: 0.62rem;
   font-weight: 700;
-  color: #2C2C2C;
-  margin: 0;
-  line-height: 1.2;
-  word-break: break-word;
+  text-align: center;
+  background: #EAF4F6;
+  color: var(--color-blue, #3C91A6);
+  text-transform: capitalize;
 }
-.dish-card__badges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
+
+.day-card__number {
+  padding: 8px 0 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--color-text, #2C2C2C);
 }
-.dish-card__subcategory {
-  display: inline-block;
-  padding: 2px 8px;
-  background: rgba(255, 152, 0, 0.15);
-  color: #C77700;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+
+/* Week-end : bandeau orange (cf. décision ClosingPage calendrier) */
+.day-card--weekend .day-card__label {
+  background: #FFE5CC;
+  color: var(--color-orange, #FF9800);
 }
-.dish-card__stats {
+.day-card--weekend .day-card__number {
+  color: var(--color-orange, #FF9800);
+}
+
+/* Jour actif : carte bleue pleine */
+.day-card--active {
+  background: var(--color-blue, #3C91A6);
+  box-shadow: 0 6px 16px rgba(60, 145, 166, 0.35);
+  transform: translateY(-2px);
+}
+.day-card--active .day-card__label {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+}
+.day-card--active .day-card__number {
+  color: #FFFFFF;
+}
+
+/* Chantier 11-C — cascade stagger sur les 7 jours */
+.timeline__days > .day-card:nth-child(1) { animation-delay: 0ms; }
+.timeline__days > .day-card:nth-child(2) { animation-delay: 30ms; }
+.timeline__days > .day-card:nth-child(3) { animation-delay: 60ms; }
+.timeline__days > .day-card:nth-child(4) { animation-delay: 90ms; }
+.timeline__days > .day-card:nth-child(5) { animation-delay: 120ms; }
+.timeline__days > .day-card:nth-child(6) { animation-delay: 150ms; }
+.timeline__days > .day-card:nth-child(7) { animation-delay: 180ms; }
+
+/* ---------- Résumé du jour ---------- */
+.summary {
+  margin-bottom: 20px;
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 220ms;
+}
+
+.summary__title {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: var(--color-text, #2C2C2C);
+}
+
+.summary__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding: 10px 0;
-  border-top: 1px solid rgba(44, 44, 44, 0.08);
-  border-bottom: 1px solid rgba(44, 44, 44, 0.08);
-  margin-bottom: 12px;
+  gap: 10px;
 }
-.dish-stat { display: flex; flex-direction: column; gap: 2px; text-align: center; }
-.dish-stat__label {
-  font-size: 0.72rem;
-  color: #8A8A8A;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-weight: 500;
-}
-.dish-stat__value {
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: #2C2C2C;
-}
-.dish-stat__value--price { color: #FF9800; }
-.dish-stat__value--cost  { color: #3C91A6; }
-.dish-stat__value--good  { color: #2FA84F; }
-.dish-stat__value--warn  { color: #D9534F; }
-.dish-stat__value small { font-size: 0.75rem; font-weight: 600; }
-.dish-card__actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-/* ---------------- Boutons modifier / supprimer (BLEU #3C91A6) ---------------- */
-.btn-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 0.85rem;
+.summary__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 12px;
+  background: #FFFFFF;
+  border-radius: var(--radius-md, 16px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid transparent;
+}
+
+.summary__card--revenue { border-left-color: var(--color-orange, #FF9800); }
+.summary__card--margin  { border-left-color: var(--color-blue, #3C91A6); }
+.summary__card--items   { border-left-color: #2C2C2C; }
+
+.summary__label {
+  font-size: 0.66rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
-  border: 2px solid #3C91A6;
+  color: var(--color-text-muted, #8A8A8A);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.btn-action:active { transform: scale(0.95); }
-.btn-action--edit { background: #3C91A6; color: #FFFFFF; }
-.btn-action--edit:hover { background: #337E90; border-color: #337E90; }
-.btn-action--delete { background: transparent; color: #3C91A6; }
-.btn-action--delete:hover { background: rgba(60, 145, 166, 0.1); }
-.btn-action--compact { padding: 6px 10px; font-size: 0.95rem; min-width: 40px; min-height: 40px; }
 
-/* ---------------- Empty state ---------------- */
-.menu-empty-card {
+.summary__value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-text, #2C2C2C);
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+/* ---------- État vide ---------- */
+.empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
-  border: 2px dashed rgba(60, 145, 166, 0.3);
-}
-.menu-empty-emoji { font-size: 3rem; margin-bottom: 8px; opacity: 0.7; }
-.menu-empty { text-align: center; color: #8A8A8A; font-size: 0.95rem; margin: 0; }
-
-/* ---------------- Carte ingrédient (VALIDÉE Chantier 7 — NE PAS TOUCHER) ---------------- */
-.ingredient-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  text-align: center;
+  padding: 24px 20px 20px;
+  margin-bottom: 20px;
   background: #FFFFFF;
-  border-radius: 14px;
-  padding: 12px 14px;
-  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.06);
-  border-left: 5px solid #FF9800;
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.25s ease-out both;
+  border-radius: var(--radius-md, 16px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 220ms;
 }
-.ingredient-card__emoji { font-size: 1.5rem; line-height: 1; flex-shrink: 0; margin-top: 4px; }
-.ingredient-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.ingredient-main__header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.ingredient-main__header h3 {
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #2C2C2C;
-  margin: 0;
-  word-break: break-word;
+
+.empty__mascot {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  margin-bottom: 10px;
 }
-.ingredient-prices { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 2px; }
-.ingredient-price-primary { font-size: 0.88rem; color: #2C2C2C; font-weight: 500; }
-.ingredient-price-derived {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background: rgba(60, 145, 166, 0.12);
-  color: #3C91A6;
+
+.empty__emoji {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.empty__title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-text, #2C2C2C);
+  margin-bottom: 6px;
+}
+
+.empty__desc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #8A8A8A);
+  margin-bottom: 14px;
+  max-width: 240px;
+}
+
+.empty__cta {
+  padding: 10px 20px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  background: var(--color-orange, #FF9800);
+  color: #FFFFFF;
+  font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
-}
-.ingredient-supplier { font-size: 0.78rem; color: #8A8A8A; margin-top: 2px; }
-.ingredient-actions { display: flex; gap: 6px; flex-shrink: 0; align-self: center; }
-
-/* ---------------- Formulaire ---------------- */
-.menu-form {
-  background: #FFFFFF;
-  padding: 18px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.06);
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.25s ease-out both;
-}
-.menu-section-title {
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #2C2C2C;
-  margin: 0 0 16px;
-}
-
-.form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-.form-row label { font-size: 0.88rem; font-weight: 600; color: #4A4A4A; }
-.form-row input,
-.form-row select {
-  padding: 10px 12px;
-  border: 2px solid rgba(60, 145, 166, 0.2);
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  color: #2C2C2C;
-  background: #FFFFFF;
-  transition: border-color 0.2s;
-}
-.form-row input:focus,
-.form-row select:focus { outline: none; border-color: #3C91A6; }
-
-.form-row--checkbox label { display: flex; align-items: center; gap: 8px; font-weight: 500; }
-.form-row--checkbox input { width: auto; }
-
-/* ---------------- Recette ---------------- */
-.menu-recipe-builder {
-  background: rgba(60, 145, 166, 0.06);
-  padding: 14px;
-  border-radius: 12px;
-  margin: 8px 0 16px;
-}
-.menu-recipe-builder h3 {
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 1.05rem;
-  color: #3C91A6;
-  margin: 0 0 10px;
-}
-.recipe-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-.recipe-item { display: flex; gap: 8px; align-items: center; }
-.recipe-item select {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 2px solid rgba(60, 145, 166, 0.2);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.88rem;
-  background: #FFFFFF;
-}
-.recipe-qty { display: flex; align-items: center; gap: 4px; }
-.recipe-qty input {
-  width: 70px;
-  padding: 8px 10px;
-  border: 2px solid rgba(60, 145, 166, 0.2);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.88rem;
-}
-.recipe-qty span { font-size: 0.8rem; color: #6B6B6B; min-width: 30px; }
-.recipe-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 10px;
-  border-top: 1px dashed rgba(60, 145, 166, 0.3);
-  font-size: 0.95rem;
-}
-.recipe-total strong {
-  color: #FF9800;
-  font-family: 'Baloo 2', system-ui, sans-serif;
-  font-size: 1.1rem;
-}
-
-/* ---------------- Actions formulaire ---------------- */
-.menu-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-.btn {
-  padding: 10px 18px;
-  border-radius: 10px;
   border: none;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
 }
-.btn:active { transform: scale(0.95); }
-.btn-primary { background: #FF9800; color: #FFFFFF; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3); }
-.btn-primary:hover { box-shadow: 0 6px 14px rgba(255, 152, 0, 0.4); }
-.btn-secondary { background: #3C91A6; color: #FFFFFF; }
-.btn-ghost { background: transparent; color: #3C91A6; border: 2px solid rgba(60, 145, 166, 0.4); }
-.btn-ghost:hover { border-color: #3C91A6; }
-.btn-danger { color: #D9534F; border-color: rgba(217, 83, 79, 0.4); }
-.btn-danger:hover { border-color: #D9534F; background: rgba(217, 83, 79, 0.05); }
 
-/* =========================================================
-   Chantier 11-C — Stagger cascade via animation-delay
-   Le @keyframes fadeInUp est désormais GLOBAL (global.css).
-   On ne garde ici que les délais en cascade.
-   ========================================================= */
-.menu-list > .dish-card:nth-child(1),
-.menu-list > .ingredient-card:nth-child(1) { animation-delay: 0ms; }
-.menu-list > .dish-card:nth-child(2),
-.menu-list > .ingredient-card:nth-child(2) { animation-delay: 40ms; }
-.menu-list > .dish-card:nth-child(3),
-.menu-list > .ingredient-card:nth-child(3) { animation-delay: 80ms; }
-.menu-list > .dish-card:nth-child(4),
-.menu-list > .ingredient-card:nth-child(4) { animation-delay: 120ms; }
-.menu-list > .dish-card:nth-child(5),
-.menu-list > .ingredient-card:nth-child(5) { animation-delay: 160ms; }
-.menu-list > .dish-card:nth-child(6),
-.menu-list > .ingredient-card:nth-child(6) { animation-delay: 200ms; }
-.menu-list > .dish-card:nth-child(7),
-.menu-list > .ingredient-card:nth-child(7) { animation-delay: 240ms; }
-.menu-list > .dish-card:nth-child(8),
-.menu-list > .ingredient-card:nth-child(8) { animation-delay: 280ms; }
-.menu-list > .dish-card:nth-child(n+9),
-.menu-list > .ingredient-card:nth-child(n+9) { animation-delay: 320ms; }
+/* ---------- Actions rapides ---------- */
+.quick-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
 
-/* Respect de la préférence système (accessibilité) */
+.action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 6px;
+  border-radius: var(--radius-md, 16px);
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.action-btn__icon { font-size: 1.35rem; line-height: 1; }
+
+.action-btn--close   { background: #E6F2F5; color: var(--color-blue, #3C91A6); }
+.action-btn--expense { background: #FFEFE0; color: var(--color-orange, #FF9800); }
+.action-btn--stats   { background: #EAF4F6; color: var(--color-blue, #3C91A6); }
+
+.quick-actions > .action-btn:nth-child(1) { animation-delay: 260ms; }
+.quick-actions > .action-btn:nth-child(2) { animation-delay: 300ms; }
+.quick-actions > .action-btn:nth-child(3) { animation-delay: 340ms; }
+
+/* ---------- Accessibilité (filet local, complémentaire du global 11-C) ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .dish-card,
-  .ingredient-card,
-  .menu-form { animation: none; }
+  .timeline,
+  .day-card,
+  .summary,
+  .empty,
+  .action-btn {
+    animation: none;
+    transition: none;
+  }
+  .day-card--active {
+    transform: none;
+  }
 }
