@@ -2,248 +2,233 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
 import { loadDataset } from '../data/storage.js';
+import { createDefaultFixtures } from '../data/fixtures.js';
 import { getActiveRestaurant } from '../data/model.js';
-import { getRevenueSeries, getDishesRanking, getGlobalSummary } from '../data/stats.js';
+import { getDishFoodCost } from '../data/calculations.js';
 import './StatsPage.css';
 
-const PERIODS = ['week', 'month', 'year'];
-
-const LOCALE_MAP = { vi: 'vi-VN', fr: 'fr-FR', en: 'en-US' };
-
-function RevenueChart({ series, period, locale, label, emptyLabel }) {
-  const width = 320;
-  const height = 150;
-  const padTop = 16;
-  const padBottom = 22;
-  const chartHeight = height - padTop - padBottom;
-  const max = Math.max(0, ...series.map((s) => s.revenue));
-
-  if (max <= 0) {
-    return <div className="stats-chart-empty">{emptyLabel}</div>;
-  }
-
-  const labelStep = period === 'week' ? 1 : period === 'year' ? 1 : 5;
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="stats-chart-svg" role="img" aria-label={label}>
-      <defs>
-        <linearGradient id="statsBarGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FF9800" />
-          <stop offset="100%" stopColor="#3C91A6" />
-        </linearGradient>
-      </defs>
-      {[0, 0.5, 1].map((frac) => (
-        <line
-          key={frac}
-          x1={0}
-          x2={width}
-          y1={padTop + chartHeight * frac}
-          y2={padTop + chartHeight * frac}
-          stroke="#E6D9BE"
-          strokeWidth={1}
-          strokeDasharray="3 4"
-        />
-      ))}
-      {series.map((point, i) => {
-        const slot = width / series.length;
-        const barW = Math.max(4, slot * 0.65);
-        const x = slot * i + (slot - barW) / 2;
-        const h = max > 0 ? (point.revenue / max) * chartHeight : 0;
-        const y = padTop + chartHeight - h;
-        return (
-          <rect
-            key={point.key}
-            x={x}
-            y={y}
-            width={barW}
-            height={h}
-            rx={Math.min(4, barW / 2)}
-            fill="url(#statsBarGradient)"
-          />
-        );
-      })}
-      {series.map((point, i) => {
-        if (i % labelStep !== 0) return null;
-        const slot = width / series.length;
-        const x = slot * i + slot / 2;
-        const labelText =
-          period === 'year'
-            ? point.date.toLocaleDateString(locale, { month: 'short' })
-            : String(point.date.getDate());
-        return (
-          <text
-            key={point.key}
-            x={x}
-            y={height - 6}
-            textAnchor="middle"
-            fontSize={10}
-            fill="#7A7A7A"
-          >
-            {labelText}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
-
-function marginClass(pct) {
-  if (pct >= 60) return 'is-good';
-  if (pct >= 30) return 'is-warn';
-  return 'is-bad';
-}
-
 export default function StatsPage() {
-  const { t, formatCurrency, lang } = useI18n();
+  const { t, formatCurrency } = useI18n();
   const [dataset, setDataset] = useState(null);
-  const [period, setPeriod] = useState('week');
+  const [activeTab, setActiveTab] = useState('overview'); // overview | top | low
+  const [selectedKpi, setSelectedKpi] = useState(null); // Pour la modale
 
   useEffect(() => {
-    setDataset(loadDataset());
+    const loaded = loadDataset();
+    const isEmpty = loaded.dishes.length === 0 && loaded.daily_closings.length === 0;
+    setDataset(isEmpty ? createDefaultFixtures() : loaded);
   }, []);
 
-  const locale = LOCALE_MAP[lang] || 'vi-VN';
+  const restaurant = useMemo(() => dataset ? getActiveRestaurant(dataset) : null, [dataset]);
 
-  const series = useMemo(() => (dataset ? getRevenueSeries(dataset, period) : []), [dataset, period]);
-  const ranking = useMemo(
-    () => (dataset ? getDishesRanking(dataset, 5) : { top: [], flop: [] }),
-    [dataset]
-  );
-  const summary = useMemo(() => (dataset ? getGlobalSummary(dataset) : null), [dataset]);
-  const restaurant = useMemo(() => (dataset ? getActiveRestaurant(dataset) : null), [dataset]);
+  // --- CALCULS DES STATISTIQUES ---
+  const stats = useMemo(() => {
+    if (!dataset || !restaurant) return null;
 
-  if (!dataset || !summary || !restaurant) {
-    return <div className="stats-page">{t('common.loading')}</div>;
-  }
+    let totalRevenue = 0;
+    let totalFoodCost = 0;
+    let totalItemsSold = 0;
+    
+    const salesByCategory = { dish: 0, drink: 0, dessert: 0 };
+    const dishSalesMap = {};
+    
+    // Initialiser les ventes par plat
+    dataset.dishes.filter(d => d.restaurant_id === restaurant.id).forEach(d => {
+      dishSalesMap[d.id] = { ...d, qty: 0, revenue: 0 };
+    });
 
-  if (summary.dayCount === 0) {
-    return (
-      <div className="stats-page">
-        <h1 className="stats-title">{t('stats.title')}</h1>
-        <div className="card stats-empty">
-          <div className="stats-empty-icon">📊</div>
-          <h2>{t('stats.noData')}</h2>
-          <p>{t('stats.noDataDesc')}</p>
-        </div>
-      </div>
-    );
-  }
+    // Agréger les données des clôtures
+    dataset.daily_closings.forEach(closing => {
+      closing.sales.forEach(sale => {
+        const dish = dataset.dishes.find(d => d.id === sale.dish_id);
+        if (!dish) return;
+
+        const revenue = dish.price * sale.quantity_sold;
+        const foodCost = getDishFoodCost(dish, dataset.ingredients) * sale.quantity_sold;
+        
+        totalRevenue += revenue;
+        totalFoodCost += foodCost;
+        totalItemsSold += sale.quantity_sold;
+        
+        if (salesByCategory[dish.category] !== undefined) {
+          salesByCategory[dish.category] += revenue;
+        }
+        
+        if (dishSalesMap[dish.id]) {
+          dishSalesMap[dish.id].qty += sale.quantity_sold;
+          dishSalesMap[dish.id].revenue += revenue;
+        }
+      });
+    });
+
+    const totalProfit = totalRevenue - totalFoodCost;
+
+    // Liste triée des plats
+    const sortedDishes = Object.values(dishSalesMap)
+      .filter(d => d.qty > 0)
+      .sort((a, b) => b.qty - a.qty);
+
+    const topDishes = sortedDishes.slice(0, 5);
+    const lowDishes = [...sortedDishes].reverse().slice(0, 5);
+
+    // Pourcentages pour le Donut
+    const totalCatSales = salesByCategory.dish + salesByCategory.drink + salesByCategory.dessert || 1;
+    const catPercentages = {
+      dish: (salesByCategory.dish / totalCatSales) * 100,
+      drink: (salesByCategory.drink / totalCatSales) * 100,
+      dessert: (salesByCategory.dessert / totalCatSales) * 100,
+    };
+
+    // Données pour le graphique en barres (7 derniers jours)
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const closing = dataset.daily_closings.find(c => c.date === dateStr);
+      
+      let dayRevenue = 0;
+      if (closing) {
+        closing.sales.forEach(s => {
+          const dish = dataset.dishes.find(dd => dd.id === s.dish_id);
+          if (dish) dayRevenue += dish.price * s.quantity_sold;
+        });
+      }
+      
+      last7Days.push({
+        date: dateStr,
+        dayLabel: new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d),
+        revenue: dayRevenue
+      });
+    }
+    const maxRevenue = Math.max(...last7Days.map(d => d.revenue), 1);
+
+    return {
+      totalRevenue, totalProfit, totalItemsSold,
+      salesByCategory, catPercentages, topDishes, lowDishes,
+      last7Days, maxRevenue
+    };
+  }, [dataset, restaurant]);
+
+  if (!dataset || !stats) return <div>{t('common.loading')}</div>;
 
   return (
     <div className="stats-page">
       <h1 className="stats-title">{t('stats.title')}</h1>
 
-      <div className="stats-period-tabs" role="tablist">
-        {PERIODS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            role="tab"
-            aria-selected={period === p}
-            className={`stats-period-tab ${period === p ? 'is-active' : ''}`}
-            onClick={() => setPeriod(p)}
-          >
-            {t(`stats.periods.${p}`)}
-          </button>
-        ))}
+      {/* --- GRILLE DES KPIs --- */}
+      <div className="stats-kpi-grid">
+        <div className="kpi-card" onClick={() => setSelectedKpi('revenue')}>
+          <div className="kpi-icon" style={{ background: '#FFF3E0', color: '#FF9800' }}>💰</div>
+          <div className="kpi-content">
+            <span className="kpi-label">{t('stats.totalRevenue')}</span>
+            <strong className="kpi-value">{formatCurrency(stats.totalRevenue)}</strong>
+          </div>
+        </div>
+
+        <div className="kpi-card" onClick={() => setSelectedKpi('profit')}>
+          <div className="kpi-icon" style={{ background: '#E0F2F1', color: '#3C91A6' }}>📈</div>
+          <div className="kpi-content">
+            <span className="kpi-label">{t('stats.totalProfit')}</span>
+            <strong className="kpi-value">{formatCurrency(stats.totalProfit)}</strong>
+          </div>
+        </div>
+
+        <div className="kpi-card" onClick={() => setSelectedKpi('items')}>
+          <div className="kpi-icon" style={{ background: '#F3E5F5', color: '#9C27B0' }}>🍽️</div>
+          <div className="kpi-content">
+            <span className="kpi-label">{t('stats.itemsSold')}</span>
+            <strong className="kpi-value">{stats.totalItemsSold}</strong>
+          </div>
+        </div>
       </div>
 
-      <section className="card stats-chart-card">
-        <h2 className="stats-section-title">{t('stats.chartTitle')}</h2>
-        <RevenueChart
-          series={series}
-          period={period}
-          locale={locale}
-          label={t('stats.chartTitle')}
-          emptyLabel={t('stats.noChartData')}
-        />
-      </section>
+      {/* --- ONGLETS --- */}
+      <div className="stats-tabs">
+        <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>{t('stats.overview')}</button>
+        <button className={activeTab === 'top' ? 'active' : ''} onClick={() => setActiveTab('top')}>{t('stats.topSales')}</button>
+        <button className={activeTab === 'low' ? 'active' : ''} onClick={() => setActiveTab('low')}>{t('stats.lowSales')}</button>
+      </div>
 
-      <section className="stats-kpis">
-        <div className="kpi-card kpi-card--orange">
-          <span className="kpi-label">{t('stats.summary.revenue')}</span>
-          <strong className="kpi-value">{formatCurrency(summary.totalRevenue)}</strong>
-        </div>
-        <div className="kpi-card kpi-card--blue">
-          <span className="kpi-label">{t('stats.summary.margin')}</span>
-          <strong className="kpi-value">{formatCurrency(summary.margin)}</strong>
-          <span className="kpi-sub">{summary.marginPct.toFixed(0)}%</span>
-        </div>
-        <div className="kpi-card kpi-card--cream">
-          <span className="kpi-label">{t('stats.summary.foodCostPct')}</span>
-          <strong className="kpi-value">{summary.foodCostPct.toFixed(0)}%</strong>
-        </div>
-        <div className="kpi-card kpi-card--cream">
-          <span className="kpi-label">{t('stats.summary.avgTicket')}</span>
-          <strong className="kpi-value">{formatCurrency(summary.avgTicket)}</strong>
-        </div>
-      </section>
-
-      <section className="card stats-details">
-        <h2 className="stats-section-title">{t('stats.summary.title')}</h2>
-        <dl className="stats-details-list">
-          <div>
-            <dt>{t('stats.summary.days')}</dt>
-            <dd>{summary.dayCount}</dd>
-          </div>
-          <div>
-            <dt>{t('stats.summary.avgDaily')}</dt>
-            <dd>{formatCurrency(summary.avgDailyRevenue)}</dd>
-          </div>
-          <div>
-            <dt>{t('stats.summary.monthlyFixedCosts')}</dt>
-            <dd>{formatCurrency(summary.monthlyFixedCosts)}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section className="card">
-        <h2 className="stats-section-title">{t('stats.topTitle')}</h2>
-        {ranking.top.length === 0 ? (
-          <p className="stats-list-empty">—</p>
-        ) : (
-          <ul className="ranking-list">
-            {ranking.top.map((item, i) => (
-              <li key={item.dish.id} className="ranking-item">
-                <span className="ranking-position ranking-position--top">{i + 1}</span>
-                <div className="ranking-info">
-                  <span className="ranking-name">{item.dish.name}</span>
-                  <span className="ranking-meta">
-                    {item.qty} {t('stats.units.sold')} · {formatCurrency(item.revenue)}
-                  </span>
+      {/* --- CONTENU DES ONGLETS --- */}
+      {activeTab === 'overview' && (
+        <div className="stats-content">
+          {/* Donut Chart */}
+          <div className="card chart-card">
+            <h3 className="chart-title">{t('stats.salesByCategory')}</h3>
+            <div className="donut-container">
+              <div className="donut-chart" style={{
+                background: `conic-gradient(
+                  #3C91A6 0% ${stats.catPercentages.dish}%, 
+                  #FF9800 ${stats.catPercentages.dish}% ${stats.catPercentages.dish + stats.catPercentages.drink}%, 
+                  #E91E63 ${stats.catPercentages.dish + stats.catPercentages.drink}% 100%
+                )`
+              }}>
+                <div className="donut-hole">
+                  <strong>{formatCurrency(stats.totalRevenue)}</strong>
+                  <span>{t('stats.total')}</span>
                 </div>
-                <span className={`ranking-margin ${marginClass(item.marginPct)}`}>
-                  {item.marginPct.toFixed(0)}%
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+              </div>
+              <div className="donut-legend">
+                <div className="legend-item"><span className="dot" style={{ background: '#3C91A6' }}></span> {t('menu.sections.dish')} <strong>{Math.round(stats.catPercentages.dish)}%</strong></div>
+                <div className="legend-item"><span className="dot" style={{ background: '#FF9800' }}></span> {t('menu.sections.drink')} <strong>{Math.round(stats.catPercentages.drink)}%</strong></div>
+                <div className="legend-item"><span className="dot" style={{ background: '#E91E63' }}></span> {t('menu.sections.dessert')} <strong>{Math.round(stats.catPercentages.dessert)}%</strong></div>
+              </div>
+            </div>
+          </div>
 
-      <section className="card">
-        <h2 className="stats-section-title">{t('stats.flopTitle')}</h2>
-        {ranking.flop.length === 0 ? (
-          <p className="stats-list-empty">—</p>
-        ) : (
-          <ul className="ranking-list">
-            {ranking.flop.map((item, i) => (
-              <li key={item.dish.id} className="ranking-item">
-                <span className="ranking-position ranking-position--flop">{i + 1}</span>
-                <div className="ranking-info">
-                  <span className="ranking-name">{item.dish.name}</span>
-                  <span className="ranking-meta">
-                    {item.qty} {t('stats.units.sold')} · {formatCurrency(item.revenue)}
-                  </span>
-                </div>
-                <span className={`ranking-margin ${marginClass(item.marginPct)}`}>
-                  {item.marginPct.toFixed(0)}%
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {/* Bar Chart (7 jours) */}
+          <div className="card chart-card">
+            <h3 className="chart-title">{t('stats.last7Days')}</h3>
+            <div className="bar-chart-container">
+              {stats.last7Days.map((day, i) => {
+                const height = Math.max((day.revenue / stats.maxRevenue) * 100, 5); // 5% min pour voir la barre
+                return (
+                  <div key={i} className="bar-wrapper">
+                    <div className="bar-tooltip">{formatCurrency(day.revenue)}</div>
+                    <div className="bar" style={{ height: `${height}%` }}></div>
+                    <span className="bar-label">{day.dayLabel}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(activeTab === 'top' || activeTab === 'low') && (
+        <div className="stats-content">
+          <div className="card list-card">
+            <h3 className="chart-title">{activeTab === 'top' ? t('stats.topSales') : t('stats.lowSales')}</h3>
+            <ul className="stats-dish-list">
+              {(activeTab === 'top' ? stats.topDishes : stats.lowDishes).map((dish, idx) => (
+                <li key={dish.id} className="stats-dish-item">
+                  <span className="rank">#{idx + 1}</span>
+                  <div className="dish-info">
+                    <span className="dish-name">{dish.name}</span>
+                    <span className="dish-cat">{t(`menu.sections.${dish.category}`)}</span>
+                  </div>
+                  <div className="dish-stats">
+                    <strong>{dish.qty} {t('stats.sold')}</strong>
+                    <span>{formatCurrency(dish.revenue)}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODALE DE DÉTAIL --- */}
+      {selectedKpi && (
+        <div className="stats-modal-backdrop" onClick={() => setSelectedKpi(null)}>
+          <div className="stats-modal" onClick={e => e.stopPropagation()}>
+            <h2>{t(`stats.${selectedKpi}Details`)}</h2>
+            <p>{t('stats.modalPlaceholder')}</p>
+            <button className="btn-close" onClick={() => setSelectedKpi(null)}>Fermer</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

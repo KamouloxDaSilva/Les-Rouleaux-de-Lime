@@ -121,7 +121,24 @@ export default {
     alreadyClosed: 'Đã chốt.',
   },
   stats: {
+    // --- NOUVELLES CLÉS (Chantier 10) ---
     title: 'Thống kê',
+    overview: 'Tổng quan',
+    topSales: 'Bán chạy nhất',
+    lowSales: 'Bán chậm nhất',
+    totalRevenue: 'Doanh thu',
+    totalProfit: 'Lợi nhuận gộp',
+    itemsSold: 'Món đã bán',
+    salesByCategory: 'Doanh thu theo danh mục',
+    last7Days: '7 ngày qua',
+    total: 'Tổng',
+    sold: 'đã bán',
+    revenueDetails: 'Chi tiết doanh thu',
+    profitDetails: 'Chi tiết lợi nhuận',
+    itemsDetails: 'Chi tiết món đã bán',
+    modalPlaceholder: 'Chi tiết đồ thị của thống kê này sẽ sớm được cập nhật.',
+    
+    // --- ANCIENNES CLÉS CONSERVÉES ---
     periods: { week: 'Tuần', month: 'Tháng', year: 'Năm' },
     summary: {
       title: 'Tổng quan',

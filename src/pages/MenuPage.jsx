@@ -8,7 +8,6 @@ import {
   getDishFoodCost,
   getDishMargin,
   getDishMarginPercent,
-  getIngredientPricePerKg,
 } from '../data/calculations.js'
 import './MenuPage.css'
 
@@ -38,20 +37,10 @@ const CATEGORY_EMOJI = {
   sauce: '🥫',
 }
 
-// Retourne 'kg' pour g/kg, 'L' pour ml/l, null pour unités non convertibles.
-// (On s'appuie sur getIngredientPricePerKg pour la valeur, mais on corrige
-// l'unité affichée car le helper renvoie toujours 'kg' y compris pour les volumes.)
-function getDerivedUnit(ingredient) {
-  const u = String(ingredient?.unit || '').trim().toLowerCase()
-  if (u === 'g' || u === 'kg') return 'kg'
-  if (u === 'ml' || u === 'l' || u === 'lit' || u === 'lít') return 'L'
-  return null
-}
-
 export default function MenuPage() {
   const { t, formatCurrency } = useI18n()
   const [dataset, setDataset] = useState(null)
-  const [activeTab, setActiveTab] = useState('dishes')
+  const [activeTab, setActiveTab] = useState('dishes') // 'dishes' | 'ingredients'
   const [activeCategory, setActiveCategory] = useState('dish')
 
   const [isEditingDish, setIsEditingDish] = useState(false)
@@ -428,7 +417,6 @@ export default function MenuPage() {
                   const fc = getDishFoodCost(dish, ingredients)
                   const margin = getDishMargin(dish, ingredients)
                   const marginPct = getDishMarginPercent(dish, ingredients)
-                  const catKey = dish.category || 'dish'
                   return (
                     <article
                       key={dish.id}
@@ -437,16 +425,13 @@ export default function MenuPage() {
                       <div className="dish-card__header">
                         <div className="dish-card__title-block">
                           <span className="dish-card__emoji">
-                            {CATEGORY_EMOJI[catKey] || '🍽️'}
+                            {CATEGORY_EMOJI[dish.category] || '🍽️'}
                           </span>
                           <div>
                             <h3 className="dish-card__name">{dish.name}</h3>
-                            <div className="dish-card__badges">
-                              <span className="category-badge">{t(`menu.sections.${catKey}`)}</span>
-                              {dish.subcategory && (
-                                <span className="dish-card__subcategory">{dish.subcategory}</span>
-                              )}
-                            </div>
+                            {dish.subcategory && (
+                              <span className="dish-card__subcategory">{dish.subcategory}</span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -580,70 +565,38 @@ export default function MenuPage() {
             {ingredients.length === 0 ? (
               <p className="menu-empty">{t('menu.ingredients.empty')}</p>
             ) : (
-              ingredients.map((ing) => {
-                const catKey = ing.category || 'dish'
-                const perKgPrice = getIngredientPricePerKg(ing)
-                const derivedUnit = getDerivedUnit(ing)
-                const originalUnit = String(ing.unit || '').trim()
-                const showDerived =
-                  perKgPrice != null &&
-                  derivedUnit != null &&
-                  originalUnit.toLowerCase() !== derivedUnit.toLowerCase()
-
-                return (
-                  <div key={ing.id} className="ingredient-card">
-                    <div className="ingredient-card__emoji">
-                      {CATEGORY_EMOJI[catKey] || '📦'}
-                    </div>
-
-                    <div className="ingredient-main">
-                      <div className="ingredient-main__header">
-                        <h3>{ing.name}</h3>
-                        <span className={`category-badge category-badge--${catKey}`}>
-                          {t(`menu.sections.${catKey}`)}
-                        </span>
-                      </div>
-
-                      <div className="ingredient-prices">
-                        <span className="ingredient-price-primary">
-                          {formatCurrency(ing.unit_cost)} / {ing.unit}
-                        </span>
-                        {showDerived && (
-                          <span
-                            className="ingredient-price-derived"
-                            aria-label={t('menu.pricePerKg')}
-                          >
-                            ≈ {formatCurrency(perKgPrice)} / {derivedUnit}
-                          </span>
-                        )}
-                      </div>
-
-                      {ing.supplier && (
-                        <span className="ingredient-supplier">🏪 {ing.supplier}</span>
-                      )}
-                    </div>
-
-                    <div className="ingredient-actions">
-                      <button
-                        className="btn-action btn-action--edit btn-action--compact"
-                        onClick={() => handleOpenEditIng(ing)}
-                        title={t('common.edit')}
-                        aria-label={t('common.edit')}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="btn-action btn-action--delete btn-action--compact"
-                        onClick={() => handleDeleteIng(ing.id)}
-                        title={t('common.delete')}
-                        aria-label={t('common.delete')}
-                      >
-                        🗑️
-                      </button>
-                    </div>
+              ingredients.map((ing) => (
+                <div key={ing.id} className="ingredient-card">
+                  <div className="ingredient-card__emoji">
+                    {CATEGORY_EMOJI[ing.category] || '📦'}
                   </div>
-                )
-              })
+                  <div className="ingredient-main">
+                    <h3>{ing.name}</h3>
+                    <span className="ingredient-meta">
+                      {formatCurrency(ing.unit_cost)} / {ing.unit}
+                      {ing.supplier && ` · ${ing.supplier}`}
+                    </span>
+                  </div>
+                  <div className="ingredient-actions">
+                    <button
+                      className="btn-action btn-action--edit"
+                      onClick={() => handleOpenEditIng(ing)}
+                      title={t('common.edit')}
+                      aria-label={t('common.edit')}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      className="btn-action btn-action--delete"
+                      onClick={() => handleDeleteIng(ing.id)}
+                      title={t('common.delete')}
+                      aria-label={t('common.delete')}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )

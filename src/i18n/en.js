@@ -121,7 +121,24 @@ export default {
     alreadyClosed: 'Already closed.',
   },
   stats: {
+    // --- NOUVELLES CLÉS (Chantier 10) ---
     title: 'Statistics',
+    overview: 'Overview',
+    topSales: 'Top Sales',
+    lowSales: 'Lowest Sales',
+    totalRevenue: 'Total Revenue',
+    totalProfit: 'Gross Profit',
+    itemsSold: 'Items Sold',
+    salesByCategory: 'Sales by Category',
+    last7Days: 'Last 7 Days',
+    total: 'Total',
+    sold: 'sold',
+    revenueDetails: 'Revenue Details',
+    profitDetails: 'Profit Details',
+    itemsDetails: 'Items Sold Details',
+    modalPlaceholder: 'Graphical details for this statistic will be added soon.',
+    
+    // --- ANCIENNES CLÉS CONSERVÉES ---
     periods: { week: 'Week', month: 'Month', year: 'Year' },
     summary: {
       title: 'Overview',
