@@ -1,5 +1,6 @@
 // src/data/storage.js
-import { SCHEMA_VERSION, createEmptyDataset, validateDataset } from './model.js';
+import { SCHEMA_VERSION, createEmptyDataset, validateDataset, MENU_CATEGORIES } from './model.js';
+
 export const STORAGE_KEY = `rdl.dataset.v${SCHEMA_VERSION}`;
 
 function getStorage() {
@@ -12,17 +13,76 @@ function getStorage() {
   } catch { return null; }
 }
 
+// Migration v4 → v5 : anciens plats (category = texte libre type "Gỏi cuốn")
+// deviennent section "dish" + subcategory = ancien libellé.
+// Les ingrédients n'avaient pas de catégorie → "dish" par défaut.
+function migrateFromV4(dataset) {
+  if (!dataset || typeof dataset !== 'object') return dataset;
+  const next = { ...dataset };
+
+  next.dishes = (next.dishes || []).map((d) => {
+    if (!d || typeof d !== 'object') return d;
+    if (MENU_CATEGORIES.includes(d.category)) return d;
+    return {
+      ...d,
+      category: 'dish',
+      subcategory: d.subcategory || d.category || '',
+    };
+  });
+
+  next.ingredients = (next.ingredients || []).map((i) => {
+    if (!i || typeof i !== 'object') return i;
+    return {
+      ...i,
+      category: MENU_CATEGORIES.includes(i.category) ? i.category : 'dish',
+    };
+  });
+
+  next.schema_version = SCHEMA_VERSION;
+  return next;
+}
+
 export function loadDataset() {
   const storage = getStorage();
   if (!storage) return createEmptyDataset();
+
   let raw = null;
+
+  // 1) Version courante (v5)
   try { raw = storage.getItem(STORAGE_KEY); } catch (e) { return createEmptyDataset(); }
-  if (!raw) return createEmptyDataset();
-  let parsed = null;
-  try { parsed = JSON.parse(raw); } catch (e) { return createEmptyDataset(); }
-  const { ok, errors } = validateDataset(parsed);
-  if (!ok) return createEmptyDataset();
-  return parsed;
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed.planning) parsed.planning = [];
+      const { ok } = validateDataset(parsed);
+      if (ok) return parsed;
+    } catch (e) { /* corrupted → continue */ }
+    raw = null;
+  }
+
+  // 2) Migration depuis v4
+  try { raw = storage.getItem('rdl.dataset.v4'); } catch (e) { raw = null; }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      const migrated = migrateFromV4(parsed);
+      if (!migrated.planning) migrated.planning = [];
+      try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
+      return migrated;
+    } catch (e) { raw = null; }
+  }
+
+  // 3) Migration depuis v3
+  try { raw = storage.getItem('rdl.dataset.v3'); } catch (e) { raw = null; }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed.planning) parsed.planning = [];
+      return migrateFromV4(parsed);
+    } catch (e) { return createEmptyDataset(); }
+  }
+
+  return createEmptyDataset();
 }
 
 export function saveDataset(dataset) {
@@ -43,14 +103,17 @@ export function resetDataset() {
 export function exportDatasetAsJSON(dataset) {
   const data = dataset || loadDataset();
   const date = new Date().toISOString().slice(0, 10);
-  return { filename: `rouleaux-de-lime-${date}.json`, content: JSON.stringify(data, null, 2) };
+  return { filename: `burihagio-${date}.json`, content: JSON.stringify(data, null, 2) };
 }
 
 export function importDatasetFromJSON(text) {
   if (typeof text !== 'string' || !text.trim()) return { ok: false, errors: ['contenu vide'] };
   let parsed = null;
   try { parsed = JSON.parse(text); } catch (e) { return { ok: false, errors: ['JSON invalide'] }; }
-  const { ok, errors } = validateDataset(parsed);
+  if (!parsed.planning) parsed.planning = [];
+  // Applique la même migration si l'utilisateur importe un vieux fichier
+  const migrated = migrateFromV4(parsed);
+  const { ok, errors } = validateDataset(migrated);
   if (!ok) return { ok: false, errors };
-  return { ok: true, dataset: parsed };
+  return { ok: true, dataset: migrated };
 }

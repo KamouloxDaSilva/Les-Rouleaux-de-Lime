@@ -1,0 +1,142 @@
+.team-page { 
+  padding: 10px 0; 
+  font-family: var(--font-body);
+}
+h1, h2 { 
+  font-family: var(--font-title); 
+  font-size: 1.6rem; 
+  margin-bottom: 16px; 
+  color: var(--color-text);
+}
+.btn-back { 
+  color: var(--color-blue); 
+  font-weight: 700; 
+  margin-bottom: 16px; 
+  display: inline-block;
+}
+
+/* --- DASHBOARD --- */
+.team-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 12px; 
+}
+.team-card { 
+  border-radius: var(--radius-md); 
+  padding: 20px; 
+  color: #FFF; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.team-card h3 { color: #FFF; font-size: 1rem; }
+.team-card p { font-size: 0.8rem; opacity: 0.9; }
+.team-card .icon { font-size: 2rem; }
+.card-blue { background: linear-gradient(135deg, #3C91A6, #5BB2C7); }
+.card-orange { background: linear-gradient(135deg, #FF9800, #FFB74D); }
+.card-green { background: linear-gradient(135deg, #43A047, #66BB6A); }
+
+/* --- FORMULAIRES & LISTES --- */
+.form-card { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  margin-bottom: 24px; 
+}
+.form-card input, .form-card select { 
+  padding: 12px; 
+  border: 1px solid #DDD; 
+  border-radius: var(--radius-sm); 
+  outline: none; 
+}
+.salary-row { display: flex; gap: 8px; }
+.salary-row select { flex: 1; }
+.salary-row input { flex: 1; }
+.form-actions { display: flex; gap: 8px; }
+.btn-ghost { padding: 10px; border-radius: var(--radius-sm); font-weight: 600; color: var(--color-text-muted); }
+
+.list { display: flex; flex-direction: column; gap: 12px; }
+.list-item { display: flex; justify-content: space-between; align-items: center; }
+.sub { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; }
+.btn-edit { font-size: 1.2rem; padding: 8px; }
+
+.total-card { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  background: var(--color-blue); 
+  color: #FFF; 
+  font-weight: 700; 
+  font-size: 1.1rem; 
+  margin-top: 12px;
+}
+
+/* --- PLANNING (Style Image) --- */
+.planning-week {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 20px;
+  background: transparent;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.planning-day-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  padding: 12px 14px;
+  border-radius: 16px;
+  min-width: 50px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.planning-day-card .day-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.planning-day-card .day-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #E0E0E0;
+  margin-top: 8px;
+}
+
+/* Jour Actif (Bleu) */
+.planning-day-card.active {
+  background: #5B6CE1; /* Bleu de l'image */
+  box-shadow: 0 6px 15px rgba(91, 108, 225, 0.3);
+}
+.planning-day-card.active .day-label { color: #FFF; }
+.planning-day-card.active .day-dot { background: #FFF; opacity: 0.7; }
+
+/* Week-end (Rouge) */
+.planning-day-card.weekend .day-label { color: #E53E3E; }
+.planning-day-card.weekend .day-dot { background: #FC8181; }
+
+/* Détails du planning */
+.planning-detail { padding: 20px; }
+.planning-detail h3 { font-size: 1.1rem; margin-bottom: 16px; color: var(--color-text); }
+.planning-content { display: flex; flex-direction: column; gap: 12px; }
+.planning-row { display: flex; align-items: center; gap: 12px; }
+.planning-row label { flex: 1; font-weight: 600; font-size: 0.9rem; color: var(--color-text-muted); }
+.time-input, .tasks-input { 
+  padding: 10px; 
+  border: 1px solid #DDD; 
+  border-radius: 8px; 
+  font-family: inherit; 
+  font-size: 1rem; 
+  background: #FAFAFA;
+}
+.tasks-input { width: 100%; resize: vertical; }

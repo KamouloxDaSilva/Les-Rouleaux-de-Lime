@@ -1,35 +1,16 @@
-/* src/components/LanguageSwitch.css */
 .lang-switch {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;      /* Cible tactile standard iOS */
+  min-width: 44px;
   height: 36px;
-  padding: 0 var(--space-sm);
-  background-color: var(--color-teal);
-  color: var(--color-cream);
+  padding: 0 12px;
+  background-color: var(--color-blue);
+  color: #FFF;
   font-family: var(--font-body);
   font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  border-radius: var(--radius-full);
-  transition: background-color 0.2s ease, transform 0.1s ease;
-  -webkit-user-select: none;
-  user-select: none;
+  font-weight: 700;
+  border-radius: 18px;
+  transition: transform 0.1s ease;
 }
-
-/* Effet au survol (utile sur PC pour tester) */
-.lang-switch:hover {
-  background-color: #09635f; /* Un teal légèrement plus foncé */
-}
-
-/* Effet visuel au clic/tap */
-.lang-switch:active {
-  transform: scale(0.95);
-}
-
-/* Focus clavier (accessibilité) */
-.lang-switch:focus-visible {
-  outline: 2px solid var(--color-orange);
-  outline-offset: 2px;
-}
+.lang-switch:active { transform: scale(0.95); }

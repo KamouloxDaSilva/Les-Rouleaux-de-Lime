@@ -1,34 +1,24 @@
-/* src/styles/theme.css */
 :root {
-  /* Couleurs de la charte */
-  --color-orange: #F5A623;
-  --color-blue: #35B6E9;
-  --color-teal: #0B7A75;
-  --color-cream: #FFF8E7;
-  
-  /* Couleurs de texte et fond */
-  --color-text: #1F2937;
-  --color-text-muted: #6B7280;
+  /* Nouvelle Charte */
+  --color-cream: #FAEBD5;
   --color-surface: #FFFFFF;
-  --color-border: #E5E7EB;
+  --color-orange: #FF9800;
+  --color-blue: #3C91A6;
+  --color-text: #2C2C2C;
+  --color-text-muted: #7A7A7A;
+  
+  /* Utilitaires */
+  --color-danger: #E53935;
+  --color-success: #43A047;
 
   /* Polices */
   --font-title: 'Baloo 2', cursive;
   --font-body: 'Be Vietnam Pro', sans-serif;
 
-  /* Espacements (mobile-first) */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-
-  /* Arrondis */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-full: 9999px;
-
   /* Layout PWA */
   --header-height: 64px;
-  --nav-height: 64px;
+  --nav-height: 70px;
+  --radius-sm: 10px;
+  --radius-md: 20px;
+  --radius-lg: 30px;
 }

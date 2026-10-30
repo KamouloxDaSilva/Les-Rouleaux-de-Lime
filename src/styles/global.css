@@ -1,20 +1,9 @@
 /* src/styles/global.css */
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap');
 @import './theme.css';
 
-/* --- Reset CSS --- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 
 body {
   font-family: var(--font-body);
@@ -23,38 +12,27 @@ body {
   line-height: 1.5;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior-y: none;
 }
 
-/* --- Typographie --- */
-h1, h2, h3, h4, h5, h6 {
+/* Application du titre avec la police script */
+h1, h2, h3, h4 {
   font-family: var(--font-title);
   font-weight: 700;
-  line-height: 1.2;
-  color: var(--color-teal);
+  color: var(--color-text);
 }
 
-h1 { font-size: 1.75rem; }
-h2 { font-size: 1.5rem; }
-h3 { font-size: 1.25rem; }
-
-/* --- Éléments interactifs --- */
-button {
-  font-family: inherit;
-  font-size: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
-}
-
-a {
+.app-title-script {
+  font-family: 'Dancing Script', cursive; /* Police pour le logo */
+  font-size: 2.5rem;
+  font-weight: 700;
   color: var(--color-blue);
-  text-decoration: none;
+  text-shadow: 2px 2px 0px var(--color-orange); /* Effet de contour simple */
+  margin: 0;
 }
 
-/* --- Structure de l'application --- */
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select, textarea { font-family: inherit; font-size: 1rem; }
+
 #root {
   display: flex;
   flex-direction: column;
@@ -70,12 +48,24 @@ a {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding-top: var(--header-height);
   padding-bottom: var(--nav-height);
 }
 
-.main-content {
-  flex: 1;
-  padding: var(--space-md);
-  overflow-y: auto;
+/* Utilitaires communs */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  margin-bottom: 16px;
+}
+.btn-primary {
+  background: var(--color-orange);
+  color: #FFF;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -1,0 +1,269 @@
+/* src/pages/StatsPage.css */
+.stats-page {
+  padding: 8px 0 24px;
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+
+.stats-title {
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  color: var(--color-text);
+  margin: 4px 0 16px;
+}
+
+/* Sélecteur de période */
+.stats-period-tabs {
+  display: flex;
+  background: #F0E5C8;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.stats-period-tab {
+  flex: 1;
+  padding: 10px 4px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.stats-period-tab.is-active {
+  background: #FFFFFF;
+  color: var(--color-orange);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Carte graphique */
+.stats-chart-card {
+  padding: 16px;
+}
+
+.stats-section-title {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  color: var(--color-blue);
+  margin: 0 0 12px;
+}
+
+.stats-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.stats-chart-empty {
+  padding: 32px 12px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  background: #FBF3E0;
+  border-radius: var(--radius-sm);
+}
+
+/* KPIs */
+.stats-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.kpi-card {
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card--orange {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  color: #FFFFFF;
+}
+
+.kpi-card--blue {
+  background: linear-gradient(135deg, #3C91A6, #5BB2C7);
+  color: #FFFFFF;
+}
+
+.kpi-card--cream {
+  background: #FFFFFF;
+  color: var(--color-text);
+  border: 1px solid #F0E5C8;
+}
+
+.kpi-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.9;
+}
+
+.kpi-value {
+  font-family: var(--font-title);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.kpi-sub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* Détails */
+.stats-details {
+  padding: 16px;
+}
+
+.stats-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.stats-details-list > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.stats-details-list dt {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.stats-details-list dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Ranking */
+.ranking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #FBF3E0;
+  border-radius: 12px;
+}
+
+.ranking-position {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.ranking-position--top {
+  background: var(--color-orange);
+  color: #FFFFFF;
+}
+
+.ranking-position--flop {
+  background: #D8D0C0;
+  color: var(--color-text);
+}
+
+.ranking-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ranking-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranking-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.ranking-margin {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.ranking-margin.is-good {
+  background: #E6F4EA;
+  color: #2E7D32;
+}
+
+.ranking-margin.is-warn {
+  background: #FFF3CD;
+  color: #A66A00;
+}
+
+.ranking-margin.is-bad {
+  background: #FDE2E2;
+  color: #B00020;
+}
+
+.stats-list-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 12px;
+  margin: 0;
+}
+
+/* État vide global */
+.stats-empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.stats-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.stats-empty h2 {
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  margin: 0 0 6px;
+}
+
+.stats-empty p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
