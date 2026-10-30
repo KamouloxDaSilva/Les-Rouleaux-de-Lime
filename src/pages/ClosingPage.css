@@ -13,16 +13,16 @@
   margin: 8px 0 16px;
 }
 
-/* --- Grille du haut (Date + Météo) --- */
+/* --- Grille du haut (Calendrier + Météo) --- */
 .closing-top-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
 }
 
 .date-card, .weather-card {
-  padding: 12px;
+  padding: 16px;
   margin-bottom: 0;
 }
 
@@ -32,19 +32,96 @@
   font-weight: 700;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+
+/* --- CALENDRIER CUSTOM (Repère visuel Image 1) --- */
+.custom-calendar {
+  background: #FFF;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid #EAEAEA;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-month-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-text);
+  text-transform: capitalize;
+}
+
+.calendar-nav-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-blue);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.calendar-nav-btn:active {
+  background: #F0F0F0;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
   margin-bottom: 8px;
 }
 
-.date-input-clean {
-  width: 100%;
-  border: 1px solid #E0E0E0;
-  border-radius: 10px;
-  padding: 8px;
-  font-size: 0.9rem;
-  background: #FAFAFA;
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
 }
 
-/* Météo (Style Widget) */
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.calendar-day.empty {
+  visibility: hidden;
+}
+
+.calendar-day.weekend {
+  color: var(--color-orange);
+}
+
+.calendar-day.selected {
+  background: var(--color-blue);
+  color: #FFF;
+  font-weight: 700;
+  box-shadow: 0 4px 8px rgba(60, 145, 166, 0.3);
+}
+
+/* --- Météo (Style Widgets) --- */
 .weather-options-row {
   display: flex;
   gap: 8px;
@@ -56,18 +133,21 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px 4px;
+  padding: 10px 4px;
   border-radius: 12px;
-  background: #F0F0F0;
+  background: #F8F8F8;
   border: 2px solid transparent;
-  transition: all 0.2s;
+  transition: all 0.2s ease-in-out;
 }
-.weather-btn-clean .weather-icon { font-size: 1.2rem; }
-.weather-btn-clean .weather-label { font-size: 0.6rem; font-weight: 700; color: var(--color-text-muted); text-align: center; }
+.weather-btn-clean .weather-icon { font-size: 1.4rem; }
+.weather-btn-clean .weather-label { font-size: 0.65rem; font-weight: 700; color: var(--color-text-muted); text-align: center; }
 
+/* Effets au clic / actif */
 .weather-btn-clean.active {
   background: var(--color-blue);
   border-color: var(--color-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(60, 145, 166, 0.2);
 }
 .weather-btn-clean.active .weather-label { color: #FFF; }
 
@@ -86,6 +166,8 @@
   font-weight: 600;
   font-size: 0.85rem;
   color: var(--color-text-muted);
+  background: transparent;
+  border: none;
 }
 .category-tab.active {
   background: #FFF;
@@ -110,17 +192,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  background: var(--color-cream); /* Fond légèrement différent */
+  padding: 12px;
+  background: #FAFAFA;
+  border: 1px solid #EFEFEF;
   border-radius: 12px;
   margin-bottom: 8px;
 }
 
-.dish-info { display: flex; flex-direction: column; }
-.dish-name { font-weight: 600; font-size: 0.95rem; }
+.dish-info { display: flex; flex-direction: column; gap: 2px; }
+.dish-name { font-weight: 600; font-size: 0.95rem; color: var(--color-text); }
 .dish-price { font-size: 0.8rem; color: var(--color-text-muted); }
 
-/* Stepper (Style Image 03) */
+/* Stepper (Boutons Bleus #3C91A6) */
 .qty-stepper {
   display: flex;
   align-items: center;
@@ -133,12 +216,15 @@
 .qty-btn {
   width: 36px;
   height: 36px;
-  background: #00BFFF; /* Un bleu clair pour les boutons */
+  background: var(--color-blue); /* Changement de couleur #3C91A6 */
   color: #FFF;
   font-size: 1.2rem;
   font-weight: 700;
   border: none;
+  cursor: pointer;
 }
+.qty-btn:active { opacity: 0.8; }
+
 .qty-input {
   width: 50px;
   border: none;
@@ -146,6 +232,13 @@
   font-size: 1rem;
   font-weight: 700;
   background: #FFF;
+  color: var(--color-text);
+  -moz-appearance: textfield;
+}
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* Notes */
@@ -156,6 +249,7 @@
   border-radius: 12px;
   background: #FAFAFA;
   resize: vertical;
+  font-family: inherit;
 }
 
 /* Footer fixe */
@@ -169,12 +263,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
   max-width: 600px;
   margin: 0 auto;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
+  z-index: 10;
 }
 .closing-total { display: flex; flex-direction: column; }
 .closing-total span { font-size: 0.75rem; color: var(--color-text-muted); }
-.closing-total strong { font-size: 1.2rem; color: var(--color-orange); }
+.closing-total strong { font-size: 1.3rem; color: var(--color-orange); }
+
+/* Animation de Feedback */
+.closing-feedback {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+.closing-feedback--success { background: #E8F5E9; color: #2E7D32; }
+.closing-feedback--error { background: #FFEBEE; color: #C62828; }

@@ -14,8 +14,7 @@ function getTodayString() {
   return `${year}-${month}-${day}`;
 }
 
-// La Clôture ne suit que 3 catégories (les sauces sont considérées
-// comme des accompagnements, pas des ventes autonomes).
+// La Clôture ne suit que 3 catégories (les sauces sont exclues)
 const CLOSING_CATEGORIES = [
   { id: 'dish', i18nKey: 'menu.sections.dish' },
   { id: 'drink', i18nKey: 'menu.sections.drink' },
@@ -23,7 +22,7 @@ const CLOSING_CATEGORIES = [
 ];
 
 export default function ClosingPage() {
-  const { t, formatCurrency } = useI18n();
+  const { t, formatCurrency, locale } = useI18n();
   const [dataset, setDataset] = useState(null);
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [weather, setWeather] = useState('');
@@ -31,6 +30,9 @@ export default function ClosingPage() {
   const [sales, setSales] = useState({});
   const [feedback, setFeedback] = useState(null);
   const [activeCategory, setActiveCategory] = useState('dish');
+
+  // État pour le calendrier
+  const [viewDate, setViewDate] = useState(new Date());
 
   useEffect(() => {
     const loaded = loadDataset();
@@ -44,7 +46,6 @@ export default function ClosingPage() {
 
   const restaurant = useMemo(() => dataset ? getActiveRestaurant(dataset) : null, [dataset]);
 
-  // Filtrage par catégorie normalisée (dish / drink / dessert)
   const activeDishes = useMemo(() => {
     if (!dataset || !restaurant) return [];
     return dataset.dishes.filter(
@@ -108,6 +109,68 @@ export default function ClosingPage() {
     } catch (e) { setFeedback({ type: 'error', message: e.message }); }
   }
 
+  // --- LOGIQUE DU CALENDRIER ---
+  const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  const handleNextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+
+  const handleDayClick = (day) => {
+    const month = String(viewDate.getMonth() + 1).padStart(2, '0');
+    const year = viewDate.getFullYear();
+    setSelectedDate(`${year}-${month}-${String(day).padStart(2, '0')}`);
+  };
+
+  const renderCalendar = () => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const totalDays = daysInMonth(year, month);
+    const startDay = firstDayOfMonth(year, month);
+    
+    const monthName = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(viewDate);
+    
+    // Jours de la semaine
+    const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Dimanche -> Samedi
+    
+    const days = [];
+    for (let i = 0; i < startDay; i++) {
+      days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
+    }
+    for (let d = 1; d <= totalDays; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isSelected = dateStr === selectedDate;
+      const dayOfWeek = new Date(year, month, d).getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      days.push(
+        <button
+          key={d}
+          className={`calendar-day ${isSelected ? 'selected' : ''} ${isWeekend ? 'weekend' : ''}`}
+          onClick={() => handleDayClick(d)}
+        >
+          {d}
+        </button>
+      );
+    }
+
+    return (
+      <div className="custom-calendar">
+        <div className="calendar-header">
+          <button type="button" className="calendar-nav-btn" onClick={handlePrevMonth}>‹</button>
+          <span className="calendar-month-title">{monthName}</span>
+          <button type="button" className="calendar-nav-btn" onClick={handleNextMonth}>›</button>
+        </div>
+        <div className="calendar-weekdays">
+          {weekDays.map((wd, i) => <span key={i} className="calendar-weekday">{wd}</span>)}
+        </div>
+        <div className="calendar-grid">
+          {days}
+        </div>
+      </div>
+    );
+  };
+
   if (!dataset || !restaurant) return <div>{t('common.loading')}</div>;
 
   return (
@@ -116,21 +179,25 @@ export default function ClosingPage() {
       {feedback && <div className={`closing-feedback closing-feedback--${feedback.type}`}>{feedback.message}</div>}
 
       <div className="closing-top-grid">
-        <div className="card date-card">
+        {/* CALENDRIER */}
+        <div className="card date-card" style={{ gridColumn: '1 / -1', padding: '16px' }}>
           <label className="closing-label">{t('closing.date')}</label>
-          <input type="date" className="date-input-clean" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} max={getTodayString()} />
+          {renderCalendar()}
         </div>
 
-        <div className="card weather-card">
+        {/* MÉTÉO */}
+        <div className="card weather-card" style={{ gridColumn: '1 / -1' }}>
           <span className="closing-label">{t('closing.weather')}</span>
           <div className="weather-options-row">
             {WEATHER_OPTIONS.map((w) => (
               <button
                 key={w}
-                className={`weather-btn-clean ${weather === w ? 'active' : ''}`}
+                className={`weather-btn-clean ${weather === w ? 'active' : ''} weather-${w}`}
                 onClick={() => setWeather(w)}
               >
-                <span className="weather-icon">{w === 'sunny' ? '☀️' : w === 'cloudy' ? '☁️' : w === 'rainy' ? '🌧️' : '⛈️'}</span>
+                <span className="weather-icon">
+                  {w === 'sunny' ? '☀️' : w === 'cloudy' ? '☁️' : w === 'rainy' ? '🌧️' : '⛈️'}
+                </span>
                 <span className="weather-label">{t(`closing.weatherOptions.${w}`)}</span>
               </button>
             ))}
