@@ -28,6 +28,9 @@
   font-size: 0.75rem;
   font-weight: 600;
   padding: 8px 0;
+  /* Chantier 11-C — vérification : pas de transition globale équivalente
+     dans global.css. Cette règle est donc la SEULE source de transition
+     de couleur sur .nav-item → on la GARDE (non redondante). */
   transition: color 0.2s ease;
 }
 

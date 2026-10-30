@@ -90,3 +90,38 @@ button:active:not(:disabled),
     box-shadow: none;
   }
 }
+
+/* =========================================================
+   Chantier 11-C — Animations globales partagées
+   ========================================================= */
+
+/* Keyframe partagé : fadeInUp
+   (déplacé depuis MenuPage.css — le keyframes est désormais GLOBAL) */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Keyframe partagé : pageFade
+   Utilisé par .page-transition pour le fade 150ms entre onglets */
+@keyframes pageFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Wrapper de transition de page (déclenché via key={activeTab} dans App.jsx) */
+.page-transition {
+  animation: pageFade 150ms ease-out both;
+}
+
+/* =========================================================
+   Chantier 11-C — Filet de sécurité prefers-reduced-motion
+   Vient en COMPLÉMENT des règles déjà présentes (ne pas les retirer).
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

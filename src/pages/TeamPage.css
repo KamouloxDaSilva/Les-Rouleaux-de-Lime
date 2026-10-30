@@ -1,5 +1,5 @@
 /* =========================================================
-   TeamPage — Refonte (Chantier 7) + polish 11-A
+   TeamPage — Refonte (Chantier 7) + polish 11-A + anim 11-C
    Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
    ========================================================= */
 
@@ -54,6 +54,8 @@
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   transition: transform 0.15s ease;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 .team-card:active { transform: scale(0.95); }
 .team-card h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
@@ -71,6 +73,8 @@
   padding: 20px;
   box-shadow: 0 6px 18px rgba(44, 44, 44, 0.05);
   margin-bottom: 16px;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 
 .form-card {
@@ -125,6 +129,8 @@
   padding: 16px 20px;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(44, 44, 44, 0.04);
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 .list-item-info h4 { margin: 0 0 4px; font-size: 1rem; font-weight: 700; }
 .list-item-info p { margin: 0; font-size: 0.85rem; color: #7A7A7A; }
@@ -159,6 +165,9 @@
   flex-direction: column;
   gap: 8px;
   margin-top: 8px;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 200ms;
 }
 .total-card-row {
   display: flex;
@@ -195,6 +204,8 @@
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 .planning-day-card .day-label {
   font-size: 0.8rem;
@@ -247,6 +258,8 @@
   border-radius: 14px;
   box-shadow: 0 4px 12px rgba(44, 44, 44, 0.04);
   border-left: 4px solid #FF9800;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 .ingredient-info h4 { margin: 0 0 4px; font-size: 1rem; }
 .ingredient-info p { margin: 0; font-size: 0.8rem; color: #7A7A7A; }
@@ -277,4 +290,51 @@
 .filter-pill.active {
   background: #3C91A6;
   color: #FFFFFF;
+}
+
+/* =========================================================
+   Chantier 11-C — Stagger cascade via animation-delay
+   ========================================================= */
+.team-grid > .team-card:nth-child(1) { animation-delay: 0ms; }
+.team-grid > .team-card:nth-child(2) { animation-delay: 40ms; }
+.team-grid > .team-card:nth-child(3) { animation-delay: 80ms; }
+.team-grid > .team-card:nth-child(4) { animation-delay: 120ms; }
+
+.list > .list-item:nth-child(1),
+.list > .ingredient-card:nth-child(1) { animation-delay: 0ms; }
+.list > .list-item:nth-child(2),
+.list > .ingredient-card:nth-child(2) { animation-delay: 40ms; }
+.list > .list-item:nth-child(3),
+.list > .ingredient-card:nth-child(3) { animation-delay: 80ms; }
+.list > .list-item:nth-child(4),
+.list > .ingredient-card:nth-child(4) { animation-delay: 120ms; }
+.list > .list-item:nth-child(5),
+.list > .ingredient-card:nth-child(5) { animation-delay: 160ms; }
+.list > .list-item:nth-child(6),
+.list > .ingredient-card:nth-child(6) { animation-delay: 200ms; }
+.list > .list-item:nth-child(7),
+.list > .ingredient-card:nth-child(7) { animation-delay: 240ms; }
+.list > .list-item:nth-child(8),
+.list > .ingredient-card:nth-child(8) { animation-delay: 280ms; }
+.list > .list-item:nth-child(n+9),
+.list > .ingredient-card:nth-child(n+9) { animation-delay: 320ms; }
+
+.planning-week > .planning-day-card:nth-child(1) { animation-delay: 0ms; }
+.planning-week > .planning-day-card:nth-child(2) { animation-delay: 40ms; }
+.planning-week > .planning-day-card:nth-child(3) { animation-delay: 80ms; }
+.planning-week > .planning-day-card:nth-child(4) { animation-delay: 120ms; }
+.planning-week > .planning-day-card:nth-child(5) { animation-delay: 160ms; }
+.planning-week > .planning-day-card:nth-child(6) { animation-delay: 200ms; }
+.planning-week > .planning-day-card:nth-child(7) { animation-delay: 240ms; }
+
+/* Respect de la préférence système (accessibilité) */
+@media (prefers-reduced-motion: reduce) {
+  .team-card,
+  .card,
+  .list-item,
+  .total-card,
+  .planning-day-card,
+  .ingredient-card {
+    animation: none;
+  }
 }

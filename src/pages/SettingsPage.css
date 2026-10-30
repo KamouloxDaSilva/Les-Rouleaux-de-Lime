@@ -21,6 +21,9 @@
   border-radius: 8px;
   margin-bottom: 12px;
   font-size: 0.95rem;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 60ms;
 }
 .settings-feedback--success { background: #D9F2EE; color: #0B7A75; border: 1px solid #0B7A75; }
 .settings-feedback--error { background: #FDE2E2; color: #B00020; border: 1px solid #B00020; }
@@ -31,6 +34,8 @@
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 16px;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 .settings-section h2 {
   font-family: 'Baloo 2', system-ui, sans-serif;
@@ -68,3 +73,18 @@
 .btn-secondary { background: #35B6E9; color: #FFFFFF; }
 .btn-ghost { background: transparent; color: #0B7A75; border: 1px solid #0B7A75; }
 .btn-danger { color: #B00020; border-color: #B00020; }
+
+/* =========================================================
+   Chantier 11-C — Stagger cascade via animation-delay
+   ========================================================= */
+.settings-page > .settings-section:nth-of-type(1) { animation-delay: 0ms; }
+.settings-page > .settings-section:nth-of-type(2) { animation-delay: 40ms; }
+.settings-page > .settings-section:nth-of-type(3) { animation-delay: 80ms; }
+
+/* Respect de la préférence système (accessibilité) */
+@media (prefers-reduced-motion: reduce) {
+  .settings-section,
+  .settings-feedback {
+    animation: none;
+  }
+}

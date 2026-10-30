@@ -25,6 +25,8 @@
 .date-card, .weather-card {
   padding: 16px;
   margin-bottom: 0;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 
 .closing-label {
@@ -43,6 +45,9 @@
   padding: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   border: 1px solid #EAEAEA;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 80ms;
 }
 
 .calendar-header {
@@ -183,6 +188,8 @@
   border: 1px solid #EFEFEF;
   border-radius: 12px;
   margin-bottom: 8px;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
 }
 
 .dish-info { display: flex; flex-direction: column; gap: 2px; }
@@ -249,6 +256,9 @@
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
   z-index: 10;
+  /* Chantier 11-C — fadeInUp global */
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 200ms;
 }
 .closing-total { display: flex; flex-direction: column; }
 .closing-total span { font-size: 0.75rem; color: var(--color-text-muted); }
@@ -264,3 +274,30 @@
 }
 .closing-feedback--success { background: #E8F5E9; color: #2E7D32; }
 .closing-feedback--error { background: #FFEBEE; color: #C62828; }
+
+/* =========================================================
+   Chantier 11-C — Stagger cascade via animation-delay
+   ========================================================= */
+.closing-top-grid > .date-card:nth-child(1) { animation-delay: 0ms; }
+.closing-top-grid > .weather-card:nth-child(2) { animation-delay: 40ms; }
+
+.closing-dishes > .closing-dish-item:nth-child(1) { animation-delay: 0ms; }
+.closing-dishes > .closing-dish-item:nth-child(2) { animation-delay: 40ms; }
+.closing-dishes > .closing-dish-item:nth-child(3) { animation-delay: 80ms; }
+.closing-dishes > .closing-dish-item:nth-child(4) { animation-delay: 120ms; }
+.closing-dishes > .closing-dish-item:nth-child(5) { animation-delay: 160ms; }
+.closing-dishes > .closing-dish-item:nth-child(6) { animation-delay: 200ms; }
+.closing-dishes > .closing-dish-item:nth-child(7) { animation-delay: 240ms; }
+.closing-dishes > .closing-dish-item:nth-child(8) { animation-delay: 280ms; }
+.closing-dishes > .closing-dish-item:nth-child(n+9) { animation-delay: 320ms; }
+
+/* Respect de la préférence système (accessibilité) */
+@media (prefers-reduced-motion: reduce) {
+  .date-card,
+  .weather-card,
+  .custom-calendar,
+  .closing-dish-item,
+  .closing-footer-fixed {
+    animation: none;
+  }
+}
