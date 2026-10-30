@@ -1,52 +1,269 @@
 /* src/pages/HomePage.css */
-.home-page { padding-top: 10px; }
 
-.home-header { text-align: center; }
-.home-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 16px; }
-.home-header h1 span { color: var(--color-orange); }
+.home-page {
+  padding-top: 10px;
+}
 
-.week-days {
-  display: flex; justify-content: space-between; margin-bottom: 24px;
-  background: var(--color-surface); padding: 12px; border-radius: var(--radius-md);
-  /* Chantier 11-C — fadeInUp global */
+.home-header {
+  text-align: center;
+}
+
+.home-header h1 {
+  font-size: 1.8rem;
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+
+.home-header h1 span {
+  color: #FF9800;
+}
+
+/* --- Timeline --- */
+
+.timeline {
+  margin-bottom: 20px;
+  padding: 12px 10px 14px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   animation: fadeInUp 0.3s ease-out both;
 }
-.day-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 12px; }
-.day-name { font-size: 0.75rem; color: var(--color-text-muted); }
-.day-number { font-size: 1.1rem; font-weight: 700; }
-.day-item--active {
-  background: #FFE5D9;
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.3s ease-out both;
-  animation-delay: 150ms;
-}
-.day-item--active .day-number { color: var(--color-orange); }
 
-.quick-actions { display: flex; gap: 12px; margin-bottom: 24px; }
+.timeline__caption {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8A8A8A;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.timeline__days {
+  display: flex;
+  gap: 4px;
+}
+
+.day-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.day-card__label {
+  padding: 6px 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: center;
+  background: #EAF4F6;
+  color: #3C91A6;
+  text-transform: capitalize;
+}
+
+.day-card__number {
+  padding: 8px 0 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: center;
+  color: #2C2C2C;
+}
+
+.day-card--weekend .day-card__label {
+  background: #FFE5CC;
+  color: #FF9800;
+}
+
+.day-card--weekend .day-card__number {
+  color: #FF9800;
+}
+
+.day-card--active {
+  background: #3C91A6;
+  box-shadow: 0 6px 16px rgba(60, 145, 166, 0.35);
+  transform: translateY(-2px);
+}
+
+.day-card--active .day-card__label {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.day-card--active .day-card__number {
+  color: #FFFFFF;
+}
+
+.timeline__days > .day-card:nth-child(1) { animation-delay: 0ms; }
+.timeline__days > .day-card:nth-child(2) { animation-delay: 30ms; }
+.timeline__days > .day-card:nth-child(3) { animation-delay: 60ms; }
+.timeline__days > .day-card:nth-child(4) { animation-delay: 90ms; }
+.timeline__days > .day-card:nth-child(5) { animation-delay: 120ms; }
+.timeline__days > .day-card:nth-child(6) { animation-delay: 150ms; }
+.timeline__days > .day-card:nth-child(7) { animation-delay: 180ms; }
+
+/* --- Résumé du jour --- */
+
+.summary {
+  margin-bottom: 20px;
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 220ms;
+}
+
+.summary__title {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #2C2C2C;
+}
+
+.summary__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.summary__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 12px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid transparent;
+}
+
+.summary__card--revenue { border-left-color: #FF9800; }
+.summary__card--margin  { border-left-color: #3C91A6; }
+.summary__card--items   { border-left-color: #2C2C2C; }
+
+.summary__label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: #8A8A8A;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary__value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+/* --- État vide --- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 20px 20px;
+  margin-bottom: 20px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  animation: fadeInUp 0.3s ease-out both;
+  animation-delay: 220ms;
+}
+
+.empty__mascot {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 10px;
+}
+
+.empty__emoji {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.empty__title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  margin-bottom: 6px;
+}
+
+.empty__desc {
+  font-size: 0.85rem;
+  color: #8A8A8A;
+  margin-bottom: 14px;
+  max-width: 240px;
+}
+
+.empty__cta {
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: #FF9800;
+  color: #FFFFFF;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* --- Actions rapides --- */
+
+.quick-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
 .action-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 16px 8px; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 700;
-  background: var(--color-surface); box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-  /* Chantier 11-C — fadeInUp global */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 6px;
+  border-radius: 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
   animation: fadeInUp 0.3s ease-out both;
 }
-.action-btn span { font-size: 1.5rem; }
-.action-btn--green { background: #E8F5E9; color: #2E7D32; }
-.action-btn--pink { background: #FCE4EC; color: #C2185B; }
-.action-btn--yellow { background: #FFF9C4; color: #F57F17; }
 
-/* =========================================================
-   Chantier 11-C — Stagger cascade via animation-delay
-   ========================================================= */
-.quick-actions > .action-btn:nth-child(1) { animation-delay: 0ms; }
-.quick-actions > .action-btn:nth-child(2) { animation-delay: 40ms; }
-.quick-actions > .action-btn:nth-child(3) { animation-delay: 80ms; }
+.action-btn__icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
 
-/* Respect de la préférence système (accessibilité) */
+.action-btn--close   { background: #E6F2F5; color: #3C91A6; }
+.action-btn--expense { background: #FFEFE0; color: #FF9800; }
+.action-btn--stats   { background: #EAF4F6; color: #3C91A6; }
+
+.quick-actions > .action-btn:nth-child(1) { animation-delay: 260ms; }
+.quick-actions > .action-btn:nth-child(2) { animation-delay: 300ms; }
+.quick-actions > .action-btn:nth-child(3) { animation-delay: 340ms; }
+
+/* --- Accessibilité --- */
+
 @media (prefers-reduced-motion: reduce) {
-  .week-days,
-  .action-btn,
-  .day-item--active {
+  .timeline,
+  .day-card,
+  .summary,
+  .empty,
+  .action-btn {
     animation: none;
+    transition: none;
+  }
+  .day-card--active {
+    transform: none;
   }
 }

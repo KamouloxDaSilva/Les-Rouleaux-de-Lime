@@ -144,8 +144,22 @@ export default {
     saveSuccess: 'Enregistré',
     alreadyClosed: 'Déjà clôturé.',
   },
-  stats: {
+    stats: {
     title: 'Statistiques',
+    overview: 'Vue d\'ensemble',
+    topSales: 'Meilleures ventes',
+    lowSales: 'Ventes les plus faibles',
+    totalRevenue: 'CA total',
+    totalProfit: 'Marge brute',
+    itemsSold: 'Articles vendus',
+    salesByCategory: 'CA par catégorie',
+    last7Days: '7 derniers jours',
+    total: 'Total',
+    sold: 'vendus',
+    revenueDetails: 'Détail du CA',
+    profitDetails: 'Détail de la marge',
+    itemsDetails: 'Détail des articles',
+    modalPlaceholder: 'Le détail graphique de cette statistique sera bientôt disponible.',
     periods: { week: 'Semaine', month: 'Mois', year: 'Année' },
     summary: {
       title: 'Vue d\'ensemble',

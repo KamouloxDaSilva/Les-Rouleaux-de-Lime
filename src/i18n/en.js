@@ -2,7 +2,7 @@
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Home', closing: 'Closing', menu: 'Menu', team: 'Team', settings: 'Settings', stats: 'Stats' },
-    home: {
+  home: {
     greeting: 'Hello!',
     subtitle: 'What are we eating today?',
     todaySummary: 'Today\'s Summary',
@@ -16,17 +16,11 @@ export default {
     noClosingTitle: 'No closing',
     noClosingDesc: 'Go to Closing tab.',
     historyTitle: 'History',
-    // Chantier 11-A — i18n HomePage
     days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     actions: { call: 'Call', close: 'Close', expense: 'Expense', stats: 'View Stats' },
     locale: 'en-US',
-    // Chantier 11-D — Timeline
     timeline: { weekOf: 'Week of' },
-    summary: {
-      revenue: 'Revenue',
-      margin: 'Margin',
-      itemsSold: 'Items',
-    },
+    summary: { revenue: 'Revenue', margin: 'Margin', itemsSold: 'Items' },
     empty: {
       title: 'Not closed yet',
       desc: 'No sales recorded for this day.',
@@ -35,12 +29,7 @@ export default {
   },
   menu: {
     title: 'Menu',
-    sections: {
-      dish: 'Dishes',
-      drink: 'Drinks',
-      dessert: 'Desserts',
-      sauce: 'Sauces',
-    },
+    sections: { dish: 'Dishes', drink: 'Drinks', dessert: 'Desserts', sauce: 'Sauces' },
     tabs: { dishes: 'Dishes', ingredients: 'Ingredients' },
     addDish: 'Add',
     addIngredient: 'Add',
@@ -146,6 +135,20 @@ export default {
   },
   stats: {
     title: 'Statistics',
+    overview: 'Overview',
+    topSales: 'Best sellers',
+    lowSales: 'Slowest sellers',
+    totalRevenue: 'Total revenue',
+    totalProfit: 'Gross margin',
+    itemsSold: 'Items sold',
+    salesByCategory: 'Revenue by category',
+    last7Days: 'Last 7 days',
+    total: 'Total',
+    sold: 'sold',
+    revenueDetails: 'Revenue details',
+    profitDetails: 'Margin details',
+    itemsDetails: 'Item details',
+    modalPlaceholder: 'The detailed chart for this statistic will be available soon.',
     periods: { week: 'Week', month: 'Month', year: 'Year' },
     summary: {
       title: 'Overview',

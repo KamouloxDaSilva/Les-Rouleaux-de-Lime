@@ -1,22 +1,9 @@
 // src/pages/HomePage.jsx
 import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
-import { getDataset } from '../data/storage';
+import { loadDataset } from '../data/storage';
+import { getActiveRestaurant } from '../data/model';
 import './HomePage.css';
-
-// Lecture défensive du dataset local (localStorage).
-// Si le nom de l'export change dans storage.js, adapter UNIQUEMENT ici.
-function readDatasetSafe() {
-  try {
-    const data = getDataset();
-    return data && typeof data === 'object' ? data : {};
-  } catch (e) {
-    if (typeof console !== 'undefined') {
-      console.warn('[HomePage] dataset read failed:', e);
-    }
-    return {};
-  }
-}
 
 function toIsoDate(d) {
   const y = d.getFullYear();
@@ -33,27 +20,52 @@ function isSameDay(a, b) {
   );
 }
 
+// Coût matière unitaire d'un plat (somme recipe.quantity × ingredient.unit_cost)
+function computeDishFoodCost(dish, ingredientMap) {
+  if (!dish || !Array.isArray(dish.recipe)) return 0;
+  let total = 0;
+  for (const r of dish.recipe) {
+    const ing = ingredientMap.get(r.ingredient_id);
+    if (!ing) continue;
+    const qty = Number(r.quantity) || 0;
+    const cost = Number(ing.unit_cost) || 0;
+    total += qty * cost;
+  }
+  return total;
+}
+
 export default function HomePage({ onNavigate }) {
   const { t } = useI18n();
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [mascotOk, setMascotOk] = useState(true);
 
-  const dataset = useMemo(() => readDatasetSafe(), []);
-  const closings = Array.isArray(dataset.daily_closing) ? dataset.daily_closing : [];
-  const dishes = Array.isArray(dataset.dishes) ? dataset.dishes : [];
-  const dishMap = useMemo(() => new Map(dishes.map(d => [d.id, d])), [dishes]);
+  // Lecture unique au montage — App.jsx remonte HomePage à chaque retour d'onglet,
+  // donc les données sont rechargées à chaque visite.
+  const dataset = useMemo(() => {
+    try {
+      const data = loadDataset();
+      return data && typeof data === 'object' ? data : {};
+    } catch (e) {
+      if (typeof console !== 'undefined') console.warn('[HomePage] loadDataset failed:', e);
+      return {};
+    }
+  }, []);
 
-  const currency =
-    dataset?.restaurant?.currency ||
-    dataset?.settings?.currency ||
-    dataset?.restaurants?.[0]?.currency ||
-    'VND';
+  const closings  = Array.isArray(dataset.daily_closings) ? dataset.daily_closings : [];
+  const dishes    = Array.isArray(dataset.dishes) ? dataset.dishes : [];
+  const ingredients = Array.isArray(dataset.ingredients) ? dataset.ingredients : [];
 
-  const today = new Date();
+  const dishMap       = useMemo(() => new Map(dishes.map(d => [d.id, d])), [dishes]);
+  const ingredientMap = useMemo(() => new Map(ingredients.map(i => [i.id, i])), [ingredients]);
+
+  const activeRestaurant = getActiveRestaurant(dataset);
+  const currency = activeRestaurant?.currency || 'VND';
+
+  const today  = new Date();
   const locale = t('home.locale');
-  const days = t('home.days');
+  const days   = t('home.days');
 
-  // Lundi = début de semaine
+  // Semaine : lundi → dimanche
   const startOfWeek = new Date(today);
   const dow = today.getDay();
   startOfWeek.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
@@ -72,19 +84,20 @@ export default function HomePage({ onNavigate }) {
       return { revenue: 0, margin: 0, itemsSold: 0 };
     }
     let revenue = 0;
+    let foodCost = 0;
     let itemsSold = 0;
     for (const s of closing.sales) {
       const dish = dishMap.get(s.dish_id);
-      const sold = Number(s.sold) || 0;
-      if (dish) revenue += sold * (Number(dish.price) || 0);
-      itemsSold += sold;
+      const qty = Number(s.quantity_sold) || 0;
+      itemsSold += qty;
+      if (!dish) continue;
+      const price = Number(dish.price) || 0;
+      const unitFood = computeDishFoodCost(dish, ingredientMap);
+      revenue  += qty * price;
+      foodCost += qty * unitFood;
     }
-    const foodCost = Number(closing.food_cost) || 0;
-    const margin = Number.isFinite(closing.margin)
-      ? closing.margin
-      : revenue - foodCost;
-    return { revenue, margin, itemsSold };
-  }, [closing, dishMap]);
+    return { revenue, margin: revenue - foodCost, itemsSold };
+  }, [closing, dishMap, ingredientMap]);
 
   const formatMoney = (n) => {
     const value = Number(n) || 0;
