@@ -202,12 +202,9 @@ export default {
       monthlyFixedCosts: 'Charges fixes / mois',
     },
     chartTitle: 'Évolution du CA',
-    topTitle: 'Meilleures ventes',
-    flopTitle: 'Ventes les plus faibles',
     noData: 'Aucune donnée',
     noDataDesc: 'Clôturez une journée pour voir les statistiques.',
     noChartData: 'Pas de CA sur cette période',
-    units: { sold: 'vendus' },
   },
   common: {
     save: 'Enregistrer',

@@ -13,6 +13,9 @@ export default function StatsPage() {
   const [activeTab, setActiveTab] = useState('overview'); // overview | top | low
   const [selectedKpi, setSelectedKpi] = useState(null); // Pour la modale
 
+  // Chantier 11-F1 — locale i18n (vi-VN / fr-FR / en-US) pour Intl.DateTimeFormat
+  const locale = t('home.locale');
+
   useEffect(() => {
     const loaded = loadDataset();
     const isEmpty = loaded.dishes.length === 0 && loaded.daily_closings.length === 0;
@@ -28,10 +31,10 @@ export default function StatsPage() {
     let totalRevenue = 0;
     let totalFoodCost = 0;
     let totalItemsSold = 0;
-    
+
     const salesByCategory = { dish: 0, drink: 0, dessert: 0 };
     const dishSalesMap = {};
-    
+
     // Initialiser les ventes par plat
     dataset.dishes.filter(d => d.restaurant_id === restaurant.id).forEach(d => {
       dishSalesMap[d.id] = { ...d, qty: 0, revenue: 0 };
@@ -45,15 +48,15 @@ export default function StatsPage() {
 
         const revenue = dish.price * sale.quantity_sold;
         const foodCost = getDishFoodCost(dish, dataset.ingredients) * sale.quantity_sold;
-        
+
         totalRevenue += revenue;
         totalFoodCost += foodCost;
         totalItemsSold += sale.quantity_sold;
-        
+
         if (salesByCategory[dish.category] !== undefined) {
           salesByCategory[dish.category] += revenue;
         }
-        
+
         if (dishSalesMap[dish.id]) {
           dishSalesMap[dish.id].qty += sale.quantity_sold;
           dishSalesMap[dish.id].revenue += revenue;
@@ -80,13 +83,14 @@ export default function StatsPage() {
     };
 
     // Données pour le graphique en barres (7 derniers jours)
+    // Chantier 11-F1 — locale dynamique au lieu de 'fr-FR' hardcodé
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
       const closing = dataset.daily_closings.find(c => c.date === dateStr);
-      
+
       let dayRevenue = 0;
       if (closing) {
         closing.sales.forEach(s => {
@@ -94,11 +98,11 @@ export default function StatsPage() {
           if (dish) dayRevenue += dish.price * s.quantity_sold;
         });
       }
-      
+
       last7Days.push({
         date: dateStr,
-        dayLabel: new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d),
-        revenue: dayRevenue
+        dayLabel: new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(d),
+        revenue: dayRevenue,
       });
     }
     const maxRevenue = Math.max(...last7Days.map(d => d.revenue), 1);
@@ -106,9 +110,9 @@ export default function StatsPage() {
     return {
       totalRevenue, totalProfit, totalItemsSold,
       salesByCategory, catPercentages, topDishes, lowDishes,
-      last7Days, maxRevenue
+      last7Days, maxRevenue,
     };
-  }, [dataset, restaurant]);
+  }, [dataset, restaurant, locale]);
 
   if (!dataset || !stats) return <div>{t('common.loading')}</div>;
 
@@ -159,10 +163,10 @@ export default function StatsPage() {
             <div className="donut-container">
               <div className="donut-chart" style={{
                 background: `conic-gradient(
-                  #3C91A6 0% ${stats.catPercentages.dish}%, 
-                  #FF9800 ${stats.catPercentages.dish}% ${stats.catPercentages.dish + stats.catPercentages.drink}%, 
+                  #3C91A6 0% ${stats.catPercentages.dish}%,
+                  #FF9800 ${stats.catPercentages.dish}% ${stats.catPercentages.dish + stats.catPercentages.drink}%,
                   #E91E63 ${stats.catPercentages.dish + stats.catPercentages.drink}% 100%
-                )`
+                )`,
               }}>
                 <div className="donut-hole">
                   <strong>{formatCurrency(stats.totalRevenue)}</strong>
@@ -225,7 +229,7 @@ export default function StatsPage() {
           <div className="stats-modal" onClick={e => e.stopPropagation()}>
             <h2>{t(`stats.${selectedKpi}Details`)}</h2>
             <p>{t('stats.modalPlaceholder')}</p>
-            <button className="btn-close" onClick={() => setSelectedKpi(null)}>Fermer</button>
+            <button className="btn-close" onClick={() => setSelectedKpi(null)}>{t('common.close')}</button>
           </div>
         </div>
       )}

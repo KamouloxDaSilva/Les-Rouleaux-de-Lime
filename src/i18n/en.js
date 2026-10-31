@@ -188,12 +188,9 @@ export default {
       monthlyFixedCosts: 'Fixed costs / month',
     },
     chartTitle: 'Revenue trend',
-    topTitle: 'Best sellers',
-    flopTitle: 'Slowest sellers',
     noData: 'No data',
     noDataDesc: 'Close a day to see statistics.',
     noChartData: 'No revenue in this period',
-    units: { sold: 'sold' },
   },
   common: {
     save: 'Save',

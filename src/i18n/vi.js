@@ -202,12 +202,9 @@ export default {
       monthlyFixedCosts: 'Chi phí cố định/tháng',
     },
     chartTitle: 'Biểu đồ doanh thu',
-    topTitle: 'Bán chạy nhất',
-    flopTitle: 'Bán chậm nhất',
     noData: 'Chưa có dữ liệu',
     noDataDesc: 'Hãy chốt ngày để xem thống kê.',
     noChartData: 'Chưa có doanh thu trong kỳ này',
-    units: { sold: 'đã bán' },
   },
   common: {
     save: 'Lưu',
