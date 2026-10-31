@@ -1,0 +1,152 @@
+/* src/components/FirstLaunchScreen.css
+ * ⚠️ Ne pas régénérer sans raison. ':' sur chaque propriété.
+ * Chantier 11-B — onboarding premier lancement (3 options empilées).
+ */
+.first-launch {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: #FAEBD5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.first-launch__inner {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.first-launch__mascot {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.first-launch__mascot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.first-launch__emoji {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.first-launch__title {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  text-align: center;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.first-launch__subtitle {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #8A8A8A;
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+.first-launch__error {
+  width: 100%;
+  padding: 10px 14px;
+  background: #FFEBEE;
+  color: #C62828;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.first-launch__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.first-launch__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.first-launch__btn:active {
+  transform: scale(0.97);
+}
+
+.first-launch__btn:disabled,
+.first-launch__btn.is-busy {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.first-launch__btn-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.first-launch__btn-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+.first-launch__btn-hint {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.first-launch__btn--primary {
+  background: #FF9800;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(255, 152, 0, 0.35);
+}
+
+.first-launch__btn--secondary {
+  background: #FFFFFF;
+  color: #3C91A6;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.first-launch__btn--tertiary {
+  background: #FFFFFF;
+  color: #2C2C2C;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .first-launch__btn {
+    transition: none;
+  }
+  .first-launch__btn:active {
+    transform: none;
+  }
+}

@@ -28,9 +28,9 @@
   font-size: 0.75rem;
   font-weight: 600;
   padding: 8px 0;
-  /* Chantier 11-C — vérification : pas de transition globale équivalente
-     dans global.css. Cette règle est donc la SEULE source de transition
-     de couleur sur .nav-item → on la GARDE (non redondante). */
+  border: none;
+  background: transparent;
+  cursor: pointer;
   transition: color 0.2s ease;
 }
 
@@ -45,16 +45,17 @@
 /* --- Style pour le bouton central --- */
 .nav-item--center {
   position: relative;
-  top: -20px; /* Fait remonter le bouton */
-  flex: 0 0 60px; /* Largeur fixe pour le bouton central */
+  top: -20px;
+  flex: 0 0 60px;
   height: 60px;
   border-radius: 50%;
-  background: var(--color-orange); /* Fond uni pour le contraste */
+  background: var(--color-orange);
   box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #FFF;
+  padding: 0;
 }
 
 .nav-center-icon {

@@ -183,5 +183,18 @@ export default {
     save: 'Lưu', cancel: 'Hủy', edit: 'Sửa', delete: 'Xóa',
     add: 'Thêm', close: 'Đóng', back: 'Quay lại', error: 'Lỗi', success: 'Thành công', loading: 'Đang tải…',
   },
+    splash: { tagline: 'Les Rouleaux de Lime' },
+  firstLaunch: {
+    title: 'Chào mừng đến Burihagio',
+    subtitle: 'Chọn cách bắt đầu',
+    import: 'Nhập JSON',
+    importHint: 'Khôi phục bản sao lưu',
+    startFresh: 'Bắt đầu từ đầu',
+    startFreshHint: 'Tạo nhà hàng mới trống',
+    useDemo: 'Xem dữ liệu mẫu',
+    useDemoHint: 'Khám phá với dữ liệu mẫu',
+    importSuccess: 'Đã nhập dữ liệu',
+    importError: 'Lỗi nhập dữ liệu',
+  },
   languages: { vi: 'Tiếng Việt', fr: 'Français', en: 'English' },
 };

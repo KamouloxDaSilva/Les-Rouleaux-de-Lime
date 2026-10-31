@@ -183,5 +183,18 @@ export default {
     save: 'Enregistrer', cancel: 'Annuler', edit: 'Modifier', delete: 'Supprimer',
     add: 'Ajouter', close: 'Fermer', back: 'Retour', error: 'Erreur', success: 'Succès', loading: 'Chargement…',
   },
+    splash: { tagline: 'Les Rouleaux de Lime' },
+  firstLaunch: {
+    title: 'Bienvenue sur Burihagio',
+    subtitle: 'Choisissez comment démarrer',
+    import: 'Importer un JSON',
+    importHint: 'Restaurer une sauvegarde',
+    startFresh: 'Commencer à zéro',
+    startFreshHint: 'Créer un nouveau restaurant vide',
+    useDemo: 'Voir données de démo',
+    useDemoHint: 'Explorer avec des exemples',
+    importSuccess: 'Import réussi',
+    importError: 'Erreur d\'import',
+  },
   languages: { vi: 'Tiếng Việt', fr: 'Français', en: 'English' },
 };

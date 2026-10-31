@@ -20,7 +20,6 @@ function isSameDay(a, b) {
   );
 }
 
-// Coût matière unitaire d'un plat (somme recipe.quantity × ingredient.unit_cost)
 function computeDishFoodCost(dish, ingredientMap) {
   if (!dish || !Array.isArray(dish.recipe)) return 0;
   let total = 0;
@@ -39,8 +38,6 @@ export default function HomePage({ onNavigate }) {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [mascotOk, setMascotOk] = useState(true);
 
-  // Lecture unique au montage — App.jsx remonte HomePage à chaque retour d'onglet,
-  // donc les données sont rechargées à chaque visite.
   const dataset = useMemo(() => {
     try {
       const data = loadDataset();
@@ -65,7 +62,6 @@ export default function HomePage({ onNavigate }) {
   const locale = t('home.locale');
   const days   = t('home.days');
 
-  // Semaine : lundi → dimanche
   const startOfWeek = new Date(today);
   const dow = today.getDay();
   startOfWeek.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
@@ -127,7 +123,6 @@ export default function HomePage({ onNavigate }) {
         </h1>
       </header>
 
-      {/* --- Timeline 7 jours --- */}
       <section className="timeline" aria-label={weekLabel}>
         <div className="timeline__caption">{weekLabel}</div>
         <div className="timeline__days">
@@ -155,7 +150,6 @@ export default function HomePage({ onNavigate }) {
         </div>
       </section>
 
-      {/* --- Résumé du jour OU état vide --- */}
       {closing ? (
         <section className="summary">
           <h2 className="summary__title">{t('home.todaySummary')}</h2>
@@ -198,7 +192,6 @@ export default function HomePage({ onNavigate }) {
         </section>
       )}
 
-      {/* --- Actions rapides --- */}
       <section className="quick-actions">
         <button
           type="button"

@@ -1,3 +1,4 @@
+/* src/components/Header.css */
 .app-header {
   position: fixed;
   top: 0;
@@ -20,11 +21,62 @@
   font-family: var(--font-title);
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--color-orange); /* Le orange de ta charte */
+  color: var(--color-orange);
   margin: 0;
 }
+
+/* ⚠️ NE PAS MODIFIER : .app-logo sert au Header uniquement. */
 .app-logo {
-  height: 45px; /* Ajuste la taille selon ton image */
+  height: 45px;
   width: auto;
   object-fit: contain;
+}
+
+/* Chantier 11-B — conteneur des actions (lang + gear) */
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Chantier 11-B — bouton roue crantée ORANGE, cible 44×44 (règle iOS) */
+.app-header-settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #FF9800;
+  color: #FFFFFF;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-header-settings:active {
+  transform: scale(0.90);
+  box-shadow: 0 1px 4px rgba(255, 152, 0, 0.28);
+  background: #E68900;
+}
+
+.app-header-settings__emoji {
+  font-size: 22px;
+  line-height: 1;
+  display: block;
+  /* Le rendu emoji est déjà coloré nativement ; pas besoin de color: */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header-settings {
+    transition: none;
+  }
+  .app-header-settings:active {
+    transform: none;
+  }
 }
