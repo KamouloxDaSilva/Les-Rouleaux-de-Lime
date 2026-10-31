@@ -2,7 +2,7 @@
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Accueil', closing: 'Clôture', menu: 'Menu', team: 'Équipe', settings: 'Réglages', stats: 'Stats' },
-    home: {
+  home: {
     greeting: 'Bonjour !',
     subtitle: 'Qu\'est-ce qu\'on mange aujourd\'hui ?',
     todaySummary: 'Résumé du jour',
@@ -16,11 +16,9 @@ export default {
     noClosingTitle: 'Non clôturé',
     noClosingDesc: 'Allez dans Clôture.',
     historyTitle: 'Historique',
-    // Chantier 11-A — i18n HomePage
     days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
     actions: { call: 'Appeler', close: 'Clôturer', expense: 'Dépense', stats: 'Voir Stats' },
     locale: 'fr-FR',
-    // Chantier 11-D — Timeline
     timeline: { weekOf: 'Semaine du' },
     summary: {
       revenue: 'CA',
@@ -123,16 +121,48 @@ export default {
   settings: {
     title: 'Réglages',
     sections: {
-      restaurant: { title: 'Restaurant', name: 'Nom', address: 'Adresse', phone: 'Téléphone', currency: 'Devise', timezone: 'Fuseau' },
-      data: { title: 'Données', export: 'Export', import: 'Import', reset: 'Reset', exportHint: 'Sauvegarder', importHint: 'Restaurer', resetHint: 'Effacer', resetConfirm: 'Effacer tout ?', importSuccess: 'Succès', importError: 'Erreur' },
-      about: { title: 'À propos', version: 'Version', schemaVersion: 'Données' },
+      restaurant: {
+        title: 'Restaurant',
+        name: 'Nom',
+        address: 'Adresse',
+        phone: 'Téléphone',
+        currency: 'Devise',
+        timezone: 'Fuseau',
+      },
+      data: {
+        title: 'Données',
+        export: 'Export',
+        import: 'Import',
+        reset: 'Reset',
+        exportHint: 'Sauvegarder',
+        importHint: 'Restaurer',
+        resetHint: 'Effacer',
+        resetConfirm: 'Effacer tout ?',
+        importSuccess: 'Succès',
+        importError: 'Erreur',
+      },
+      about: {
+        title: 'À propos',
+        version: 'Version',
+        schemaVersion: 'Données',
+      },
     },
   },
   closing: {
     title: 'Clôture',
     date: 'Date',
+    weekOf: 'Semaine du',
+    daySummary: 'Résumé du jour',
+    itemsSold: 'Articles vendus',
+    prevWeek: 'Semaine précédente',
+    nextWeek: 'Semaine suivante',
     weather: 'Météo',
-    weatherOptions: { sunny: 'Soleil', cloudy: 'Nuages', rainy: 'Pluie', stormy: 'Orage' },
+    weatherOptions: {
+      sunny: 'Soleil',
+      cloudy: 'Nuages',
+      rainy: 'Pluie',
+      stormy: 'Orage',
+    },
     sales: 'Ventes',
     dishName: 'Plat',
     sold: 'Vendus',
@@ -144,7 +174,7 @@ export default {
     saveSuccess: 'Enregistré',
     alreadyClosed: 'Déjà clôturé.',
   },
-    stats: {
+  stats: {
     title: 'Statistiques',
     overview: 'Vue d\'ensemble',
     topSales: 'Meilleures ventes',
@@ -180,10 +210,18 @@ export default {
     units: { sold: 'vendus' },
   },
   common: {
-    save: 'Enregistrer', cancel: 'Annuler', edit: 'Modifier', delete: 'Supprimer',
-    add: 'Ajouter', close: 'Fermer', back: 'Retour', error: 'Erreur', success: 'Succès', loading: 'Chargement…',
+    save: 'Enregistrer',
+    cancel: 'Annuler',
+    edit: 'Modifier',
+    delete: 'Supprimer',
+    add: 'Ajouter',
+    close: 'Fermer',
+    back: 'Retour',
+    error: 'Erreur',
+    success: 'Succès',
+    loading: 'Chargement…',
   },
-    splash: { tagline: 'Les Rouleaux de Lime' },
+  splash: { tagline: 'Les Rouleaux de Lime' },
   firstLaunch: {
     title: 'Bienvenue sur Burihagio',
     subtitle: 'Choisissez comment démarrer',

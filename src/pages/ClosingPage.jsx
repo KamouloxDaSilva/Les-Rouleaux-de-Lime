@@ -6,19 +6,38 @@ import { loadDataset, saveDataset } from '../data/storage.js';
 import { createDefaultFixtures } from '../data/fixtures.js';
 import './ClosingPage.css';
 
-function getTodayString() {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+function formatDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
-// La Clôture ne suit que 3 catégories (les sauces sont exclues)
+function getTodayString() {
+  return formatDateString(new Date());
+}
+
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function getStartOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = dimanche
+  const diff = day === 0 ? -6 : 1 - day; // lundi comme premier jour
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// La Clôture suit désormais les 4 catégories (Sauces incluses)
 const CLOSING_CATEGORIES = [
   { id: 'dish', i18nKey: 'menu.sections.dish' },
   { id: 'drink', i18nKey: 'menu.sections.drink' },
   { id: 'dessert', i18nKey: 'menu.sections.dessert' },
+  { id: 'sauce', i18nKey: 'menu.sections.sauce' },
 ];
 
 export default function ClosingPage() {
@@ -31,8 +50,8 @@ export default function ClosingPage() {
   const [feedback, setFeedback] = useState(null);
   const [activeCategory, setActiveCategory] = useState('dish');
 
-  // État pour le calendrier
-  const [viewDate, setViewDate] = useState(new Date());
+  // Date affichée dans la bande semaine
+  const [viewDate, setViewDate] = useState(() => new Date());
 
   useEffect(() => {
     const loaded = loadDataset();
@@ -44,14 +63,29 @@ export default function ClosingPage() {
     setDataset(initial);
   }, []);
 
+  // Garde la semaine affichée synchronisée avec la date sélectionnée
+  useEffect(() => {
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    if (year && month && day) {
+      setViewDate(new Date(year, month - 1, day));
+    }
+  }, [selectedDate]);
+
   const restaurant = useMemo(() => dataset ? getActiveRestaurant(dataset) : null, [dataset]);
 
-  const activeDishes = useMemo(() => {
+  // Tous les plats concernés par la clôture (4 catégories)
+  const closingDishes = useMemo(() => {
     if (!dataset || !restaurant) return [];
+    const categoryIds = CLOSING_CATEGORIES.map((c) => c.id);
     return dataset.dishes.filter(
-      (d) => d.active && d.restaurant_id === restaurant.id && d.category === activeCategory
+      (d) => d.active && d.restaurant_id === restaurant.id && categoryIds.includes(d.category)
     );
-  }, [dataset, restaurant, activeCategory]);
+  }, [dataset, restaurant]);
+
+  // Plats affichés dans l'onglet actif
+  const activeDishes = useMemo(() => {
+    return closingDishes.filter((d) => d.category === activeCategory);
+  }, [closingDishes, activeCategory]);
 
   useEffect(() => {
     if (!dataset) return;
@@ -63,7 +97,9 @@ export default function ClosingPage() {
       existing.sales.forEach((s) => { map[s.dish_id] = { sold: s.quantity_sold ?? 0 }; });
       setSales(map);
     } else {
-      setWeather(''); setNotes(''); setSales({});
+      setWeather('');
+      setNotes('');
+      setSales({});
     }
     setFeedback(null);
   }, [selectedDate, dataset]);
@@ -74,6 +110,7 @@ export default function ClosingPage() {
       [dishId]: { ...(prev[dishId] || {}), [field]: value },
     }));
   }
+
   function bumpSale(dishId, field, delta) {
     setSales((prev) => {
       const current = prev[dishId] || { sold: 0 };
@@ -83,89 +120,130 @@ export default function ClosingPage() {
   }
 
   const estimatedRevenue = useMemo(() => {
-    return activeDishes.reduce((sum, dish) => {
+    return closingDishes.reduce((sum, dish) => {
       const sold = sales[dish.id]?.sold ?? 0;
       return sum + dish.price * sold;
     }, 0);
-  }, [activeDishes, sales]);
+  }, [closingDishes, sales]);
+
+  const totalItemsSold = useMemo(() => {
+    return closingDishes.reduce((sum, dish) => {
+      return sum + (sales[dish.id]?.sold ?? 0);
+    }, 0);
+  }, [closingDishes, sales]);
 
   function handleSave() {
     if (!dataset || !restaurant) return;
-    const salesArray = activeDishes
+    const salesArray = closingDishes
       .map((dish) => ({ dish_id: dish.id, quantity_sold: Number(sales[dish.id]?.sold) || 0 }))
       .filter((s) => s.quantity_sold > 0);
 
     const existingIndex = dataset.daily_closings.findIndex((c) => c.date === selectedDate);
     const nextClosings = [...dataset.daily_closings];
     if (existingIndex >= 0) {
-      nextClosings[existingIndex] = { ...nextClosings[existingIndex], weather, notes, sales: salesArray, updatedAt: new Date().toISOString() };
+      nextClosings[existingIndex] = {
+        ...nextClosings[existingIndex],
+        weather,
+        notes,
+        sales: salesArray,
+        updatedAt: new Date().toISOString(),
+      };
     } else {
-      nextClosings.push(createDailyClosing({ restaurant_id: restaurant.id, date: selectedDate, weather, notes, sales: salesArray }));
+      nextClosings.push(
+        createDailyClosing({
+          restaurant_id: restaurant.id,
+          date: selectedDate,
+          weather,
+          notes,
+          sales: salesArray,
+        })
+      );
     }
     const nextDataset = { ...dataset, daily_closings: nextClosings };
     try {
-      saveDataset(nextDataset); setDataset(nextDataset);
+      saveDataset(nextDataset);
+      setDataset(nextDataset);
       setFeedback({ type: 'success', message: t('closing.saveSuccess') });
-    } catch (e) { setFeedback({ type: 'error', message: e.message }); }
+    } catch (e) {
+      setFeedback({ type: 'error', message: e.message });
+    }
   }
 
-  // --- LOGIQUE DU CALENDRIER ---
-  const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+  // --- LOGIQUE DU CALENDRIER COMPACT ---
+  const weekStart = useMemo(() => getStartOfWeek(viewDate), [viewDate]);
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
+  );
 
-  const handlePrevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
-  const handleNextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  const weekTitle = useMemo(() => {
+    const formatted = new Intl.DateTimeFormat(locale, {
+      month: 'short',
+      day: 'numeric',
+    }).format(weekStart);
+    return `${t('closing.weekOf')} ${formatted}`;
+  }, [locale, t, weekStart]);
 
-  const handleDayClick = (day) => {
-    const month = String(viewDate.getMonth() + 1).padStart(2, '0');
-    const year = viewDate.getFullYear();
-    setSelectedDate(`${year}-${month}-${String(day).padStart(2, '0')}`);
+  const formattedSelectedDate = useMemo(() => {
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    return new Intl.DateTimeFormat(locale, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(d);
+  }, [locale, selectedDate]);
+
+  const handlePrevWeek = () => setViewDate((prev) => addDays(prev, -7));
+  const handleNextWeek = () => setViewDate((prev) => addDays(prev, 7));
+
+  const handleDayClick = (dayDate) => {
+    setSelectedDate(formatDateString(dayDate));
   };
 
-  const renderCalendar = () => {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const totalDays = daysInMonth(year, month);
-    const startDay = firstDayOfMonth(year, month);
-    
-    const monthName = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(viewDate);
-    
-    // Jours de la semaine
-    const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Dimanche -> Samedi
-    
-    const days = [];
-    for (let i = 0; i < startDay; i++) {
-      days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
-    }
-    for (let d = 1; d <= totalDays; d++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isSelected = dateStr === selectedDate;
-      const dayOfWeek = new Date(year, month, d).getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-      days.push(
-        <button
-          key={d}
-          className={`calendar-day ${isSelected ? 'selected' : ''} ${isWeekend ? 'weekend' : ''}`}
-          onClick={() => handleDayClick(d)}
-        >
-          {d}
-        </button>
-      );
-    }
-
+  const renderWeekCalendar = () => {
     return (
-      <div className="custom-calendar">
-        <div className="calendar-header">
-          <button type="button" className="calendar-nav-btn" onClick={handlePrevMonth}>‹</button>
-          <span className="calendar-month-title">{monthName}</span>
-          <button type="button" className="calendar-nav-btn" onClick={handleNextMonth}>›</button>
+      <div className="week-calendar">
+        <div className="week-calendar-header">
+          <button
+            type="button"
+            className="week-nav-btn"
+            onClick={handlePrevWeek}
+            aria-label={t('closing.prevWeek')}
+          >
+            ‹
+          </button>
+          <span className="week-title">{weekTitle}</span>
+          <button
+            type="button"
+            className="week-nav-btn"
+            onClick={handleNextWeek}
+            aria-label={t('closing.nextWeek')}
+          >
+            ›
+          </button>
         </div>
-        <div className="calendar-weekdays">
-          {weekDays.map((wd, i) => <span key={i} className="calendar-weekday">{wd}</span>)}
-        </div>
-        <div className="calendar-grid">
-          {days}
+
+        <div className="week-days">
+          {weekDays.map((dayDate) => {
+            const dateStr = formatDateString(dayDate);
+            const isSelected = dateStr === selectedDate;
+            const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
+            const weekdayLabel = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(dayDate);
+
+            return (
+              <button
+                key={dateStr}
+                type="button"
+                className={`week-day ${isSelected ? 'selected' : ''} ${isWeekend ? 'weekend' : ''}`}
+                onClick={() => handleDayClick(dayDate)}
+              >
+                <span className="week-day-name">{weekdayLabel}</span>
+                <span className="week-day-number">{dayDate.getDate()}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -176,22 +254,28 @@ export default function ClosingPage() {
   return (
     <div className="closing-page">
       <h1 className="closing-title">{t('closing.title')}</h1>
-      {feedback && <div className={`closing-feedback closing-feedback--${feedback.type}`}>{feedback.message}</div>}
+
+      {feedback && (
+        <div className={`closing-feedback closing-feedback--${feedback.type}`}>
+          {feedback.message}
+        </div>
+      )}
 
       <div className="closing-top-grid">
-        {/* CALENDRIER */}
-        <div className="card date-card" style={{ gridColumn: '1 / -1', padding: '16px' }}>
+        {/* CALENDRIER COMPACT */}
+        <div className="card date-card">
           <label className="closing-label">{t('closing.date')}</label>
-          {renderCalendar()}
+          {renderWeekCalendar()}
         </div>
 
         {/* MÉTÉO */}
-        <div className="card weather-card" style={{ gridColumn: '1 / -1' }}>
+        <div className="card weather-card">
           <span className="closing-label">{t('closing.weather')}</span>
           <div className="weather-options-row">
             {WEATHER_OPTIONS.map((w) => (
               <button
                 key={w}
+                type="button"
                 className={`weather-btn-clean ${weather === w ? 'active' : ''} weather-${w}`}
                 onClick={() => setWeather(w)}
               >
@@ -203,6 +287,27 @@ export default function ClosingPage() {
             ))}
           </div>
         </div>
+
+        {/* RÉSUMÉ DU JOUR */}
+        <div className="card closing-summary-card">
+          <span className="closing-label">{t('closing.daySummary')}</span>
+          <div className="closing-summary-date">{formattedSelectedDate}</div>
+
+          <div className="closing-summary-stats">
+            <div>
+              <span>{t('closing.estimatedRevenue')}</span>
+              <strong>{formatCurrency(estimatedRevenue)}</strong>
+            </div>
+            <div>
+              <span>{t('closing.itemsSold')}</span>
+              <strong>{totalItemsSold}</strong>
+            </div>
+            <div>
+              <span>{t('closing.weather')}</span>
+              <strong>{weather ? t(`closing.weatherOptions.${weather}`) : '—'}</strong>
+            </div>
+          </div>
+        </div>
       </div>
 
       <section className="closing-section card">
@@ -212,6 +317,7 @@ export default function ClosingPage() {
           {CLOSING_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
+              type="button"
               className={`category-tab ${activeCategory === cat.id ? 'active' : ''}`}
               onClick={() => setActiveCategory(cat.id)}
             >
@@ -235,13 +341,34 @@ export default function ClosingPage() {
                   <span className="dish-price">{formatCurrency(dish.price)}</span>
                 </div>
                 <div className="qty-stepper">
-                  <button className="qty-btn" onClick={() => bumpSale(dish.id, 'sold', -1)}>−</button>
+                  <button
+                    type="button"
+                    className="qty-btn"
+                    onClick={() => bumpSale(dish.id, 'sold', -1)}
+                  >
+                    −
+                  </button>
                   <input
-                    type="number" className="qty-input" min="0"
-                    value={s.sold || ''} placeholder="0"
-                    onChange={(e) => updateSale(dish.id, 'sold', Math.max(0, parseInt(e.target.value) || 0))}
+                    type="number"
+                    className="qty-input"
+                    min="0"
+                    value={s.sold || ''}
+                    placeholder="0"
+                    onChange={(e) =>
+                      updateSale(
+                        dish.id,
+                        'sold',
+                        Math.max(0, parseInt(e.target.value, 10) || 0)
+                      )
+                    }
                   />
-                  <button className="qty-btn" onClick={() => bumpSale(dish.id, 'sold', 1)}>+</button>
+                  <button
+                    type="button"
+                    className="qty-btn"
+                    onClick={() => bumpSale(dish.id, 'sold', 1)}
+                  >
+                    +
+                  </button>
                 </div>
               </li>
             );
@@ -250,8 +377,17 @@ export default function ClosingPage() {
       </section>
 
       <section className="closing-section card">
-        <label className="closing-label" htmlFor="notes">{t('closing.notes')}</label>
-        <textarea id="notes" className="closing-notes" rows={3} placeholder={t('closing.notesPlaceholder')} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <label className="closing-label" htmlFor="notes">
+          {t('closing.notes')}
+        </label>
+        <textarea
+          id="notes"
+          className="closing-notes"
+          rows={3}
+          placeholder={t('closing.notesPlaceholder')}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
       </section>
 
       <div className="closing-footer-fixed">
@@ -259,7 +395,9 @@ export default function ClosingPage() {
           <span>{t('closing.estimatedRevenue')}</span>
           <strong>{formatCurrency(estimatedRevenue)}</strong>
         </div>
-        <button className="btn-primary" onClick={handleSave}>{t('closing.saveButton')}</button>
+        <button type="button" className="btn-primary" onClick={handleSave}>
+          {t('closing.saveButton')}
+        </button>
       </div>
     </div>
   );

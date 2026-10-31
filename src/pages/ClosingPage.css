@@ -11,10 +11,10 @@
   color: var(--color-blue);
   font-size: 1.6rem;
   margin: 8px 0 16px;
-  text-align: center; /* Chantier 11-A */
+  text-align: center;
 }
 
-/* --- Grille du haut (Calendrier + Météo) --- */
+/* --- Grille du haut (Calendrier + Météo + Résumé) --- */
 .closing-top-grid {
   display: flex;
   flex-direction: column;
@@ -22,10 +22,11 @@
   margin-bottom: 16px;
 }
 
-.date-card, .weather-card {
+.date-card,
+.weather-card,
+.closing-summary-card {
   padding: 16px;
   margin-bottom: 0;
-  /* Chantier 11-C — fadeInUp global */
   animation: fadeInUp 0.3s ease-out both;
 }
 
@@ -38,36 +39,36 @@
   margin-bottom: 12px;
 }
 
-/* --- CALENDRIER CUSTOM --- */
-.custom-calendar {
+/* --- CALENDRIER COMPACT (BANDE SEMAINE) --- */
+.week-calendar {
   background: #FFF;
   border-radius: 16px;
   padding: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   border: 1px solid #EAEAEA;
-  /* Chantier 11-C — fadeInUp global */
   animation: fadeInUp 0.3s ease-out both;
   animation-delay: 80ms;
 }
 
-.calendar-header {
+.week-calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-.calendar-month-title {
+.week-title {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: var(--color-text);
   text-transform: capitalize;
 }
 
-.calendar-nav-btn {
+.week-nav-btn {
   background: transparent;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
+  line-height: 1;
   color: var(--color-blue);
   width: 32px;
   height: 32px;
@@ -77,49 +78,105 @@
   cursor: pointer;
   border-radius: 50%;
 }
-.calendar-nav-btn:active { background: #F0F0F0; }
-
-.calendar-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  margin-bottom: 8px;
+.week-nav-btn:active {
+  background: #F0F0F0;
 }
 
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-
-.calendar-day {
-  aspect-ratio: 1;
+.week-days {
   display: flex;
+  gap: 6px;
+}
+
+.week-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--color-text);
-  background: transparent;
-  border: none;
-  border-radius: 50%;
+  gap: 2px;
+  padding: 8px 2px;
+  border-radius: 12px;
+  background: #F8F8F8;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
-.calendar-day.empty { visibility: hidden; }
-.calendar-day.weekend { color: var(--color-orange); }
-.calendar-day.selected {
-  background: var(--color-blue);
-  color: #FFF;
+
+.week-day-name {
+  font-size: 0.62rem;
   font-weight: 700;
-  box-shadow: 0 4px 8px rgba(60, 145, 166, 0.3);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.week-day-number {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.week-day.weekend .week-day-name,
+.week-day.weekend .week-day-number {
+  color: var(--color-orange);
+}
+
+.week-day.selected {
+  background: var(--color-blue);
+  border-color: var(--color-blue);
+  box-shadow: 0 4px 10px rgba(60, 145, 166, 0.25);
+  transform: translateY(-2px);
+}
+
+.week-day.selected .week-day-name,
+.week-day.selected .week-day-number {
+  color: #FFF;
+}
+
+/* --- RÉSUMÉ DU JOUR --- */
+.closing-summary-date {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  text-transform: capitalize;
+}
+
+.closing-summary-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.closing-summary-stats > div {
+  flex: 1 1 30%;
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #FAFAFA;
+  border: 1px solid #EFEFEF;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.closing-summary-stats span {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.closing-summary-stats strong {
+  font-size: 0.95rem;
+  color: var(--color-text);
 }
 
 /* --- Météo --- */
-.weather-options-row { display: flex; gap: 8px; }
+.weather-options-row {
+  display: flex;
+  gap: 8px;
+}
+
 .weather-btn-clean {
   flex: 1;
   display: flex;
@@ -132,15 +189,28 @@
   border: 2px solid transparent;
   transition: all 0.2s ease-in-out;
 }
-.weather-btn-clean .weather-icon { font-size: 1.4rem; }
-.weather-btn-clean .weather-label { font-size: 0.65rem; font-weight: 700; color: var(--color-text-muted); text-align: center; }
+
+.weather-btn-clean .weather-icon {
+  font-size: 1.4rem;
+}
+
+.weather-btn-clean .weather-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 .weather-btn-clean.active {
   background: var(--color-blue);
   border-color: var(--color-blue);
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(60, 145, 166, 0.2);
 }
-.weather-btn-clean.active .weather-label { color: #FFF; }
+
+.weather-btn-clean.active .weather-label {
+  color: #FFF;
+}
 
 /* --- Section Ventes --- */
 .category-tabs {
@@ -150,6 +220,7 @@
   border-radius: 12px;
   margin-bottom: 16px;
 }
+
 .category-tab {
   flex: 1;
   padding: 8px;
@@ -160,10 +231,11 @@
   background: transparent;
   border: none;
 }
+
 .category-tab.active {
   background: #FFF;
   color: var(--color-orange);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .closing-sales-header {
@@ -177,7 +249,16 @@
   margin-bottom: 12px;
   padding: 0 4px;
 }
-.closing-sales-header span:last-child { text-align: center; }
+
+.closing-sales-header span:last-child {
+  text-align: center;
+}
+
+.closing-dishes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 
 .closing-dish-item {
   display: flex;
@@ -188,13 +269,25 @@
   border: 1px solid #EFEFEF;
   border-radius: 12px;
   margin-bottom: 8px;
-  /* Chantier 11-C — fadeInUp global */
   animation: fadeInUp 0.3s ease-out both;
 }
 
-.dish-info { display: flex; flex-direction: column; gap: 2px; }
-.dish-name { font-weight: 600; font-size: 0.95rem; color: var(--color-text); }
-.dish-price { font-size: 0.8rem; color: var(--color-text-muted); }
+.dish-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dish-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.dish-price {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
 
 .qty-stepper {
   display: flex;
@@ -203,8 +296,9 @@
   border: 1px solid #E0E0E0;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
+
 .qty-btn {
   width: 36px;
   height: 36px;
@@ -215,7 +309,10 @@
   border: none;
   cursor: pointer;
 }
-.qty-btn:active { opacity: 0.8; }
+
+.qty-btn:active {
+  opacity: 0.8;
+}
 
 .qty-input {
   width: 50px;
@@ -225,11 +322,15 @@
   font-weight: 700;
   background: #FFF;
   color: var(--color-text);
-  -moz-appearance: textfield; /* Firefox */
-  appearance: textfield;      /* standard — supprime les flèches du input number */
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
+
 .qty-input::-webkit-outer-spin-button,
-.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
 .closing-notes {
   width: 100%;
@@ -251,19 +352,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
   max-width: 600px;
   margin: 0 auto;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
   z-index: 10;
-  /* Chantier 11-C — fadeInUp global */
   animation: fadeInUp 0.3s ease-out both;
   animation-delay: 200ms;
 }
-.closing-total { display: flex; flex-direction: column; }
-.closing-total span { font-size: 0.75rem; color: var(--color-text-muted); }
-.closing-total strong { font-size: 1.3rem; color: var(--color-orange); }
+
+.closing-total {
+  display: flex;
+  flex-direction: column;
+}
+
+.closing-total span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.closing-total strong {
+  font-size: 1.3rem;
+  color: var(--color-orange);
+}
 
 .closing-feedback {
   padding: 12px;
@@ -273,30 +385,64 @@
   font-weight: 600;
   text-align: center;
 }
-.closing-feedback--success { background: #E8F5E9; color: #2E7D32; }
-.closing-feedback--error { background: #FFEBEE; color: #C62828; }
+
+.closing-feedback--success {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.closing-feedback--error {
+  background: #FFEBEE;
+  color: #C62828;
+}
 
 /* =========================================================
-   Chantier 11-C — Stagger cascade via animation-delay
+   Stagger cascade via animation-delay
    ========================================================= */
-.closing-top-grid > .date-card:nth-child(1) { animation-delay: 0ms; }
-.closing-top-grid > .weather-card:nth-child(2) { animation-delay: 40ms; }
+.closing-top-grid > .date-card:nth-child(1) {
+  animation-delay: 0ms;
+}
+.closing-top-grid > .weather-card:nth-child(2) {
+  animation-delay: 40ms;
+}
+.closing-top-grid > .closing-summary-card:nth-child(3) {
+  animation-delay: 80ms;
+}
 
-.closing-dishes > .closing-dish-item:nth-child(1) { animation-delay: 0ms; }
-.closing-dishes > .closing-dish-item:nth-child(2) { animation-delay: 40ms; }
-.closing-dishes > .closing-dish-item:nth-child(3) { animation-delay: 80ms; }
-.closing-dishes > .closing-dish-item:nth-child(4) { animation-delay: 120ms; }
-.closing-dishes > .closing-dish-item:nth-child(5) { animation-delay: 160ms; }
-.closing-dishes > .closing-dish-item:nth-child(6) { animation-delay: 200ms; }
-.closing-dishes > .closing-dish-item:nth-child(7) { animation-delay: 240ms; }
-.closing-dishes > .closing-dish-item:nth-child(8) { animation-delay: 280ms; }
-.closing-dishes > .closing-dish-item:nth-child(n+9) { animation-delay: 320ms; }
+.closing-dishes > .closing-dish-item:nth-child(1) {
+  animation-delay: 0ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(2) {
+  animation-delay: 40ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(3) {
+  animation-delay: 80ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(4) {
+  animation-delay: 120ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(5) {
+  animation-delay: 160ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(6) {
+  animation-delay: 200ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(7) {
+  animation-delay: 240ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(8) {
+  animation-delay: 280ms;
+}
+.closing-dishes > .closing-dish-item:nth-child(n+9) {
+  animation-delay: 320ms;
+}
 
 /* Respect de la préférence système (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
   .date-card,
   .weather-card,
-  .custom-calendar,
+  .closing-summary-card,
+  .week-calendar,
   .closing-dish-item,
   .closing-footer-fixed {
     animation: none;

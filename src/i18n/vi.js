@@ -2,7 +2,7 @@
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Trang chủ', closing: 'Chốt ngày', menu: 'Thực đơn', team: 'Đội ngũ', settings: 'Cài đặt', stats: 'Thống kê' },
-    home: {
+  home: {
     greeting: 'Xin chào !',
     subtitle: 'Hôm nay ăn gì?',
     todaySummary: 'Tóm tắt hôm nay',
@@ -16,11 +16,9 @@ export default {
     noClosingTitle: 'Chưa chốt ngày',
     noClosingDesc: 'Hãy chốt ngày.',
     historyTitle: 'Lịch sử gần đây',
-    // Chantier 11-A — i18n HomePage
     days: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
     actions: { call: 'Gọi', close: 'Chốt ngày', expense: 'Chi phí', stats: 'Thống kê' },
     locale: 'vi-VN',
-    // Chantier 11-D — Timeline
     timeline: { weekOf: 'Tuần từ' },
     summary: {
       revenue: 'Doanh thu',
@@ -123,16 +121,48 @@ export default {
   settings: {
     title: 'Cài đặt',
     sections: {
-      restaurant: { title: 'Nhà hàng', name: 'Tên', address: 'Địa chỉ', phone: 'Điện thoại', currency: 'Tiền tệ', timezone: 'Múi giờ' },
-      data: { title: 'Dữ liệu', export: 'Xuất JSON', import: 'Nhập JSON', reset: 'Đặt lại', exportHint: 'Tải xuống', importHint: 'Khôi phục', resetHint: 'Xóa toàn bộ', resetConfirm: 'Chắc chắn xóa?', importSuccess: 'Thành công', importError: 'Lỗi' },
-      about: { title: 'Giới thiệu', version: 'Phiên bản', schemaVersion: 'Dữ liệu' },
+      restaurant: {
+        title: 'Nhà hàng',
+        name: 'Tên',
+        address: 'Địa chỉ',
+        phone: 'Điện thoại',
+        currency: 'Tiền tệ',
+        timezone: 'Múi giờ',
+      },
+      data: {
+        title: 'Dữ liệu',
+        export: 'Xuất JSON',
+        import: 'Nhập JSON',
+        reset: 'Đặt lại',
+        exportHint: 'Tải xuống',
+        importHint: 'Khôi phục',
+        resetHint: 'Xóa toàn bộ',
+        resetConfirm: 'Chắc chắn xóa?',
+        importSuccess: 'Thành công',
+        importError: 'Lỗi',
+      },
+      about: {
+        title: 'Giới thiệu',
+        version: 'Phiên bản',
+        schemaVersion: 'Dữ liệu',
+      },
     },
   },
   closing: {
     title: 'Chốt ngày',
     date: 'Ngày',
+    weekOf: 'Tuần từ',
+    daySummary: 'Tóm tắt ngày',
+    itemsSold: 'Số món đã bán',
+    prevWeek: 'Tuần trước',
+    nextWeek: 'Tuần sau',
     weather: 'Thời tiết',
-    weatherOptions: { sunny: 'Nắng', cloudy: 'Mây', rainy: 'Mưa', stormy: 'Bão' },
+    weatherOptions: {
+      sunny: 'Nắng',
+      cloudy: 'Mây',
+      rainy: 'Mưa',
+      stormy: 'Bão',
+    },
     sales: 'Bán hàng',
     dishName: 'Món',
     sold: 'Bán',
@@ -180,10 +210,18 @@ export default {
     units: { sold: 'đã bán' },
   },
   common: {
-    save: 'Lưu', cancel: 'Hủy', edit: 'Sửa', delete: 'Xóa',
-    add: 'Thêm', close: 'Đóng', back: 'Quay lại', error: 'Lỗi', success: 'Thành công', loading: 'Đang tải…',
+    save: 'Lưu',
+    cancel: 'Hủy',
+    edit: 'Sửa',
+    delete: 'Xóa',
+    add: 'Thêm',
+    close: 'Đóng',
+    back: 'Quay lại',
+    error: 'Lỗi',
+    success: 'Thành công',
+    loading: 'Đang tải…',
   },
-    splash: { tagline: 'Les Rouleaux de Lime' },
+  splash: { tagline: 'Les Rouleaux de Lime' },
   firstLaunch: {
     title: 'Chào mừng đến Burihagio',
     subtitle: 'Chọn cách bắt đầu',
