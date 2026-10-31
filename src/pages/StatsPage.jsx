@@ -5,13 +5,21 @@ import { loadDataset } from '../data/storage.js';
 import { createDefaultFixtures } from '../data/fixtures.js';
 import { getActiveRestaurant } from '../data/model.js';
 import { getDishFoodCost } from '../data/calculations.js';
+import { getCategoryBreakdown } from '../data/stats.js';
 import './StatsPage.css';
+
+const CATEGORY_COLORS = {
+  dish: '#3C91A6',
+  drink: '#FF9800',
+  dessert: '#E91E63',
+  sauce: '#9C27B0',
+};
 
 export default function StatsPage() {
   const { t, formatCurrency } = useI18n();
   const [dataset, setDataset] = useState(null);
   const [activeTab, setActiveTab] = useState('overview'); // overview | top | low
-  const [selectedKpi, setSelectedKpi] = useState(null); // Pour la modale
+  const [drillDownData, setDrillDownData] = useState(null);
 
   // Chantier 11-F1 — locale i18n (vi-VN / fr-FR / en-US) pour Intl.DateTimeFormat
   const locale = t('home.locale');
@@ -114,7 +122,24 @@ export default function StatsPage() {
     };
   }, [dataset, restaurant, locale]);
 
+  const handleKpiClick = (kpiType) => {
+    const data = getCategoryBreakdown(dataset, kpiType);
+    setDrillDownData({ kpiType, ...data });
+  };
+
   if (!dataset || !stats) return <div>{t('common.loading')}</div>;
+
+  // Préparation du gradient pour le donut de drill-down
+  let drillDownGradient = '';
+  if (drillDownData && drillDownData.total > 0) {
+    let cumulative = 0;
+    const parts = drillDownData.categories.map((cat) => {
+      const start = cumulative;
+      cumulative += cat.percentage;
+      return `${CATEGORY_COLORS[cat.key]} ${start}% ${cumulative}%`;
+    });
+    drillDownGradient = `conic-gradient(${parts.join(', ')})`;
+  }
 
   return (
     <div className="stats-page">
@@ -122,7 +147,7 @@ export default function StatsPage() {
 
       {/* --- GRILLE DES KPIs --- */}
       <div className="stats-kpi-grid">
-        <div className="kpi-card" onClick={() => setSelectedKpi('revenue')}>
+        <div className="kpi-card" onClick={() => handleKpiClick('revenue')}>
           <div className="kpi-icon" style={{ background: '#FFF3E0', color: '#FF9800' }}>💰</div>
           <div className="kpi-content">
             <span className="kpi-label">{t('stats.totalRevenue')}</span>
@@ -130,7 +155,7 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <div className="kpi-card" onClick={() => setSelectedKpi('profit')}>
+        <div className="kpi-card" onClick={() => handleKpiClick('profit')}>
           <div className="kpi-icon" style={{ background: '#E0F2F1', color: '#3C91A6' }}>📈</div>
           <div className="kpi-content">
             <span className="kpi-label">{t('stats.totalProfit')}</span>
@@ -138,7 +163,7 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <div className="kpi-card" onClick={() => setSelectedKpi('items')}>
+        <div className="kpi-card" onClick={() => handleKpiClick('items')}>
           <div className="kpi-icon" style={{ background: '#F3E5F5', color: '#9C27B0' }}>🍽️</div>
           <div className="kpi-content">
             <span className="kpi-label">{t('stats.itemsSold')}</span>
@@ -223,13 +248,42 @@ export default function StatsPage() {
         </div>
       )}
 
-      {/* --- MODALE DE DÉTAIL --- */}
-      {selectedKpi && (
-        <div className="stats-modal-backdrop" onClick={() => setSelectedKpi(null)}>
+      {/* --- MODALE DE DRILL-DOWN --- */}
+      {drillDownData && (
+        <div className="stats-modal-backdrop" onClick={() => setDrillDownData(null)}>
           <div className="stats-modal" onClick={e => e.stopPropagation()}>
-            <h2>{t(`stats.${selectedKpi}Details`)}</h2>
-            <p>{t('stats.modalPlaceholder')}</p>
-            <button className="btn-close" onClick={() => setSelectedKpi(null)}>{t('common.close')}</button>
+            <h2>{t(`stats.drillDown.${drillDownData.kpiType}`)}</h2>
+            {drillDownData.total > 0 ? (
+              <div className="drilldown-container">
+                <div className="drilldown-donut" style={{ background: drillDownGradient }}>
+                  <div className="drilldown-hole">
+                    <strong>
+                      {drillDownData.kpiType === 'items'
+                        ? drillDownData.total
+                        : formatCurrency(drillDownData.total)}
+                    </strong>
+                    <span>{t('stats.total')}</span>
+                  </div>
+                </div>
+                <div className="drilldown-legend">
+                  {drillDownData.categories.map(cat => (
+                    <div key={cat.key} className="legend-item">
+                      <span className="dot" style={{ background: CATEGORY_COLORS[cat.key] }}></span>
+                      {t(`menu.sections.${cat.key}`)}
+                      <strong>
+                        {drillDownData.kpiType === 'items'
+                          ? cat.value
+                          : formatCurrency(cat.value)}
+                      </strong>
+                      <span className="pct">{Math.round(cat.percentage)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p>{t('stats.drillDown.noData')}</p>
+            )}
+            <button className="btn-close" onClick={() => setDrillDownData(null)}>{t('common.close')}</button>
           </div>
         </div>
       )}

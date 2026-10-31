@@ -205,7 +205,13 @@ export default {
     noData: 'Chưa có dữ liệu',
     noDataDesc: 'Hãy chốt ngày để xem thống kê.',
     noChartData: 'Chưa có doanh thu trong kỳ này',
-  },
+    drillDown: {
+      revenue: 'Chi tiết doanh thu theo danh mục',
+      profit: 'Chi tiết lợi nhuận theo danh mục',
+      items: 'Chi tiết món đã bán theo danh mục',
+      noData: 'Chưa có dữ liệu bán hàng cho kỳ này.',
+    },
+  }, // <--- L'ACCOLADE MANQUANTE EST ICI
   common: {
     save: 'Lưu',
     cancel: 'Hủy',

@@ -191,7 +191,13 @@ export default {
     noData: 'No data',
     noDataDesc: 'Close a day to see statistics.',
     noChartData: 'No revenue in this period',
-  },
+    drillDown: {
+      revenue: 'Revenue breakdown by category',
+      profit: 'Margin breakdown by category',
+      items: 'Items sold breakdown by category',
+      noData: 'No sales recorded for this period.',
+    },
+  }, //
   common: {
     save: 'Save',
     cancel: 'Cancel',

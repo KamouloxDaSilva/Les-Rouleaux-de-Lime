@@ -175,3 +175,50 @@ export function getGlobalSummary(dataset) {
     monthlyFixedCosts,
   };
 }
+
+/**
+ * Drill-down par catégorie pour un KPI donné.
+ * @param {object} dataset - Le dataset complet
+ * @param {string} kpiType - 'revenue' | 'profit' | 'items'
+ * @returns {{ total: number, categories: Array<{ key: string, value: number, percentage: number }> }}
+ */
+export function getCategoryBreakdown(dataset, kpiType = 'revenue') {
+  const { closings, dishes, ingredients } = filterByRestaurant(dataset);
+  const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
+
+  const categories = { dish: 0, drink: 0, dessert: 0, sauce: 0 };
+  let total = 0;
+
+  for (const c of closings) {
+    if (!c || !Array.isArray(c.sales)) continue;
+    for (const s of c.sales) {
+      const dish = dishesById[s && s.dish_id];
+      if (!dish) continue;
+      const qty = Number(s.quantity_sold) || 0;
+      if (qty <= 0) continue;
+
+      let value = 0;
+      if (kpiType === 'revenue') {
+        value = qty * (Number(dish.price) || 0);
+      } else if (kpiType === 'profit') {
+        const unitCost = getDishFoodCost(dish, ingredients);
+        value = qty * ((Number(dish.price) || 0) - unitCost);
+      } else if (kpiType === 'items') {
+        value = qty;
+      }
+
+      if (categories[dish.category] !== undefined) {
+        categories[dish.category] += value;
+        total += value;
+      }
+    }
+  }
+
+  const catList = Object.entries(categories).map(([key, value]) => ({
+    key,
+    value,
+    percentage: total > 0 ? (value / total) * 100 : 0,
+  }));
+
+  return { total, categories: catList };
+}

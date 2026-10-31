@@ -203,6 +203,70 @@
   border-radius: 8px; font-weight: 700; cursor: pointer;
 }
 
+/* --- DRILL-DOWN --- */
+.drilldown-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 16px 0;
+}
+.drilldown-donut {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.drilldown-hole {
+  position: absolute;
+  inset: 12px;
+  background: #FFF;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.drilldown-hole strong {
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+.drilldown-hole span {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+.drilldown-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.drilldown-legend .legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+.drilldown-legend .legend-item .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.drilldown-legend .legend-item strong {
+  margin-left: auto;
+  margin-right: 8px;
+}
+.drilldown-legend .legend-item .pct {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  min-width: 30px;
+  text-align: right;
+}
+
 /* =========================================================
    Chantier 11-C — Stagger cascade via animation-delay
    ========================================================= */

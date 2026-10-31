@@ -205,7 +205,13 @@ export default {
     noData: 'Aucune donnée',
     noDataDesc: 'Clôturez une journée pour voir les statistiques.',
     noChartData: 'Pas de CA sur cette période',
-  },
+    drillDown: {
+      revenue: 'Détail du CA par catégorie',
+      profit: 'Détail de la marge par catégorie',
+      items: 'Détail des articles vendus par catégorie',
+      noData: 'Aucune vente enregistrée pour cette période.',
+    },
+  }, //
   common: {
     save: 'Enregistrer',
     cancel: 'Annuler',
