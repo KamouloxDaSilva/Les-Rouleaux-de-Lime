@@ -80,11 +80,35 @@ export default function TeamPage() {
   const [newTask, setNewTask] = useState('');
   const [newTaskType, setNewTaskType] = useState('day');
 
+  // --- FILTRES PAR CATÉGORIE (Chantier 12 — Fixes UI bonus) ---
+  // 'all' | 'dish' | 'drink' | 'dessert' | 'sauce'
+  const [ingredientFilter, setIngredientFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
+
   useEffect(() => {
     setDataset(loadDataset());
   }, []);
 
   const restaurant = useMemo(() => dataset ? getActiveRestaurant(dataset) : null, [dataset]);
+
+  // --- LISTES FILTRÉES & TRIÉES ---
+  const filteredIngredients = useMemo(() => {
+    if (!dataset) return [];
+    const sorted = [...(dataset.ingredients || [])].sort(
+      (a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0)
+    );
+    if (ingredientFilter === 'all') return sorted;
+    return sorted.filter(i => (i.category || 'dish') === ingredientFilter);
+  }, [dataset, ingredientFilter]);
+
+  const filteredStock = useMemo(() => {
+    if (!dataset) return [];
+    const sorted = [...(dataset.ingredients || [])].sort(
+      (a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0)
+    );
+    if (stockFilter === 'all') return sorted;
+    return sorted.filter(i => (i.category || 'dish') === stockFilter);
+  }, [dataset, stockFilter]);
 
   function commit(next) {
     setDataset(next);
@@ -114,19 +138,11 @@ export default function TeamPage() {
     );
   }
 
-  /**
-   * Retourne le prochain sort_order pour une collection simple (mono-bucket).
-   * Évite le bug où tous les items avaient sort_order = 0 → swap no-op.
-   */
   function nextSortOrder(collection) {
     const list = dataset[collection] || [];
     return list.reduce((m, it) => Math.max(m, Number(it.sort_order) || 0), -1) + 1;
   }
 
-  /**
-   * Déplace un item dans une collection simple (employees, fixed_costs, ingredients, suppliers).
-   * Robuste : swap de positions dans le tableau puis renumérotation séquentielle 0..n-1.
-   */
   function moveItem(collection, item, direction) {
     const source = dataset[collection] || [];
     const list = [...source].sort((a, b) => {
@@ -143,10 +159,6 @@ export default function TeamPage() {
     commit({ ...dataset, [collection]: renumbered });
   }
 
-  /**
-   * Déplace une tâche à l'intérieur de son bucket (type + day_of_week pour type='day').
-   * Les sort_order des tâches ne sont significatifs qu'à l'intérieur d'un bucket.
-   */
   function moveTask(task, direction) {
     const allTasks = dataset.tasks || [];
     const bucket = bucketKey(task);
@@ -255,7 +267,7 @@ export default function TeamPage() {
     commit({ ...dataset, ingredients: nextIngs });
   }
 
-  // --- PLANNING (Chantier 12 — Fixes UI) ---
+  // --- PLANNING ---
   function nextTaskSortOrder(type, dayOfWeek) {
     const allTasks = dataset.tasks || [];
     const bucket = type === 'day' ? `day_${dayOfWeek}` : type;
@@ -287,6 +299,32 @@ export default function TeamPage() {
 
   function deleteTask(id) {
     commit({ ...dataset, tasks: (dataset.tasks || []).filter(tk => tk.id !== id) });
+  }
+
+  // --- RENDU D'UNE RANGÉE DE PILLS FILTRE (réutilisable Ingrédients + Stock) ---
+  function renderCategoryFilterPills(currentFilter, onFilterChange) {
+    return (
+      <div className="category-filter-row">
+        <button
+          type="button"
+          className={`filter-pill ${currentFilter === 'all' ? 'filter-pill--active' : ''}`}
+          onClick={() => onFilterChange('all')}
+        >
+          {t('stats.filters.all')}
+        </button>
+        {MENU_CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            type="button"
+            className={`filter-pill ${currentFilter === cat ? 'filter-pill--active' : ''}`}
+            onClick={() => onFilterChange(cat)}
+          >
+            <span className="filter-pill__emoji">{CATEGORY_EMOJI[cat]}</span>
+            <span className="filter-pill__label">{t(`menu.sections.${cat}`)}</span>
+          </button>
+        ))}
+      </div>
+    );
   }
 
   if (!dataset || !restaurant) return <div className="team-page">{t('common.loading')}</div>;
@@ -424,27 +462,37 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= INGRÉDIENTS (Fix #4 : unités traduites) ================= */}
+      {/* ================= INGRÉDIENTS (avec filtre catégorie) ================= */}
       {view === 'ingredients' && (
         <div className="section-container">
           <button className="btn-primary full-width" onClick={() => { setIngForm({ id: null, name: '', category: 'dish', unit: 'g', unit_cost: '', supplier_id: '' }); setIsFormOpen(true); }}>
             + {t('menu.ingredients.add')}
           </button>
+
+          {renderCategoryFilterPills(ingredientFilter, setIngredientFilter)}
+
           <div className="list">
-            {[...dataset.ingredients].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)).map((ing, idx, arr) => (
-              <div key={ing.id} className="list-item ingredient-card">
-                <div className="list-item-info">
-                  <h4>{CATEGORY_EMOJI[ing.category]} {ing.name}</h4>
-                  <p>{formatCurrency(ing.unit_cost)} / {unitLabel(t, ing.unit)} {ing.supplier_id && `· ${dataset.suppliers.find(s=>s.id===ing.supplier_id)?.name || ''}`}</p>
+            {filteredIngredients.length === 0 ? (
+              <div className="list-empty">{t('menu.ingredients.empty')}</div>
+            ) : (
+              filteredIngredients.map((ing, idx) => (
+                <div key={ing.id} className="list-item ingredient-card">
+                  <div className="list-item-info">
+                    <h4>
+                      <span className="category-badge" aria-hidden="true">{CATEGORY_EMOJI[ing.category] || '🍽️'}</span>
+                      {ing.name}
+                    </h4>
+                    <p>{formatCurrency(ing.unit_cost)} / {unitLabel(t, ing.unit)} {ing.supplier_id && `· ${dataset.suppliers.find(s=>s.id===ing.supplier_id)?.name || ''}`}</p>
+                  </div>
+                  <div className="list-item-actions">
+                    <button className="btn-icon" onClick={() => moveItem('ingredients', ing, 'up')} disabled={idx === 0}>↑</button>
+                    <button className="btn-icon" onClick={() => moveItem('ingredients', ing, 'down')} disabled={idx === filteredIngredients.length - 1}>↓</button>
+                    <button className="btn-edit" onClick={() => { setIngForm({ ...ing, unit_cost: String(ing.unit_cost) }); setIsFormOpen(true); }}>✏️</button>
+                    <button className="btn-delete" onClick={() => handleDeleteItem('ingredients', ing.id, ing.name)}>🗑️</button>
+                  </div>
                 </div>
-                <div className="list-item-actions">
-                  <button className="btn-icon" onClick={() => moveItem('ingredients', ing, 'up')} disabled={idx === 0}>↑</button>
-                  <button className="btn-icon" onClick={() => moveItem('ingredients', ing, 'down')} disabled={idx === arr.length - 1}>↓</button>
-                  <button className="btn-edit" onClick={() => { setIngForm({ ...ing, unit_cost: String(ing.unit_cost) }); setIsFormOpen(true); }}>✏️</button>
-                  <button className="btn-delete" onClick={() => handleDeleteItem('ingredients', ing.id, ing.name)}>🗑️</button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}
@@ -524,38 +572,47 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= STOCK (Fix #4 : unité traduite) ================= */}
+      {/* ================= STOCK (avec filtre catégorie) ================= */}
       {view === 'stock' && (
         <div className="section-container">
+          {renderCategoryFilterPills(stockFilter, setStockFilter)}
+
           <div className="list">
-            {dataset.ingredients.map(ing => {
-              const stock = ing.stock_quantity || 0;
-              const min = ing.min_stock || 0;
-              const pct = min > 0 ? Math.min(100, (stock / (min * 2)) * 100) : (stock > 0 ? 100 : 0);
-              const color = stock <= min ? '#E53935' : stock <= min * 1.5 ? '#FF9800' : '#43A047';
-              return (
-                <div key={ing.id} className="list-item stock-item">
-                  <div className="list-item-info" style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '4px' }}>
-                      <h4>{ing.name}</h4>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{stock} {unitLabel(t, ing.unit)}</span>
+            {filteredStock.length === 0 ? (
+              <div className="list-empty">{t('menu.ingredients.empty')}</div>
+            ) : (
+              filteredStock.map(ing => {
+                const stock = ing.stock_quantity || 0;
+                const min = ing.min_stock || 0;
+                const pct = min > 0 ? Math.min(100, (stock / (min * 2)) * 100) : (stock > 0 ? 100 : 0);
+                const color = stock <= min ? '#E53935' : stock <= min * 1.5 ? '#FF9800' : '#43A047';
+                return (
+                  <div key={ing.id} className="list-item stock-item">
+                    <div className="list-item-info" style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '4px' }}>
+                        <h4>
+                          <span className="category-badge" aria-hidden="true">{CATEGORY_EMOJI[ing.category] || '🍽️'}</span>
+                          {ing.name}
+                        </h4>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{stock} {unitLabel(t, ing.unit)}</span>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', background: '#F0F0F0', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: color }} />
+                      </div>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: '#F0F0F0', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${pct}%`, height: '100%', background: color }} />
+                    <div className="list-item-actions">
+                      <button className="btn-icon" onClick={() => adjustStock(ing, -1)}>-</button>
+                      <button className="btn-icon" onClick={() => adjustStock(ing, 1)}>+</button>
                     </div>
                   </div>
-                  <div className="list-item-actions">
-                    <button className="btn-icon" onClick={() => adjustStock(ing, -1)}>-</button>
-                    <button className="btn-icon" onClick={() => adjustStock(ing, 1)}>+</button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       )}
 
-      {/* ================= PLANNING (Fix #2 : 3 types de tâches persistés) ================= */}
+      {/* ================= PLANNING ================= */}
       {view === 'planning' && (
         <div className="section-container">
           <div className="planning-week">
@@ -582,7 +639,6 @@ export default function TeamPage() {
             </div>
           </div>
 
-          {/* --- Formulaire d'ajout : 3 types --- */}
           <div className="card planning-content" style={{ marginBottom: '12px' }}>
             <label style={{ fontWeight: 700, fontSize: '0.9rem', color: '#2C2C2C' }}>
               {t('team.addTask')}
@@ -618,7 +674,6 @@ export default function TeamPage() {
             </div>
           </div>
 
-          {/* --- 3 sections : Tâches du jour / de la semaine / permanentes --- */}
           {TASK_TYPES.map((type) => {
             const tasksForType = (dataset.tasks || [])
               .filter(tk => tk.type === type)
@@ -659,7 +714,6 @@ export default function TeamPage() {
 
       {/* ================= MODALES ================= */}
 
-      {/* Formulaire Employé */}
       <FormModal isOpen={isFormOpen && view === 'employees'} onClose={() => setIsFormOpen(false)} title={empForm.id ? t('common.edit') : t('team.addEmployee')}>
         <form className="form-card" onSubmit={saveEmployee}>
           <input className="form-input" type="text" placeholder={t('team.name')} value={empForm.name} onChange={e => setEmpForm({ ...empForm, name: e.target.value })} required />
@@ -676,7 +730,6 @@ export default function TeamPage() {
         </form>
       </FormModal>
 
-      {/* Formulaire Charge */}
       <FormModal isOpen={isFormOpen && view === 'costs'} onClose={() => setIsFormOpen(false)} title={costForm.id ? t('common.edit') : t('team.addFixedCost')}>
         <form className="form-card" onSubmit={saveCost}>
           <input className="form-input" type="text" placeholder={t('team.name')} value={costForm.name} onChange={e => setCostForm({ ...costForm, name: e.target.value })} required />
@@ -692,7 +745,6 @@ export default function TeamPage() {
         </form>
       </FormModal>
 
-      {/* Formulaire Ingrédient (Fix #4 : unités traduites) */}
       <FormModal isOpen={isFormOpen && view === 'ingredients'} onClose={() => setIsFormOpen(false)} title={ingForm.id ? t('common.edit') : t('menu.ingredients.add')}>
         <form className="form-card" onSubmit={saveIngredient}>
           <input className="form-input" type="text" placeholder={t('menu.ingredients.name')} value={ingForm.name} onChange={e => setIngForm({ ...ingForm, name: e.target.value })} required />
@@ -713,7 +765,6 @@ export default function TeamPage() {
         </form>
       </FormModal>
 
-      {/* Formulaire Fournisseur */}
       <FormModal isOpen={isFormOpen && view === 'suppliers'} onClose={() => setIsFormOpen(false)} title={supForm.id ? t('common.edit') : t('team.addSupplier')}>
         <form className="form-card" onSubmit={saveSupplier}>
           <input className="form-input" type="text" placeholder={t('team.name')} value={supForm.name} onChange={e => setSupForm({ ...supForm, name: e.target.value })} required />
@@ -723,7 +774,6 @@ export default function TeamPage() {
         </form>
       </FormModal>
 
-      {/* Formulaire Dépense */}
       <FormModal isOpen={isFormOpen && view === 'expenses'} onClose={() => setIsFormOpen(false)} title={t('team.addExpense')}>
         <form className="form-card" onSubmit={saveExpense}>
           <input className="form-input" type="number" placeholder={t('team.amount')} value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} required />
@@ -735,7 +785,6 @@ export default function TeamPage() {
         </form>
       </FormModal>
 
-      {/* Formulaire Promotion */}
       <FormModal isOpen={isFormOpen && view === 'promotions'} onClose={() => setIsFormOpen(false)} title={t('team.addPromo')}>
         <form className="form-card" onSubmit={savePromotion}>
           <select className="form-select" value={promoForm.dish_id} onChange={e => setPromoForm({ ...promoForm, dish_id: e.target.value })} required>

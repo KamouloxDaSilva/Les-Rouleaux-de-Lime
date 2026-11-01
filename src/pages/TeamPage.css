@@ -2,7 +2,6 @@
 /* =========================================================
    Burihagio — Onglet Gestion (Chantier 12)
    Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
-   Design : Cartes blanches, ombres douces, épuré
    ========================================================= */
 
 .team-page {
@@ -26,10 +25,7 @@
   margin-bottom: 20px;
 }
 
-.team-header .back-button {
-  grid-column: 1;
-  justify-self: start;
-}
+.team-header .back-button { grid-column: 1; justify-self: start; }
 
 .team-title {
   grid-column: 2;
@@ -42,18 +38,8 @@
 }
 
 /* --- DASHBOARD GESTION (Hub) --- */
-.management-hub {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.hub-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
+.management-hub { display: flex; flex-direction: column; gap: 20px; }
+.hub-section { display: flex; flex-direction: column; gap: 10px; }
 .hub-section-title {
   font-size: 0.8rem;
   font-weight: 800;
@@ -63,13 +49,8 @@
   margin-left: 4px;
 }
 
-.team-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+.team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-/* Cartes du Dashboard (Style Image) */
 .team-card {
   background: #FFFFFF;
   border-radius: 20px;
@@ -85,12 +66,7 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   animation: fadeInUp 0.3s ease-out both;
 }
-
-.team-card:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
+.team-card:active { transform: scale(0.95); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
 .team-card .icon {
   font-size: 1.8rem;
   width: 56px;
@@ -101,31 +77,16 @@
   border-radius: 50%;
   margin-bottom: 10px;
 }
+.team-card h3 { margin: 0; font-size: 0.95rem; font-weight: 800; color: #2C2C2C; }
+.team-card p { margin: 4px 0 0; font-size: 0.72rem; font-weight: 600; color: #8A8A8A; }
 
-.team-card h3 {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #2C2C2C;
-}
-
-.team-card p {
-  margin: 4px 0 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #8A8A8A;
-}
-
-/* Couleurs des icônes (fonds pastel) */
 .card-blue .icon { background: #EAF4F6; color: #3C91A6; }
 .card-orange .icon { background: #FFF3E0; color: #FF9800; }
 .card-green .icon { background: #E8F5E9; color: #43A047; }
 .card-purple .icon { background: #F3E5F5; color: #9C27B0; }
 
-/* --- VUES SECONDAIRES (Listes) --- */
-.section-container {
-  animation: fadeInUp 0.3s ease-out both;
-}
+/* --- VUES SECONDAIRES --- */
+.section-container { animation: fadeInUp 0.3s ease-out both; }
 
 .btn-primary {
   background: #FF9800;
@@ -140,20 +101,20 @@
   box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
   transition: transform 0.15s, filter 0.15s;
 }
+.btn-primary:active { transform: scale(0.96); }
+.btn-primary.full-width { width: 100%; margin-bottom: 16px; }
 
-.btn-primary:active {
-  transform: scale(0.96);
-}
+.list { display: flex; flex-direction: column; gap: 12px; }
 
-.btn-primary.full-width {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.list-empty {
+  text-align: center;
+  padding: 24px 12px;
+  color: #8A8A8A;
+  font-size: 0.85rem;
+  font-style: italic;
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px dashed #E0E0E0;
 }
 
 .list-item {
@@ -168,14 +129,7 @@
   animation: fadeInUp 0.3s ease-out both;
 }
 
-.list-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
+.list-item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .list-item-info h4 {
   margin: 0;
   font-size: 0.95rem;
@@ -185,7 +139,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .list-item-info p {
   margin: 0;
   font-size: 0.8rem;
@@ -195,14 +148,8 @@
   text-overflow: ellipsis;
 }
 
-.list-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
+.list-item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
-/* Boutons d'action (↑ / ↓ / Edit / Delete) */
 .btn-icon {
   background: #F5F5F5;
   border: none;
@@ -217,17 +164,10 @@
   cursor: pointer;
   transition: background 0.15s;
 }
+.btn-icon:active { background: #E0E0E0; }
+.btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
 
-.btn-icon:active {
-  background: #E0E0E0;
-}
-
-.btn-icon:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.btn-edit {
+.btn-edit, .btn-delete {
   background: transparent;
   border: none;
   font-size: 1.1rem;
@@ -236,41 +176,63 @@
   border-radius: 8px;
   transition: background 0.15s;
 }
+.btn-edit:active, .btn-delete:active { background: rgba(0, 0, 0, 0.05); }
 
-.btn-delete {
-  background: transparent;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  transition: background 0.15s;
+/* --- BADGE CATÉGORIE sur les cartes ingrédients --- */
+.category-badge {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 1rem;
+  line-height: 1;
+  vertical-align: middle;
 }
 
-.btn-edit:active, .btn-delete:active {
-  background: rgba(0, 0, 0, 0.05);
+/* --- FILTRES PAR CATÉGORIE (Chantier 12 — Fixes UI bonus) --- */
+.category-filter-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.category-filter-row::-webkit-scrollbar { display: none; }
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #FFFFFF;
+  color: #2C2C2C;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-pill__emoji { font-size: 0.95rem; line-height: 1; }
+.filter-pill__label { line-height: 1; }
+
+.filter-pill--active {
+  background: #3C91A6;
+  color: #FFFFFF;
+  border-color: #3C91A6;
+  box-shadow: 0 4px 12px rgba(60, 145, 166, 0.3);
 }
 
 /* --- CARTES SPÉCIFIQUES --- */
-/* Ingrédients */
-.ingredient-card {
-  border-left: 4px solid #FF9800;
-}
+.ingredient-card { border-left: 4px solid #FF9800; }
+.promo-active { border-left: 4px solid #43A047; }
+.promo-inactive { border-left: 4px solid #BDBDBD; opacity: 0.6; }
 
-/* Promotions */
-.promo-active {
-  border-left: 4px solid #43A047;
-}
-.promo-inactive {
-  border-left: 4px solid #BDBDBD;
-  opacity: 0.6;
-}
-
-/* Stock */
-.stock-item {
-  flex-direction: column;
-  align-items: stretch;
-}
+.stock-item { flex-direction: column; align-items: stretch; }
 .stock-item .list-item-info {
   flex-direction: row;
   justify-content: space-between;
@@ -300,36 +262,17 @@
   transition: all 0.2s;
   border: 2px solid transparent;
 }
-
-.planning-day-card .day-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #7A7A7A;
-}
-
-.planning-day-card .day-number {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #2C2C2C;
-  margin-top: 2px;
-}
-
-.planning-day-card.weekend .day-label {
-  color: #FF9800;
-}
-
+.planning-day-card .day-label { font-size: 0.7rem; font-weight: 700; color: #7A7A7A; }
+.planning-day-card .day-number { font-size: 1rem; font-weight: 800; color: #2C2C2C; margin-top: 2px; }
+.planning-day-card.weekend .day-label { color: #FF9800; }
 .planning-day-card.active {
   background: #3C91A6;
   border-color: #3C91A6;
   box-shadow: 0 4px 12px rgba(60, 145, 166, 0.3);
 }
-
 .planning-day-card.active .day-label,
-.planning-day-card.active .day-number {
-  color: #FFFFFF;
-}
+.planning-day-card.active .day-number { color: #FFFFFF; }
 
-/* Contenu du planning */
 .card {
   background: #FFFFFF;
   border-radius: 20px;
@@ -338,31 +281,11 @@
   border: 1px solid #F0F0F0;
 }
 
-.planning-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+.planning-content { display: flex; flex-direction: column; gap: 16px; }
+.planning-row { display: flex; align-items: center; gap: 12px; }
+.planning-row label { font-weight: 700; font-size: 0.85rem; color: #4A4A4A; min-width: 60px; }
 
-.planning-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.planning-row label {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #4A4A4A;
-  min-width: 60px;
-}
-
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
+.tasks-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 
 .task-item {
   display: flex;
@@ -375,13 +298,8 @@
   font-size: 0.9rem;
 }
 
-/* --- SÉLECTEUR DE TYPE DE TÂCHE (Chantier 12 — Fixes UI) --- */
-.task-type-selector {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
+/* --- SÉLECTEUR DE TYPE DE TÂCHE --- */
+.task-type-selector { display: flex; gap: 8px; width: 100%; }
 .task-type-btn {
   flex: 1;
   min-height: 40px;
@@ -399,29 +317,17 @@
   line-height: 1.2;
   text-align: center;
 }
-
-.task-type-btn:active {
-  transform: scale(0.97);
-}
-
+.task-type-btn:active { transform: scale(0.97); }
 .task-type-btn--active {
   background: #3C91A6;
   border-color: #3C91A6;
   color: #FFFFFF;
   box-shadow: 0 4px 12px rgba(60, 145, 166, 0.25);
 }
+.task-type-btn--active:active { background: #2F7A8C; }
 
-.task-type-btn--active:active {
-  background: #2F7A8C;
-}
-
-/* --- FORMULAIRES (utilisés dans les Modales) --- */
-.form-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+/* --- FORMULAIRES --- */
+.form-card { display: flex; flex-direction: column; gap: 12px; }
 .form-input, .form-select {
   width: 100%;
   padding: 14px 16px;
@@ -435,20 +341,9 @@
   outline: none;
   transition: border-color 0.2s;
 }
-
-.form-input:focus, .form-select:focus {
-  border-color: #3C91A6;
-}
-
-.row-inputs {
-  display: flex;
-  gap: 10px;
-}
-
-.row-inputs > * {
-  flex: 1;
-  min-width: 0;
-}
+.form-input:focus, .form-select:focus { border-color: #3C91A6; }
+.row-inputs { display: flex; gap: 10px; }
+.row-inputs > * { flex: 1; min-width: 0; }
 
 /* --- ANIMATIONS --- */
 @keyframes fadeInUp {
@@ -456,7 +351,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Stagger cascade pour le Dashboard */
 .team-grid > .team-card:nth-child(1) { animation-delay: 0ms; }
 .team-grid > .team-card:nth-child(2) { animation-delay: 40ms; }
 .team-grid > .team-card:nth-child(3) { animation-delay: 80ms; }
@@ -464,7 +358,6 @@
 .team-grid > .team-card:nth-child(5) { animation-delay: 160ms; }
 .team-grid > .team-card:nth-child(6) { animation-delay: 200ms; }
 
-/* Stagger cascade pour les listes */
 .list > .list-item:nth-child(1) { animation-delay: 0ms; }
 .list > .list-item:nth-child(2) { animation-delay: 40ms; }
 .list > .list-item:nth-child(3) { animation-delay: 80ms; }
@@ -472,26 +365,16 @@
 .list > .list-item:nth-child(5) { animation-delay: 160ms; }
 .list > .list-item:nth-child(n+6) { animation-delay: 200ms; }
 
-/* --- RESPONSIVE (petits écrans) --- */
 @media (max-width: 400px) {
-  .task-type-selector {
-    flex-direction: column;
-  }
-  .task-type-btn {
-    width: 100%;
-  }
+  .task-type-selector { flex-direction: column; }
+  .task-type-btn { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .team-card,
   .list-item,
-  .section-container {
-    animation: none;
-  }
-  .team-card:active {
-    transform: none;
-  }
-  .task-type-btn:active {
-    transform: none;
-  }
+  .section-container { animation: none; }
+  .team-card:active { transform: none; }
+  .task-type-btn:active { transform: none; }
+  .filter-pill:active { transform: none; }
 }
