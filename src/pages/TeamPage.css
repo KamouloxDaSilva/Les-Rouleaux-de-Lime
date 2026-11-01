@@ -1,6 +1,8 @@
+/* src/pages/TeamPage.css */
 /* =========================================================
-   TeamPage — Refonte (Chantier 7) + polish 11-A + anim 11-C
+   Burihagio — Onglet Gestion (Chantier 12)
    Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
+   Design : Cartes blanches, ombres douces, épuré
    ========================================================= */
 
 .team-page {
@@ -15,7 +17,7 @@
   margin: 0 auto;
 }
 
-/* Header — Chantier 11-A : grille 1fr auto 1fr */
+/* --- HEADER --- */
 .team-header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -33,50 +35,347 @@
   grid-column: 2;
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 1.6rem;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
   text-align: center;
+  color: #2C2C2C;
 }
 
-/* --- DASHBOARD --- */
+/* --- DASHBOARD GESTION (Hub) --- */
+.management-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hub-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hub-section-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #8A8A8A;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+}
+
 .team-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
 }
+
+/* Cartes du Dashboard (Style Image) */
 .team-card {
+  background: #FFFFFF;
   border-radius: 20px;
-  padding: 20px 16px;
-  color: #FFF;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  border: 1px solid #F0F0F0;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-  transition: transform 0.15s ease;
-  /* Chantier 11-C — fadeInUp global */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   animation: fadeInUp 0.3s ease-out both;
 }
-.team-card:active { transform: scale(0.95); }
-.team-card h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
-.team-card p { margin: 0; font-size: 0.85rem; opacity: 0.9; }
-.team-card .icon { font-size: 2rem; margin-bottom: 4px; }
-.card-blue { background: linear-gradient(135deg, #3C91A6, #5BB2C7); }
-.card-orange { background: linear-gradient(135deg, #FF9800, #FFB74D); }
-.card-green { background: linear-gradient(135deg, #43A047, #66BB6A); }
-.card-purple { background: linear-gradient(135deg, #8E44AD, #9B59B6); }
 
-/* --- CARTES & FORMULAIRES GLOBAUX --- */
+.team-card:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.team-card .icon {
+  font-size: 1.8rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.team-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #2C2C2C;
+}
+
+.team-card p {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8A8A8A;
+}
+
+/* Couleurs des icônes (fonds pastel) */
+.card-blue .icon { background: #EAF4F6; color: #3C91A6; }
+.card-orange .icon { background: #FFF3E0; color: #FF9800; }
+.card-green .icon { background: #E8F5E9; color: #43A047; }
+.card-purple .icon { background: #F3E5F5; color: #9C27B0; }
+
+/* --- VUES SECONDAIRES (Listes) --- */
+.section-container {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.btn-primary {
+  background: #FF9800;
+  color: #FFFFFF;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+}
+
+.btn-primary.full-width {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFFFF;
+  padding: 14px 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #F0F0F0;
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.list-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item-info h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-item-info p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #8A8A8A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Boutons d'action (↑ / ↓ / Edit / Delete) */
+.btn-icon {
+  background: #F5F5F5;
+  border: none;
+  color: #7A7A7A;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-icon:active {
+  background: #E0E0E0;
+}
+
+.btn-icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-edit {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.btn-delete {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.btn-edit:active, .btn-delete:active {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* --- CARTES SPÉCIFIQUES --- */
+/* Ingrédients */
+.ingredient-card {
+  border-left: 4px solid #FF9800;
+}
+
+/* Promotions */
+.promo-active {
+  border-left: 4px solid #43A047;
+}
+.promo-inactive {
+  border-left: 4px solid #BDBDBD;
+  opacity: 0.6;
+}
+
+/* Stock */
+.stock-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+.stock-item .list-item-info {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* --- PLANNING --- */
+.planning-week {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.planning-day-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  padding: 10px 0;
+  border-radius: 14px;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.planning-day-card .day-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #7A7A7A;
+}
+
+.planning-day-card .day-number {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  margin-top: 2px;
+}
+
+.planning-day-card.weekend .day-label {
+  color: #FF9800;
+}
+
+.planning-day-card.active {
+  background: #3C91A6;
+  border-color: #3C91A6;
+  box-shadow: 0 4px 12px rgba(60, 145, 166, 0.3);
+}
+
+.planning-day-card.active .day-label,
+.planning-day-card.active .day-number {
+  color: #FFFFFF;
+}
+
+/* Contenu du planning */
 .card {
   background: #FFFFFF;
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 6px 18px rgba(44, 44, 44, 0.05);
-  margin-bottom: 16px;
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.3s ease-out both;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  border: 1px solid #F0F0F0;
 }
 
+.planning-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.planning-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.planning-row label {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #4A4A4A;
+  min-width: 60px;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FAFAFA;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #F0F0F0;
+  font-size: 0.9rem;
+}
+
+/* --- FORMULAIRES (utilisés dans les Modales) --- */
 .form-card {
   display: flex;
   flex-direction: column;
@@ -88,7 +387,7 @@
   padding: 14px 16px;
   border: 1px solid #EBEBEB;
   border-radius: 12px;
-  background: #F9F9F9;
+  background: #FFFFFF;
   font-family: inherit;
   font-size: 0.95rem;
   color: #2C2C2C;
@@ -96,245 +395,50 @@
   outline: none;
   transition: border-color 0.2s;
 }
+
 .form-input:focus, .form-select:focus {
   border-color: #3C91A6;
-  background: #FFFFFF;
 }
 
-.row-inputs { display: flex; gap: 10px; }
-.row-inputs > * { flex: 1; }
-
-.btn-primary {
-  background: #FF9800;
-  color: #FFFFFF;
-  border: none;
-  padding: 14px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  font-family: inherit;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
-  transition: transform 0.15s;
-}
-.btn-primary:active { transform: scale(0.95); }
-
-/* --- LISTES D'ÉLÉMENTS --- */
-.list { display: flex; flex-direction: column; gap: 12px; }
-.list-item {
+.row-inputs {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #FFFFFF;
-  padding: 16px 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.04);
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.3s ease-out both;
-}
-.list-item-info h4 { margin: 0 0 4px; font-size: 1rem; font-weight: 700; }
-.list-item-info p { margin: 0; font-size: 0.85rem; color: #7A7A7A; }
-.btn-edit {
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: #FF9800;
-  padding: 8px;
-  border-radius: 8px;
-  transition: transform 0.15s ease;
-}
-.btn-edit:hover { background: rgba(255, 152, 0, 0.1); }
-.btn-delete {
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: #E53E3E;
-  padding: 8px;
-  transition: transform 0.15s ease;
+  gap: 10px;
 }
 
-/* --- CHARGES FIXES --- */
-.total-card {
-  background: #3C91A6;
-  color: #FFF;
-  border-radius: 16px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.3s ease-out both;
-  animation-delay: 200ms;
-}
-.total-card-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.95rem;
-}
-.total-card-row.main {
-  font-size: 1.2rem;
-  font-weight: 700;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-  padding-bottom: 8px;
-  margin-bottom: 4px;
-}
-.total-card-row.sub { opacity: 0.85; }
-
-/* --- PLANNING CALENDRIER --- */
-.planning-week {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 20px;
-}
-.planning-day-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: #FFFFFF;
-  padding: 12px 0;
-  border-radius: 16px;
+.row-inputs > * {
   flex: 1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.3s ease-out both;
-}
-.planning-day-card .day-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #7A7A7A;
-}
-.planning-day-card .day-number {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #2C2C2C;
-  margin-top: 4px;
-}
-.planning-day-card.active {
-  background: #3C91A6;
-  border-color: #3C91A6;
-  box-shadow: 0 6px 15px rgba(60, 145, 166, 0.3);
-}
-.planning-day-card.active .day-label,
-.planning-day-card.active .day-number { color: #FFF; }
-.planning-day-card.weekend .day-label { color: #FF9800; }
-.planning-day-card.active.weekend .day-label { color: #FFF; }
-
-/* Détails du planning */
-.planning-content { display: flex; flex-direction: column; gap: 16px; }
-.planning-row { display: flex; align-items: center; gap: 12px; }
-.planning-row label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #4A4A4A;
-  min-width: 80px;
-}
-.tasks-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-.task-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #F9F9F9;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  min-width: 0;
 }
 
-/* --- INGRÉDIENTS (Coût) --- */
-.ingredient-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #FFFFFF;
-  padding: 14px 16px;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.04);
-  border-left: 4px solid #FF9800;
-  /* Chantier 11-C — fadeInUp global */
-  animation: fadeInUp 0.3s ease-out both;
-}
-.ingredient-info h4 { margin: 0 0 4px; font-size: 1rem; }
-.ingredient-info p { margin: 0; font-size: 0.8rem; color: #7A7A7A; }
-.ingredient-price { font-weight: 700; color: #3C91A6; font-size: 0.95rem; }
-
-/* --- FILTRES CATÉGORIES --- */
-.filter-pills {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  margin-bottom: 16px;
-  scrollbar-width: none;
-}
-.filter-pills::-webkit-scrollbar { display: none; }
-.filter-pill {
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: #FFFFFF;
-  border: none;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-  white-space: nowrap;
-  color: #7A7A7A;
-}
-.filter-pill.active {
-  background: #3C91A6;
-  color: #FFFFFF;
+/* --- ANIMATIONS --- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================================
-   Chantier 11-C — Stagger cascade via animation-delay
-   ========================================================= */
+/* Stagger cascade pour le Dashboard */
 .team-grid > .team-card:nth-child(1) { animation-delay: 0ms; }
 .team-grid > .team-card:nth-child(2) { animation-delay: 40ms; }
 .team-grid > .team-card:nth-child(3) { animation-delay: 80ms; }
 .team-grid > .team-card:nth-child(4) { animation-delay: 120ms; }
+.team-grid > .team-card:nth-child(5) { animation-delay: 160ms; }
+.team-grid > .team-card:nth-child(6) { animation-delay: 200ms; }
 
-.list > .list-item:nth-child(1),
-.list > .ingredient-card:nth-child(1) { animation-delay: 0ms; }
-.list > .list-item:nth-child(2),
-.list > .ingredient-card:nth-child(2) { animation-delay: 40ms; }
-.list > .list-item:nth-child(3),
-.list > .ingredient-card:nth-child(3) { animation-delay: 80ms; }
-.list > .list-item:nth-child(4),
-.list > .ingredient-card:nth-child(4) { animation-delay: 120ms; }
-.list > .list-item:nth-child(5),
-.list > .ingredient-card:nth-child(5) { animation-delay: 160ms; }
-.list > .list-item:nth-child(6),
-.list > .ingredient-card:nth-child(6) { animation-delay: 200ms; }
-.list > .list-item:nth-child(7),
-.list > .ingredient-card:nth-child(7) { animation-delay: 240ms; }
-.list > .list-item:nth-child(8),
-.list > .ingredient-card:nth-child(8) { animation-delay: 280ms; }
-.list > .list-item:nth-child(n+9),
-.list > .ingredient-card:nth-child(n+9) { animation-delay: 320ms; }
+/* Stagger cascade pour les listes */
+.list > .list-item:nth-child(1) { animation-delay: 0ms; }
+.list > .list-item:nth-child(2) { animation-delay: 40ms; }
+.list > .list-item:nth-child(3) { animation-delay: 80ms; }
+.list > .list-item:nth-child(4) { animation-delay: 120ms; }
+.list > .list-item:nth-child(5) { animation-delay: 160ms; }
+.list > .list-item:nth-child(n+6) { animation-delay: 200ms; }
 
-.planning-week > .planning-day-card:nth-child(1) { animation-delay: 0ms; }
-.planning-week > .planning-day-card:nth-child(2) { animation-delay: 40ms; }
-.planning-week > .planning-day-card:nth-child(3) { animation-delay: 80ms; }
-.planning-week > .planning-day-card:nth-child(4) { animation-delay: 120ms; }
-.planning-week > .planning-day-card:nth-child(5) { animation-delay: 160ms; }
-.planning-week > .planning-day-card:nth-child(6) { animation-delay: 200ms; }
-.planning-week > .planning-day-card:nth-child(7) { animation-delay: 240ms; }
-
-/* Respect de la préférence système (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
   .team-card,
-  .card,
   .list-item,
-  .total-card,
-  .planning-day-card,
-  .ingredient-card {
+  .section-container {
     animation: none;
+  }
+  .team-card:active {
+    transform: none;
   }
 }

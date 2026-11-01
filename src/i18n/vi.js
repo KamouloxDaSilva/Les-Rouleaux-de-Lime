@@ -1,7 +1,7 @@
 // src/i18n/vi.js
 export default {
   app: { name: 'Burihagio' },
-  nav: { home: 'Trang chủ', closing: 'Chốt ngày', menu: 'Thực đơn', team: 'Đội ngũ', settings: 'Cài đặt', stats: 'Thống kê' },
+  nav: { home: 'Trang chủ', closing: 'Chốt ngày', menu: 'Thực đơn', team: 'Quản lý', settings: 'Cài đặt', stats: 'Thống kê' },
   home: {
     greeting: 'Xin chào !',
     subtitle: 'Hôm nay ăn gì?',
@@ -73,7 +73,7 @@ export default {
     pricePerUnit: 'Giá/đơn vị',
   },
   team: {
-    title: 'Đội ngũ',
+    title: 'Quản lý',
     dashboard: 'Tổng quan',
     back: 'Quay lại',
     fixedCosts: 'Chi phí cố định',
@@ -116,6 +116,33 @@ export default {
     taskPlaceholder: 'Nhập công việc...',
     yearlyCost: 'Chi phí năm',
     fixedCostsYearly: 'Tổng chi phí năm',
+
+    // --- NOUVELLES CLÉS (Chantier 12) ---
+    sections: {
+      hr: 'Nhân sự',
+      finance: 'Tài chính',
+      stock: 'Hàng hóa',
+      marketing: 'Tiếp thị',
+    },
+    expenses: 'Chi phí phát sinh',
+    stock: 'Kho hàng',
+    suppliers: 'Nhà cung cấp',
+    promotions: 'Khuyến mãi',
+    addSupplier: 'Thêm nhà cung cấp',
+    addExpense: 'Thêm chi phí',
+    addPromo: 'Thêm khuyến mãi',
+    noSupplier: 'Không có nhà cung cấp',
+    phone: 'Điện thoại',
+    notes: 'Ghi chú',
+    selectDish: 'Chọn món',
+    filters: { items: 'mục' },
+    expenseCats: {
+      material: 'Thiết bị',
+      repair: 'Sửa chữa',
+      transport: 'Vận chuyển',
+      marketing: 'Tiếp thị',
+      other: 'Khác',
+    },
   },
   placeholder: { comingSoon: 'Đang phát triển...' },
   settings: {

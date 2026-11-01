@@ -1,0 +1,102 @@
+/* src/components/FormModal.css */
+.form-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end; /* Sur mobile, la modale monte du bas */
+  justify-content: center;
+  animation: fadeInBackdrop 0.2s ease-out;
+}
+
+.form-modal {
+  background: #FAEBD5; /* Fond crème pour la modale */
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh; /* Évite de dépasser l'écran */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.form-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.form-modal__title {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #3C91A6; /* Bleu de la charte */
+  margin: 0;
+}
+
+.form-modal__close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  color: #2C2C2C;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.form-modal__close-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.9);
+}
+
+.form-modal__content {
+  padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+
+/* Sur tablette/desktop, la modale est centrée */
+@media (min-width: 600px) {
+  .form-modal-backdrop {
+    align-items: center;
+    padding: 20px;
+  }
+  .form-modal {
+    border-radius: 24px;
+    max-height: 85vh;
+  }
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-modal-backdrop,
+  .form-modal {
+    animation: none;
+  }
+  .form-modal__close-btn:active {
+    transform: none;
+  }
+}

@@ -55,7 +55,53 @@ function migrateFromV5(dataset) {
     };
   });
 
-  next.schema_version = SCHEMA_VERSION; // Passe à la v6
+  next.schema_version = 6; // Passe à la v6, la v7 s'occupera de la suite
+  return next;
+}
+
+// Migration v6 → v7 : Chantier 12 (Refonte Gestion)
+// Ajout des collections suppliers, expenses, promotions
+// Ajout des champs sort_order, stock_quantity, min_stock, supplier_id
+function migrateFromV6(dataset) {
+  if (!dataset || typeof dataset !== 'object') return dataset;
+  const next = { ...dataset };
+
+  // 1. Ajout des nouvelles collections
+  next.suppliers = next.suppliers || [];
+  next.expenses = next.expenses || [];
+  next.promotions = next.promotions || [];
+
+  // 2. Mise à jour des ingrédients
+  next.ingredients = (next.ingredients || []).map(ing => {
+    if (!ing || typeof ing !== 'object') return ing;
+    return {
+      ...ing,
+      stock_quantity: Number.isFinite(ing.stock_quantity) ? ing.stock_quantity : 0,
+      min_stock: Number.isFinite(ing.min_stock) ? ing.min_stock : 0,
+      supplier_id: ing.supplier_id || '',
+      sort_order: Number.isFinite(ing.sort_order) ? ing.sort_order : 0,
+    };
+  });
+
+  // 3. Mise à jour des employés (ajout de sort_order)
+  next.employees = (next.employees || []).map(emp => {
+    if (!emp || typeof emp !== 'object') return emp;
+    return {
+      ...emp,
+      sort_order: Number.isFinite(emp.sort_order) ? emp.sort_order : 0,
+    };
+  });
+
+  // 4. Mise à jour des charges fixes (ajout de sort_order)
+  next.fixed_costs = (next.fixed_costs || []).map(cost => {
+    if (!cost || typeof cost !== 'object') return cost;
+    return {
+      ...cost,
+      sort_order: Number.isFinite(cost.sort_order) ? cost.sort_order : 0,
+    };
+  });
+
+  next.schema_version = SCHEMA_VERSION; // Passe à la v7
   return next;
 }
 
@@ -65,50 +111,65 @@ export function loadDataset() {
 
   let raw = null;
 
-  // 1) Version courante (v6)
+  // 1) Version courante (v7)
   try { raw = storage.getItem(STORAGE_KEY); } catch (e) { return createEmptyDataset(); }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
+      // Sécurité : s'assurer que les tableaux existent
       if (!parsed.planning) parsed.planning = [];
+      if (!parsed.suppliers) parsed.suppliers = [];
+      if (!parsed.expenses) parsed.expenses = [];
+      if (!parsed.promotions) parsed.promotions = [];
+      
       const { ok } = validateDataset(parsed);
       if (ok) return parsed;
     } catch (e) { /* corrupted → continue */ }
     raw = null;
   }
 
-  // 2) Migration depuis v5 (version juste avant ce chantier)
+  // 2) Migration depuis v6
+  try { raw = storage.getItem('rdl.dataset.v6'); } catch (e) { raw = null; }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      const migrated = migrateFromV6(parsed);
+      if (!migrated.planning) migrated.planning = [];
+      try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
+      return migrated;
+    } catch (e) { raw = null; }
+  }
+
+  // 3) Migration depuis v5
   try { raw = storage.getItem('rdl.dataset.v5'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      const migrated = migrateFromV5(parsed);
+      const migrated = migrateFromV6(migrateFromV5(parsed));
       if (!migrated.planning) migrated.planning = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
       return migrated;
     } catch (e) { raw = null; }
   }
 
-  // 3) Migration depuis v4
+  // 4) Migration depuis v4
   try { raw = storage.getItem('rdl.dataset.v4'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      // On chaîne les migrations : v4 -> v5 -> v6
-      const migrated = migrateFromV5(migrateFromV4(parsed));
+      const migrated = migrateFromV6(migrateFromV5(migrateFromV4(parsed)));
       if (!migrated.planning) migrated.planning = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
       return migrated;
     } catch (e) { raw = null; }
   }
 
-  // 4) Migration depuis v3
+  // 5) Migration depuis v3
   try { raw = storage.getItem('rdl.dataset.v3'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      // On chaîne les migrations : v3 -> v4 (via logique) -> v5 -> v6
-      const migrated = migrateFromV5(migrateFromV4(parsed));
+      const migrated = migrateFromV6(migrateFromV5(migrateFromV4(parsed)));
       if (!migrated.planning) migrated.planning = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
       return migrated;
@@ -146,10 +207,14 @@ export function importDatasetFromJSON(text) {
   
   // Applique la même chaîne de migration si l'utilisateur importe un vieux fichier
   let migrated = parsed;
-  if (parsed.schema_version < 5) migrated = migrateFromV4(parsed);
+  if (parsed.schema_version < 5) migrated = migrateFromV4(migrated);
   if (parsed.schema_version < 6) migrated = migrateFromV5(migrated);
+  if (parsed.schema_version < 7) migrated = migrateFromV6(migrated);
   
   if (!migrated.planning) migrated.planning = [];
+  if (!migrated.suppliers) migrated.suppliers = [];
+  if (!migrated.expenses) migrated.expenses = [];
+  if (!migrated.promotions) migrated.promotions = [];
   
   const { ok, errors } = validateDataset(migrated);
   if (!ok) return { ok: false, errors };

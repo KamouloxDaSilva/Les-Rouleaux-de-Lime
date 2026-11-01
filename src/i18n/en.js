@@ -1,7 +1,7 @@
 // src/i18n/en.js
 export default {
   app: { name: 'Burihagio' },
-  nav: { home: 'Home', closing: 'Closing', menu: 'Menu', team: 'Team', settings: 'Settings', stats: 'Stats' },
+  nav: { home: 'Home', closing: 'Closing', menu: 'Menu', team: 'Management', settings: 'Settings', stats: 'Stats' },
   home: {
     greeting: 'Hello!',
     subtitle: 'What are we eating today?',
@@ -20,7 +20,11 @@ export default {
     actions: { call: 'Call', close: 'Close', expense: 'Expense', stats: 'View Stats' },
     locale: 'en-US',
     timeline: { weekOf: 'Week of' },
-    summary: { revenue: 'Revenue', margin: 'Margin', itemsSold: 'Items' },
+    summary: {
+      revenue: 'Revenue',
+      margin: 'Margin',
+      itemsSold: 'Items',
+    },
     empty: {
       title: 'Not closed yet',
       desc: 'No sales recorded for this day.',
@@ -29,7 +33,12 @@ export default {
   },
   menu: {
     title: 'Menu',
-    sections: { dish: 'Dishes', drink: 'Drinks', dessert: 'Desserts', sauce: 'Sauces' },
+    sections: {
+      dish: 'Dishes',
+      drink: 'Drinks',
+      dessert: 'Desserts',
+      sauce: 'Sauces',
+    },
     tabs: { dishes: 'Dishes', ingredients: 'Ingredients' },
     addDish: 'Add',
     addIngredient: 'Add',
@@ -64,7 +73,7 @@ export default {
     pricePerUnit: 'Price / unit',
   },
   team: {
-    title: 'Team',
+    title: 'Management',
     dashboard: 'Overview',
     back: 'Back',
     fixedCosts: 'Fixed Costs',
@@ -107,6 +116,33 @@ export default {
     taskPlaceholder: 'Enter a task...',
     yearlyCost: 'Yearly cost',
     fixedCostsYearly: 'Yearly total',
+
+    // --- NOUVELLES CLÉS (Chantier 12) ---
+    sections: {
+      hr: 'Human Resources',
+      finance: 'Finance',
+      stock: 'Inventory',
+      marketing: 'Marketing',
+    },
+    expenses: 'Expenses',
+    stock: 'Stock',
+    suppliers: 'Suppliers',
+    promotions: 'Promotions',
+    addSupplier: 'Add supplier',
+    addExpense: 'Add expense',
+    addPromo: 'Add promo',
+    noSupplier: 'No supplier',
+    phone: 'Phone',
+    notes: 'Notes',
+    selectDish: 'Select dish',
+    filters: { items: 'items' },
+    expenseCats: {
+      material: 'Material',
+      repair: 'Repair',
+      transport: 'Transport',
+      marketing: 'Marketing',
+      other: 'Other',
+    },
   },
   placeholder: { comingSoon: 'Coming soon...' },
   settings: {

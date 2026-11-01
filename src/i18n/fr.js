@@ -1,7 +1,7 @@
 // src/i18n/fr.js
 export default {
   app: { name: 'Burihagio' },
-  nav: { home: 'Accueil', closing: 'Clôture', menu: 'Menu', team: 'Équipe', settings: 'Réglages', stats: 'Stats' },
+  nav: { home: 'Accueil', closing: 'Clôture', menu: 'Menu', team: 'Gestion', settings: 'Réglages', stats: 'Stats' },
   home: {
     greeting: 'Bonjour !',
     subtitle: 'Qu\'est-ce qu\'on mange aujourd\'hui ?',
@@ -73,7 +73,7 @@ export default {
     pricePerUnit: 'Prix / unité',
   },
   team: {
-    title: 'Équipe',
+    title: 'Gestion',
     dashboard: 'Vue d\'ensemble',
     back: 'Retour',
     fixedCosts: 'Charges fixes',
@@ -116,6 +116,33 @@ export default {
     taskPlaceholder: 'Saisir une tâche...',
     yearlyCost: 'Coût annuel',
     fixedCostsYearly: 'Total annuel',
+
+    // --- NOUVELLES CLÉS (Chantier 12) ---
+    sections: {
+      hr: 'Ressources Humaines',
+      finance: 'Finances',
+      stock: 'Marchandises',
+      marketing: 'Marketing',
+    },
+    expenses: 'Dépenses',
+    stock: 'Stock',
+    suppliers: 'Fournisseurs',
+    promotions: 'Promotions',
+    addSupplier: 'Ajouter un fournisseur',
+    addExpense: 'Ajouter une dépense',
+    addPromo: 'Ajouter une promo',
+    noSupplier: 'Aucun fournisseur',
+    phone: 'Téléphone',
+    notes: 'Notes',
+    selectDish: 'Choisir un plat',
+    filters: { items: 'éléments' },
+    expenseCats: {
+      material: 'Matériel',
+      repair: 'Réparation',
+      transport: 'Transport',
+      marketing: 'Marketing',
+      other: 'Divers',
+    },
   },
   placeholder: { comingSoon: 'En développement...' },
   settings: {

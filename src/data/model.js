@@ -1,5 +1,5 @@
 // src/data/model.js
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const CURRENCY_DEFAULT = 'VND';
 export const TIMEZONE_DEFAULT = 'Asia/Ho_Chi_Minh';
@@ -7,8 +7,13 @@ export const FIXED_COST_FREQUENCIES = ['daily', 'weekly', 'monthly'];
 export const WEATHER_OPTIONS = ['sunny', 'cloudy', 'rainy', 'stormy'];
 
 // Les 4 grandes catégories du Menu (plats, boissons, desserts, sauces).
-// Utilisées à la fois par les plats et par les ingrédients.
 export const MENU_CATEGORIES = ['dish', 'drink', 'dessert', 'sauce'];
+
+// Catégories pour les dépenses ponctuelles
+export const EXPENSE_CATEGORIES = ['material', 'repair', 'transport', 'marketing', 'other'];
+
+// Types de promotions
+export const PROMO_TYPES = ['percentage', 'fixed_amount'];
 
 export function newId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -45,6 +50,10 @@ export function createIngredient(input = {}) {
     unit: input.unit || '',
     unit_cost: Number.isFinite(input.unit_cost) ? input.unit_cost : 0,
     supplier: input.supplier || '',
+    supplier_id: input.supplier_id || '',
+    stock_quantity: Number.isFinite(input.stock_quantity) ? input.stock_quantity : 0,
+    min_stock: Number.isFinite(input.min_stock) ? input.min_stock : 0,
+    sort_order: Number.isFinite(input.sort_order) ? input.sort_order : 0,
     createdAt: input.createdAt || ts,
     updatedAt: ts,
   };
@@ -75,6 +84,7 @@ export function createFixedCost(input = {}) {
     name: input.name || '',
     amount: Number.isFinite(input.amount) ? input.amount : 0,
     frequency: FIXED_COST_FREQUENCIES.includes(input.frequency) ? input.frequency : 'monthly',
+    sort_order: Number.isFinite(input.sort_order) ? input.sort_order : 0,
     createdAt: input.createdAt || ts,
     updatedAt: ts,
   };
@@ -106,6 +116,7 @@ export function createEmployee(input = {}) {
     monthly_salary: Number.isFinite(input.monthly_salary) ? input.monthly_salary : 0,
     days_per_week: Number.isFinite(input.days_per_week) ? input.days_per_week : 5,
     active: input.active !== false,
+    sort_order: Number.isFinite(input.sort_order) ? input.sort_order : 0,
     createdAt: input.createdAt || ts,
     updatedAt: ts,
   };
@@ -138,6 +149,54 @@ export function createPlanningDay(input = {}) {
   };
 }
 
+// --- NOUVEAUX CRÉATEURS (Chantier 12) ---
+
+export function createSupplier(input = {}) {
+  const ts = nowISO();
+  return {
+    id: input.id || newId(),
+    restaurant_id: input.restaurant_id,
+    name: input.name || '',
+    phone: input.phone || '',
+    notes: input.notes || '',
+    sort_order: Number.isFinite(input.sort_order) ? input.sort_order : 0,
+    createdAt: input.createdAt || ts,
+    updatedAt: ts,
+  };
+}
+
+export function createExpense(input = {}) {
+  const ts = nowISO();
+  return {
+    id: input.id || newId(),
+    restaurant_id: input.restaurant_id,
+    date: input.date || new Date().toISOString().slice(0, 10),
+    amount: Number.isFinite(input.amount) ? input.amount : 0,
+    category: EXPENSE_CATEGORIES.includes(input.category) ? input.category : 'other',
+    note: input.note || '',
+    createdAt: input.createdAt || ts,
+    updatedAt: ts,
+  };
+}
+
+export function createPromotion(input = {}) {
+  const ts = nowISO();
+  return {
+    id: input.id || newId(),
+    restaurant_id: input.restaurant_id,
+    dish_id: input.dish_id,
+    type: PROMO_TYPES.includes(input.type) ? input.type : 'percentage',
+    value: Number.isFinite(input.value) ? input.value : 0,
+    start_date: input.start_date || new Date().toISOString().slice(0, 10),
+    end_date: input.end_date || new Date().toISOString().slice(0, 10),
+    active: input.active !== false,
+    createdAt: input.createdAt || ts,
+    updatedAt: ts,
+  };
+}
+
+// ---------------------------------------
+
 export function createEmptyDataset() {
   const restaurant = createRestaurant({ name: 'Les Rouleaux de Lime' });
   return {
@@ -151,6 +210,9 @@ export function createEmptyDataset() {
     employees: [],
     shifts: [],
     planning: [],
+    suppliers: [],
+    expenses: [],
+    promotions: [],
   };
 }
 
@@ -180,5 +242,11 @@ export function validateDataset(dataset) {
   checkCollection(dataset.employees, 'employees');
   checkCollection(dataset.shifts, 'shifts');
   checkCollection(dataset.planning || [], 'planning');
+  
+  // Validation des nouvelles collections (Chantier 12)
+  checkCollection(dataset.suppliers || [], 'suppliers');
+  checkCollection(dataset.expenses || [], 'expenses');
+  checkCollection(dataset.promotions || [], 'promotions');
+
   return { ok: errors.length === 0, errors };
 }

@@ -8,12 +8,21 @@ import {
   createDailyClosing,
   createEmployee,
   createShift,
+  // --- NOUVEAUX CRÉATEURS (Chantier 12) ---
+  createSupplier,
+  createExpense,
+  createPromotion,
 } from './model.js';
 
 export const FIXTURE_RESTAURANT_ID = 'resto-main';
 
 function getDateOffset(daysAgo = 0) {
   const d = new Date(); d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().slice(0, 10);
+}
+
+function getFutureDateOffset(daysAhead = 0) {
+  const d = new Date(); d.setDate(d.getDate() + daysAhead);
   return d.toISOString().slice(0, 10);
 }
 
@@ -26,31 +35,37 @@ export function createDefaultFixtures() {
   });
   const rid = restaurant.id;
 
+  // ---------------- FOURNISSEURS (Chantier 12) ----------------
+  const suppliers = [
+    createSupplier({ id: 'sup-1', restaurant_id: rid, name: 'Chợ đầu mối Bình Điền', phone: '0901234567', notes: 'Livraison le matin', sort_order: 0 }),
+    createSupplier({ id: 'sup-2', restaurant_id: rid, name: 'Đại lý Nước giải khát', phone: '0987654321', notes: '', sort_order: 1 }),
+  ];
+
   // ---------------- INGREDIENTS ----------------
   const ingredients = [
-    // Plats (gỏi cuốn)
-    createIngredient({ id: 'ing-banh-trang', restaurant_id: rid, name: 'Bánh tráng', category: 'dish', unit: 'tờ', unit_cost: 200 }),
-    createIngredient({ id: 'ing-bun', restaurant_id: rid, name: 'Bún', category: 'dish', unit: 'g', unit_cost: 30 }),
-    createIngredient({ id: 'ing-tom', restaurant_id: rid, name: 'Tôm', category: 'dish', unit: 'g', unit_cost: 250 }),
-    createIngredient({ id: 'ing-thit-heo', restaurant_id: rid, name: 'Thịt heo', category: 'dish', unit: 'g', unit_cost: 120 }),
-    createIngredient({ id: 'ing-xa-lach', restaurant_id: rid, name: 'Xà lách', category: 'dish', unit: 'g', unit_cost: 40 }),
-    createIngredient({ id: 'ing-bac-ha', restaurant_id: rid, name: 'Rau bạc hà', category: 'dish', unit: 'g', unit_cost: 50 }),
-    createIngredient({ id: 'ing-rau-mui', restaurant_id: rid, name: 'Rau mùi', category: 'dish', unit: 'g', unit_cost: 50 }),
-    createIngredient({ id: 'ing-dau-phong', restaurant_id: rid, name: 'Đậu phộng', category: 'dish', unit: 'g', unit_cost: 80 }),
+    // Plats (gỏi cuốn) - liés au fournisseur sup-1 avec du stock
+    createIngredient({ id: 'ing-banh-trang', restaurant_id: rid, name: 'Bánh tráng', category: 'dish', unit: 'tờ', unit_cost: 200, supplier_id: 'sup-1', stock_quantity: 500, min_stock: 100, sort_order: 0 }),
+    createIngredient({ id: 'ing-bun', restaurant_id: rid, name: 'Bún', category: 'dish', unit: 'g', unit_cost: 30, supplier_id: 'sup-1', stock_quantity: 5000, min_stock: 1000, sort_order: 1 }),
+    createIngredient({ id: 'ing-tom', restaurant_id: rid, name: 'Tôm', category: 'dish', unit: 'g', unit_cost: 250, supplier_id: 'sup-1', stock_quantity: 2000, min_stock: 500, sort_order: 2 }),
+    createIngredient({ id: 'ing-thit-heo', restaurant_id: rid, name: 'Thịt heo', category: 'dish', unit: 'g', unit_cost: 120, supplier_id: 'sup-1', stock_quantity: 1500, min_stock: 500, sort_order: 3 }),
+    createIngredient({ id: 'ing-xa-lach', restaurant_id: rid, name: 'Xà lách', category: 'dish', unit: 'g', unit_cost: 40, supplier_id: 'sup-1', stock_quantity: 300, min_stock: 1000, sort_order: 4 }), // Stock bas pour test alerte
+    createIngredient({ id: 'ing-bac-ha', restaurant_id: rid, name: 'Rau bạc hà', category: 'dish', unit: 'g', unit_cost: 50, supplier_id: 'sup-1', stock_quantity: 1000, min_stock: 200, sort_order: 5 }),
+    createIngredient({ id: 'ing-rau-mui', restaurant_id: rid, name: 'Rau mùi', category: 'dish', unit: 'g', unit_cost: 50, supplier_id: 'sup-1', stock_quantity: 800, min_stock: 200, sort_order: 6 }),
+    createIngredient({ id: 'ing-dau-phong', restaurant_id: rid, name: 'Đậu phộng', category: 'dish', unit: 'g', unit_cost: 80, supplier_id: 'sup-1', stock_quantity: 2000, min_stock: 500, sort_order: 7 }),
 
-    // Boissons
-    createIngredient({ id: 'ing-tra', restaurant_id: rid, name: 'Trà', category: 'drink', unit: 'g', unit_cost: 100 }),
-    createIngredient({ id: 'ing-duong', restaurant_id: rid, name: 'Đường', category: 'drink', unit: 'g', unit_cost: 20 }),
-    createIngredient({ id: 'ing-mia', restaurant_id: rid, name: 'Mía', category: 'drink', unit: 'kg', unit_cost: 8000 }),
+    // Boissons - liés au fournisseur sup-2
+    createIngredient({ id: 'ing-tra', restaurant_id: rid, name: 'Trà', category: 'drink', unit: 'g', unit_cost: 100, supplier_id: 'sup-2', stock_quantity: 500, min_stock: 100, sort_order: 8 }),
+    createIngredient({ id: 'ing-duong', restaurant_id: rid, name: 'Đường', category: 'drink', unit: 'g', unit_cost: 20, supplier_id: 'sup-2', stock_quantity: 3000, min_stock: 500, sort_order: 9 }),
+    createIngredient({ id: 'ing-mia', restaurant_id: rid, name: 'Mía', category: 'drink', unit: 'kg', unit_cost: 8000, supplier_id: 'sup-2', stock_quantity: 20, min_stock: 5, sort_order: 10 }),
 
     // Sauces
-    createIngredient({ id: 'ing-nuoc-mam', restaurant_id: rid, name: 'Nước mắm', category: 'sauce', unit: 'ml', unit_cost: 60 }),
-    createIngredient({ id: 'ing-toi', restaurant_id: rid, name: 'Tỏi', category: 'sauce', unit: 'g', unit_cost: 80 }),
-    createIngredient({ id: 'ing-ot', restaurant_id: rid, name: 'Ớt', category: 'sauce', unit: 'g', unit_cost: 50 }),
+    createIngredient({ id: 'ing-nuoc-mam', restaurant_id: rid, name: 'Nước mắm', category: 'sauce', unit: 'ml', unit_cost: 60, supplier_id: '', stock_quantity: 1000, min_stock: 200, sort_order: 11 }),
+    createIngredient({ id: 'ing-toi', restaurant_id: rid, name: 'Tỏi', category: 'sauce', unit: 'g', unit_cost: 80, supplier_id: '', stock_quantity: 500, min_stock: 100, sort_order: 12 }),
+    createIngredient({ id: 'ing-ot', restaurant_id: rid, name: 'Ớt', category: 'sauce', unit: 'g', unit_cost: 50, supplier_id: '', stock_quantity: 300, min_stock: 100, sort_order: 13 }),
 
     // Desserts
-    createIngredient({ id: 'ing-dau-xanh', restaurant_id: rid, name: 'Đậu xanh', category: 'dessert', unit: 'g', unit_cost: 70 }),
-    createIngredient({ id: 'ing-nuoc-cot-dua', restaurant_id: rid, name: 'Nước cốt dừa', category: 'dessert', unit: 'ml', unit_cost: 40 }),
+    createIngredient({ id: 'ing-dau-xanh', restaurant_id: rid, name: 'Đậu xanh', category: 'dessert', unit: 'g', unit_cost: 70, supplier_id: '', stock_quantity: 1000, min_stock: 200, sort_order: 14 }),
+    createIngredient({ id: 'ing-nuoc-cot-dua', restaurant_id: rid, name: 'Nước cốt dừa', category: 'dessert', unit: 'ml', unit_cost: 40, supplier_id: '', stock_quantity: 2000, min_stock: 500, sort_order: 15 }),
   ];
 
   // ---------------- DISHES ----------------
@@ -139,20 +154,50 @@ export function createDefaultFixtures() {
 
   // ---------------- CHARGES FIXES ----------------
   const fixed_costs = [
-    createFixedCost({ id: 'fc-loyer', restaurant_id: rid, name: 'Tiền thuê mặt bằng', amount: 5000000, frequency: 'monthly' }),
-    createFixedCost({ id: 'fc-electricite', restaurant_id: rid, name: 'Tiền điện', amount: 800000, frequency: 'monthly' }),
+    createFixedCost({ id: 'fc-loyer', restaurant_id: rid, name: 'Tiền thuê mặt bằng', amount: 5000000, frequency: 'monthly', sort_order: 0 }),
+    createFixedCost({ id: 'fc-electricite', restaurant_id: rid, name: 'Tiền điện', amount: 800000, frequency: 'monthly', sort_order: 1 }),
   ];
 
   // ---------------- EMPLOYÉS ----------------
   const employees = [
-    createEmployee({ id: 'emp-1', restaurant_id: rid, name: 'Lan', hourly_rate: 25000, active: true, days_per_week: 5 }),
-    createEmployee({ id: 'emp-2', restaurant_id: rid, name: 'Hùng', hourly_rate: 30000, active: true, days_per_week: 6 }),
+    createEmployee({ id: 'emp-1', restaurant_id: rid, name: 'Lan', hourly_rate: 25000, active: true, days_per_week: 5, sort_order: 0 }),
+    createEmployee({ id: 'emp-2', restaurant_id: rid, name: 'Hùng', hourly_rate: 30000, active: true, days_per_week: 6, sort_order: 1 }),
   ];
 
   const shifts = [
     createShift({ restaurant_id: rid, employee_id: 'emp-1', date: getDateOffset(1), hours_worked: 4 }),
     createShift({ restaurant_id: rid, employee_id: 'emp-2', date: getDateOffset(1), hours_worked: 5 }),
     createShift({ restaurant_id: rid, employee_id: 'emp-1', date: getDateOffset(0), hours_worked: 6 }),
+  ];
+
+  // ---------------- DÉPENSES PONCTUELLES (Chantier 12) ----------------
+  const expenses = [
+    createExpense({ id: 'exp-1', restaurant_id: rid, date: getDateOffset(3), amount: 150000, category: 'material', note: 'Achat de nouveaux bols' }),
+    createExpense({ id: 'exp-2', restaurant_id: rid, date: getDateOffset(1), amount: 50000, category: 'transport', note: 'Livraison marché' }),
+  ];
+
+  // ---------------- PROMOTIONS (Chantier 12) ----------------
+  const promotions = [
+    createPromotion({
+      id: 'promo-1',
+      restaurant_id: rid,
+      dish_id: 'dish-goi-cuon-tom-thit',
+      type: 'fixed_amount',
+      value: 2000, // -2000 VND
+      start_date: getDateOffset(0),
+      end_date: getFutureDateOffset(7),
+      active: true,
+    }),
+    createPromotion({
+      id: 'promo-2',
+      restaurant_id: rid,
+      dish_id: 'dish-nuoc-mia',
+      type: 'percentage',
+      value: 10, // -10%
+      start_date: getDateOffset(10),
+      end_date: getDateOffset(2), // Expirée
+      active: true,
+    }),
   ];
 
   // ---------------- CLÔTURES ----------------
@@ -195,5 +240,9 @@ export function createDefaultFixtures() {
     employees,
     shifts,
     planning: [],
+    // Nouvelles collections
+    suppliers,
+    expenses,
+    promotions,
   };
 }
