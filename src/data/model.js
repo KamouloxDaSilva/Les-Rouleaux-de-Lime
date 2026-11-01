@@ -1,5 +1,5 @@
 // src/data/model.js
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 export const CURRENCY_DEFAULT = 'VND';
 export const TIMEZONE_DEFAULT = 'Asia/Ho_Chi_Minh';
@@ -14,6 +14,9 @@ export const EXPENSE_CATEGORIES = ['material', 'repair', 'transport', 'marketing
 
 // Types de promotions
 export const PROMO_TYPES = ['percentage', 'fixed_amount'];
+
+// Types de tâches du planning (Chantier 12 — Fixes UI, SCHEMA v8)
+export const TASK_TYPES = ['day', 'week', 'permanent'];
 
 export function newId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -195,6 +198,23 @@ export function createPromotion(input = {}) {
   };
 }
 
+// --- NOUVEAU CRÉATEUR (Chantier 12 — Fixes UI, SCHEMA v8) ---
+
+export function createTask(input = {}) {
+  const ts = nowISO();
+  return {
+    id: input.id || newId(),
+    restaurant_id: input.restaurant_id,
+    text: input.text || '',
+    done: input.done === true,
+    type: TASK_TYPES.includes(input.type) ? input.type : 'day',
+    day_of_week: Number.isInteger(input.day_of_week) ? input.day_of_week : null,
+    sort_order: Number.isFinite(input.sort_order) ? input.sort_order : 0,
+    createdAt: input.createdAt || ts,
+    updatedAt: ts,
+  };
+}
+
 // ---------------------------------------
 
 export function createEmptyDataset() {
@@ -213,6 +233,7 @@ export function createEmptyDataset() {
     suppliers: [],
     expenses: [],
     promotions: [],
+    tasks: [],
   };
 }
 
@@ -242,11 +263,14 @@ export function validateDataset(dataset) {
   checkCollection(dataset.employees, 'employees');
   checkCollection(dataset.shifts, 'shifts');
   checkCollection(dataset.planning || [], 'planning');
-  
-  // Validation des nouvelles collections (Chantier 12)
+
+  // Validation des collections Chantier 12
   checkCollection(dataset.suppliers || [], 'suppliers');
   checkCollection(dataset.expenses || [], 'expenses');
   checkCollection(dataset.promotions || [], 'promotions');
+
+  // Chantier 12 — Fixes UI (SCHEMA v8) : collection tasks
+  checkCollection(dataset.tasks || [], 'tasks');
 
   return { ok: errors.length === 0, errors };
 }

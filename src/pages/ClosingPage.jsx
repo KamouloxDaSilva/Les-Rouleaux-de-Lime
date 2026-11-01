@@ -1,9 +1,11 @@
 // src/pages/ClosingPage.jsx
+// Chantier 12 — Partie 2 (UI) : Utilisation du prix promo dans le calcul du CA
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
 import { WEATHER_OPTIONS, createDailyClosing, getActiveRestaurant } from '../data/model.js';
 import { loadDataset, saveDataset } from '../data/storage.js';
 import { createDefaultFixtures } from '../data/fixtures.js';
+import { getDishSellingPrice } from '../data/calculations.js';
 import './ClosingPage.css';
 
 function formatDateString(date) {
@@ -72,6 +74,7 @@ export default function ClosingPage() {
   }, [selectedDate]);
 
   const restaurant = useMemo(() => dataset ? getActiveRestaurant(dataset) : null, [dataset]);
+  const promotions = dataset?.promotions || [];
 
   // Tous les plats concernés par la clôture (4 catégories)
   const closingDishes = useMemo(() => {
@@ -86,6 +89,23 @@ export default function ClosingPage() {
   const activeDishes = useMemo(() => {
     return closingDishes.filter((d) => d.category === activeCategory);
   }, [closingDishes, activeCategory]);
+
+  /**
+   * Prix de vente effectif pour un plat à la date sélectionnée.
+   * Applique la promo active (le cas échéant) sur cette date précise —
+   * et non sur "aujourd'hui" — afin que la saisie d'une clôture passée
+   * utilise bien le prix qui était en vigueur ce jour-là.
+   */
+  const getSellingPriceForDate = (dish) => {
+    try {
+      const p = getDishSellingPrice(dish, promotions, selectedDate);
+      const numeric = Number(p);
+      if (Number.isFinite(numeric) && numeric > 0) return numeric;
+    } catch (e) {
+      /* fallback silencieux */
+    }
+    return Number(dish.price) || 0;
+  };
 
   useEffect(() => {
     if (!dataset) return;
@@ -119,12 +139,14 @@ export default function ClosingPage() {
     });
   }
 
+  // CA estimé : utilise le prix promo si une promo est active à la date sélectionnée
   const estimatedRevenue = useMemo(() => {
     return closingDishes.reduce((sum, dish) => {
       const sold = sales[dish.id]?.sold ?? 0;
-      return sum + dish.price * sold;
+      if (!sold) return sum;
+      return sum + getSellingPriceForDate(dish) * sold;
     }, 0);
-  }, [closingDishes, sales]);
+  }, [closingDishes, sales, promotions, selectedDate]);
 
   const totalItemsSold = useMemo(() => {
     return closingDishes.reduce((sum, dish) => {
@@ -334,11 +356,55 @@ export default function ClosingPage() {
         <ul className="closing-dishes">
           {activeDishes.map((dish) => {
             const s = sales[dish.id] || { sold: 0 };
+            const basePrice = Number(dish.price) || 0;
+            const sellingPrice = getSellingPriceForDate(dish);
+            const hasPromo = sellingPrice > 0 && sellingPrice < basePrice;
+
             return (
               <li key={dish.id} className="closing-dish-item">
                 <div className="dish-info">
-                  <span className="dish-name">{dish.name}</span>
-                  <span className="dish-price">{formatCurrency(dish.price)}</span>
+                  <span className="dish-name">
+                    {dish.name}
+                    {hasPromo && (
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          marginLeft: 6,
+                          padding: '1px 6px',
+                          background: '#FF9800',
+                          color: '#FFFFFF',
+                          fontSize: '0.55rem',
+                          fontWeight: 800,
+                          letterSpacing: '0.04em',
+                          borderRadius: 999,
+                          verticalAlign: 'middle',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        PROMO
+                      </span>
+                    )}
+                  </span>
+                  {hasPromo ? (
+                    <span className="dish-price">
+                      <span
+                        style={{
+                          textDecoration: 'line-through',
+                          color: '#8A8A8A',
+                          fontSize: '0.75em',
+                          fontWeight: 600,
+                          marginRight: 6,
+                        }}
+                      >
+                        {formatCurrency(basePrice)}
+                      </span>
+                      <span style={{ color: '#FF9800', fontWeight: 800 }}>
+                        {formatCurrency(sellingPrice)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="dish-price">{formatCurrency(basePrice)}</span>
+                  )}
                 </div>
                 <div className="qty-stepper">
                   <button

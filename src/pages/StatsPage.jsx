@@ -3,6 +3,7 @@
 // Burihagio — Statistiques approfondies v5 (Chantier 11-F4)
 // 6 onglets · 4 graphiques (Courbe / Donut / Barre / Barres Groupées) · KPI partout
 // Période dans chaque sous-bloc · Drill-down systématique
+// + Chantier 12 — Partie 2 : Affichage de la catégorie "Dépenses ponctuelles"
 // =====================================================================
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
@@ -37,6 +38,32 @@ function safeT(t, key) {
   if (s.indexOf('.') === -1) return s;
   const translated = t(s);
   return translated === s ? s : translated;
+}
+
+// =====================================================================
+// HELPER — filtre local des dépenses ponctuelles par période
+// =====================================================================
+// Filtre la collection `dataset.expenses` (dépenses ponctuelles brutes)
+// selon la période active. Isolé du reste pour ne pas impacter les autres
+// onglets ni les helpers de stats.js.
+function filterExpensesByPeriod(expenses, period) {
+  if (!Array.isArray(expenses)) return [];
+  if (!period || period === 'all') return expenses;
+  const daysBack =
+    period === 'day' ? 1 :
+    period === 'week' ? 7 :
+    period === 'month' ? 30 :
+    period === 'year' ? 365 :
+    null;
+  if (!daysBack) return expenses;
+  const now = new Date();
+  now.setHours(23, 59, 59, 999);
+  const cutoff = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+  return expenses.filter((e) => {
+    if (!e || !e.date) return false;
+    const d = new Date(e.date);
+    return d >= cutoff && d <= now;
+  });
 }
 
 // =====================================================================
@@ -1196,7 +1223,7 @@ function SalesTab({ dataset, t, formatters }) {
 }
 
 // =====================================================================
-// ONGLET : COÛTS
+// ONGLET : COÛTS (Chantier 12 — Partie 2 : ajout Dépenses ponctuelles)
 // =====================================================================
 function CostsTab({ dataset, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_costs_period', DEFAULT_PERIODS.costs);
@@ -1211,6 +1238,30 @@ function CostsTab({ dataset, t, formatters }) {
   const fixed = useMemo(() => getFixedCostsBreakdown(dataset, period), [dataset, period]);
   const ings = useMemo(() => getIngredientCosts(dataset, period), [dataset, period]);
   const emps = useMemo(() => getEmployeeStats(dataset, period), [dataset, period]);
+
+  // --- Chantier 12 — Partie 2 : dépenses ponctuelles (collection brute) ---
+  const oneOffExpenses = useMemo(
+    () => filterExpensesByPeriod(dataset.expenses || [], period),
+    [dataset.expenses, period]
+  );
+  const oneOffTotal = useMemo(
+    () => oneOffExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0),
+    [oneOffExpenses]
+  );
+  const oneOffBars = useMemo(
+    () => oneOffExpenses.map((exp) => {
+      const name =
+        exp.description || exp.name || exp.label || exp.category || '—';
+      return {
+        key: exp.id,
+        label: exp.date ? `${exp.date} · ${name}` : name,
+        value: Number(exp.amount) || 0,
+        color: '#E91E63',
+        format: 'currency',
+      };
+    }),
+    [oneOffExpenses]
+  );
 
   const lineSeries = useMemo(() => [{
     key: 'expenses',
@@ -1311,6 +1362,9 @@ function CostsTab({ dataset, t, formatters }) {
     });
   };
 
+  // Les sous-onglets — ajout de 'oneOff' en fin de liste
+  const costSubTabs = ['repartition', 'fixed', 'ingredients', 'employees', 'oneOff'];
+
   return (
     <div className="stats-content">
       <PeriodSelector period={period} onChange={setPeriod} t={t} />
@@ -1319,6 +1373,7 @@ function CostsTab({ dataset, t, formatters }) {
         <KpiCard icon="🏠" label={t('stats.expensesComponents.fixed')} value={formatters.currency(expenses.categories.find((c) => c.key === 'fixed')?.value || 0)} color="#3C91A6" onClick={() => openExpenseDrill('fixed')} />
         <KpiCard icon="🥗" label={t('stats.expensesComponents.ingredients')} value={formatters.currency(expenses.categories.find((c) => c.key === 'ingredients')?.value || 0)} color="#FF9800" onClick={() => openExpenseDrill('ingredients')} />
         <KpiCard icon="👥" label={t('stats.expensesComponents.employees')} value={formatters.currency(expenses.categories.find((c) => c.key === 'employees')?.value || 0)} color="#9C27B0" onClick={() => openExpenseDrill('employees')} />
+        <KpiCard icon="🛒" label={t('stats.expensesComponents.oneOff')} value={formatters.currency(oneOffTotal)} color="#E91E63" />
         <KpiCard icon="📉" label={t('stats.metrics.expenses')} value={formatters.currency(expenses.total)} color="#E91E63" />
       </div>
 
@@ -1341,7 +1396,7 @@ function CostsTab({ dataset, t, formatters }) {
       </section>
 
       <div className="stats-subtabs">
-        {['repartition', 'fixed', 'ingredients', 'employees'].map((st) => (
+        {costSubTabs.map((st) => (
           <button key={st} type="button" className={`stats-subtab ${subTab === st ? 'stats-subtab--active' : ''}`} onClick={() => setSubTab(st)}>
             {t(`stats.costSubtabs.${st}`)}
           </button>
@@ -1394,6 +1449,21 @@ function CostsTab({ dataset, t, formatters }) {
               if (emp) openEmployeeDrill(emp.employee);
             }}
           />
+        </section>
+      )}
+
+      {subTab === 'oneOff' && (
+        <section className="stats-block">
+          <div className="stats-block-header"><h3 className="stats-block-title">{t('stats.costSubtabs.oneOff')}</h3></div>
+          <BarChart
+            bars={oneOffBars}
+            formatValue={formatters.format}
+            t={t}
+          />
+          <div className="stats-fixed-footer">
+            <span>{t('stats.metrics.total')} : <strong>{formatters.currency(oneOffTotal)}</strong></span>
+            <span>{oneOffExpenses.length} {t('stats.filters.items')}</span>
+          </div>
         </section>
       )}
 

@@ -375,6 +375,46 @@
   font-size: 0.9rem;
 }
 
+/* --- SÉLECTEUR DE TYPE DE TÂCHE (Chantier 12 — Fixes UI) --- */
+.task-type-selector {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.task-type-btn {
+  flex: 1;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 2px solid #EBEBEB;
+  background: #FFFFFF;
+  color: #4A4A4A;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.task-type-btn:active {
+  transform: scale(0.97);
+}
+
+.task-type-btn--active {
+  background: #3C91A6;
+  border-color: #3C91A6;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(60, 145, 166, 0.25);
+}
+
+.task-type-btn--active:active {
+  background: #2F7A8C;
+}
+
 /* --- FORMULAIRES (utilisés dans les Modales) --- */
 .form-card {
   display: flex;
@@ -432,6 +472,16 @@
 .list > .list-item:nth-child(5) { animation-delay: 160ms; }
 .list > .list-item:nth-child(n+6) { animation-delay: 200ms; }
 
+/* --- RESPONSIVE (petits écrans) --- */
+@media (max-width: 400px) {
+  .task-type-selector {
+    flex-direction: column;
+  }
+  .task-type-btn {
+    width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .team-card,
   .list-item,
@@ -439,6 +489,9 @@
     animation: none;
   }
   .team-card:active {
+    transform: none;
+  }
+  .task-type-btn:active {
     transform: none;
   }
 }

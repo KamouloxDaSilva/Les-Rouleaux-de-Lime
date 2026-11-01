@@ -143,6 +143,36 @@ export default {
       marketing: 'Tiếp thị',
       other: 'Khác',
     },
+
+    // --- FIX #3 (Chantier 12 — Fixes UI) ---
+    // Clé manquante utilisée par le Header pour view === 'costs'.
+    // Sans elle, l'UI affiche la chaîne brute "team.costs" dans les 3 langues.
+    costs: 'Chi phí cố định',
+
+    // --- FIX #2 (Chantier 12 — Fixes UI) ---
+    // Types de tâches pour l'onglet Planning
+    taskTypes: {
+      day: 'Nhiệm vụ trong ngày',
+      week: 'Nhiệm vụ trong tuần',
+      permanent: 'Nhiệm vụ thường xuyên',
+    },
+
+    // --- FIX #4 (Chantier 12 — Fixes UI) ---
+    // Libellés d'unités traduits (les IDs stockés restent 'cái', 'tờ', etc.)
+    units: {
+      g: 'g',
+      kg: 'kg',
+      t: 'tấn',
+      ml: 'ml',
+      cl: 'cl',
+      l: 'L',
+      piece: 'cái',
+      piece_vi: 'cái',
+      sheet: 'tờ',
+      box: 'hộp',
+      pack: 'gói',
+      bunch: 'bó',
+    },
   },
   placeholder: { comingSoon: 'Đang phát triển...' },
   settings: {
@@ -215,14 +245,12 @@ export default {
       comparison: 'So sánh',
     },
     periods: {
-      // ✅ v5 : "all" supprimée, "day" ajoutée
       day: 'Ngày',
       week: 'Tuần',
       month: 'Tháng',
       year: 'Năm',
     },
     chartTypes: {
-      // ✅ v5 : "bubble" supprimée, "donut" + "groupedBar" ajoutées
       line: 'Đường cong',
       donut: 'Donut',
       bar: 'Cột',
@@ -233,13 +261,11 @@ export default {
       absolute: 'Tuyệt đối',
     },
     groupedBar: {
-      // ✅ v5 : nouveau bloc
       trend: 'so với kỳ trước',
       current: 'Hiện tại',
       previous: 'Trước đó',
     },
     fallback: {
-      // ✅ v5 : nouveau bloc
       chartUnavailable: 'Không khả dụng cho chi tiết này',
     },
     blocks: {
@@ -306,9 +332,7 @@ export default {
       expenses: 'Chi phí',
       items: 'Món',
     },
-    // ✅ v5 : bloc "bubble" entièrement supprimé (remplacé par Donut + GroupedBar)
     drillDown: {
-      // Conservé pour compatibilité (plus référencé par StatsPage v5)
       revenue: 'Chi tiết doanh thu',
       profit: 'Chi tiết lợi nhuận',
       items: 'Chi tiết món',

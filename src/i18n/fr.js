@@ -143,6 +143,36 @@ export default {
       marketing: 'Marketing',
       other: 'Divers',
     },
+
+    // --- FIX #3 (Chantier 12 — Fixes UI) ---
+    // Clé manquante utilisée par le Header pour view === 'costs'.
+    // Sans elle, l'UI affiche la chaîne brute "team.costs" dans les 3 langues.
+    costs: 'Charges fixes',
+
+    // --- FIX #2 (Chantier 12 — Fixes UI) ---
+    // Types de tâches pour l'onglet Planning
+    taskTypes: {
+      day: 'Tâche du jour',
+      week: 'Tâche de la semaine',
+      permanent: 'Tâche permanente',
+    },
+
+    // --- FIX #4 (Chantier 12 — Fixes UI) ---
+    // Libellés d'unités traduits (les IDs stockés restent 'cái', 'tờ', etc.)
+    units: {
+      g: 'g',
+      kg: 'kg',
+      t: 't',
+      ml: 'ml',
+      cl: 'cl',
+      l: 'L',
+      piece: 'pce',
+      piece_vi: 'pce',
+      sheet: 'feuille',
+      box: 'boîte',
+      pack: 'paquet',
+      bunch: 'botte',
+    },
   },
   placeholder: { comingSoon: 'En développement...' },
   settings: {
@@ -215,14 +245,12 @@ export default {
       comparison: 'Comparaison',
     },
     periods: {
-      // ✅ v5 : "all" supprimée, "day" ajoutée
       day: 'Jour',
       week: 'Semaine',
       month: 'Mois',
       year: 'Année',
     },
     chartTypes: {
-      // ✅ v5 : "bubble" supprimée, "donut" + "groupedBar" ajoutées
       line: 'Courbe',
       donut: 'Donut',
       bar: 'Barre',
@@ -233,13 +261,11 @@ export default {
       absolute: 'Absolu',
     },
     groupedBar: {
-      // ✅ v5 : nouveau bloc
       trend: 'vs période préc.',
       current: 'Actuel',
       previous: 'Précédent',
     },
     fallback: {
-      // ✅ v5 : nouveau bloc
       chartUnavailable: 'Non disponible pour ce détail',
     },
     blocks: {
@@ -306,9 +332,7 @@ export default {
       expenses: 'Charges',
       items: 'Articles',
     },
-    // ✅ v5 : bloc "bubble" entièrement supprimé (remplacé par Donut + GroupedBar)
     drillDown: {
-      // Conservé pour compatibilité (plus référencé par StatsPage v5)
       revenue: 'Détail du CA',
       profit: 'Détail de la marge',
       items: 'Détail des articles',

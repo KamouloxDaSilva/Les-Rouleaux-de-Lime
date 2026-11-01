@@ -1,4 +1,5 @@
 // src/pages/MenuPage.jsx
+// Chantier 12 — Partie 2 (UI) : Affichage des promotions dans le Menu
 import { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../i18n'
 import { getActiveRestaurant, createDish, MENU_CATEGORIES } from '../data/model.js'
@@ -8,6 +9,9 @@ import {
   getDishFoodCost,
   getDishMargin,
   getDishMarginPercent,
+  getDishSellingPrice,
+  getIngredientPricePerKg,
+  getIngredientDisplayPrice,
 } from '../data/calculations.js'
 import './MenuPage.css'
 
@@ -26,6 +30,61 @@ const CATEGORY_EMOJI = {
   drink: '🥤',
   dessert: '🍰',
   sauce: '🥫',
+}
+
+/**
+ * Retourne la date du jour au format YYYY-MM-DD (heure locale, pas UTC).
+ * Utilisé pour la détection des promotions actives.
+ */
+function getTodayString() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Wrapper défensif autour de getIngredientPricePerKg / getIngredientDisplayPrice.
+ * Renvoie { price, unit } avec l'unité corrigée (L pour les volumes, kg pour
+ * les masses, unité d'origine pour les unités non convertibles).
+ */
+function getIngredientDisplayInfo(ing) {
+  let price = null
+  let unit = ing.unit
+
+  // 1) Essai via getIngredientDisplayPrice (peut retourner { price, unit } ou un nombre)
+  try {
+    const display = getIngredientDisplayPrice(ing)
+    if (display && typeof display === 'object') {
+      price = display.price ?? display.value ?? null
+      if (display.unit) unit = display.unit
+    } else if (typeof display === 'number') {
+      price = display
+    }
+  } catch (e) {
+    /* fallback silencieux */
+  }
+
+  // 2) Fallback via getIngredientPricePerKg
+  if (price == null) {
+    try {
+      price = getIngredientPricePerKg(ing)
+    } catch (e) {
+      price = Number(ing.unit_cost) || 0
+    }
+  }
+
+  // 3) Normalisation de l'unité affichée
+  const rawUnit = ing.unit
+  if (rawUnit === 'ml' || rawUnit === 'l') {
+    unit = 'L'
+  } else if (rawUnit === 'g' || rawUnit === 'kg') {
+    unit = 'kg'
+  } else if (unit === 'kg' && rawUnit !== 'g' && rawUnit !== 'kg') {
+    // getIngredientDisplayPrice renvoie parfois 'kg' par défaut pour des unités
+    // non-masse ; on préfère l'unité d'origine (ex : 'pièce', 'botte').
+    unit = rawUnit
+  }
+
+  return { price: Number(price) || 0, unit }
 }
 
 export default function MenuPage() {
@@ -50,6 +109,10 @@ export default function MenuPage() {
   const restaurant = useMemo(() => (dataset ? getActiveRestaurant(dataset) : null), [dataset])
   const ingredients = dataset?.ingredients || []
   const dishes = dataset?.dishes || []
+  const promotions = dataset?.promotions || []
+
+  // Date du jour (pour détecter les promos actives)
+  const today = getTodayString()
 
   function commit(next) {
     setDataset(next)
@@ -222,9 +285,14 @@ export default function MenuPage() {
                   <div key={index} className="recipe-item">
                     <select required value={item.ingredient_id} onChange={(e) => updateRecipeItem(index, 'ingredient_id', e.target.value)}>
                       <option value="">{t('menu.recipe.selectIngredient')}</option>
-                      {ingredients.map((i) => (
-                        <option key={i.id} value={i.id}>{i.name} ({formatCurrency(i.unit_cost)}/{i.unit})</option>
-                      ))}
+                      {ingredients.map((i) => {
+                        const info = getIngredientDisplayInfo(i)
+                        return (
+                          <option key={i.id} value={i.id}>
+                            {i.name} ({formatCurrency(info.price)}/{info.unit})
+                          </option>
+                        )
+                      })}
                     </select>
                     <div className="recipe-qty">
                       <input type="number" min="0" step="1" required value={item.quantity} onChange={(e) => updateRecipeItem(index, 'quantity', e.target.value)} />
@@ -267,16 +335,47 @@ export default function MenuPage() {
               </div>
             ) : (
               filteredDishes.map((dish) => {
+                // --- Prix de vente effectif (promo si active aujourd'hui) ---
+                const sellingPrice = getDishSellingPrice(dish, promotions, today)
+                const hasPromo =
+                  Number.isFinite(sellingPrice) &&
+                  sellingPrice > 0 &&
+                  sellingPrice < Number(dish.price)
+                const effectivePrice = hasPromo ? sellingPrice : Number(dish.price) || 0
+
+                // --- Coût food & marge basés sur le prix effectif ---
                 const fc = getDishFoodCost(dish, ingredients)
-                const margin = getDishMargin(dish, ingredients)
-                const marginPct = getDishMarginPercent(dish, ingredients)
+                const margin = effectivePrice - fc
+                const marginPct = effectivePrice > 0 ? (margin / effectivePrice) * 100 : 0
+
                 return (
                   <article key={dish.id} className={`dish-card ${!dish.active ? 'dish-card--inactive' : ''}`}>
                     <div className="dish-card__header">
                       <div className="dish-card__title-block">
                         <span className="dish-card__emoji">{CATEGORY_EMOJI[dish.category] || '🍽️'}</span>
                         <div>
-                          <h3 className="dish-card__name">{dish.name}</h3>
+                          <h3 className="dish-card__name">
+                            {dish.name}
+                            {hasPromo && (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  marginLeft: 8,
+                                  padding: '2px 8px',
+                                  background: '#FF9800',
+                                  color: '#FFFFFF',
+                                  fontSize: '0.6rem',
+                                  fontWeight: 800,
+                                  letterSpacing: '0.04em',
+                                  borderRadius: 999,
+                                  verticalAlign: 'middle',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                PROMO
+                              </span>
+                            )}
+                          </h3>
                           {dish.subcategory && <span className="dish-card__subcategory">{dish.subcategory}</span>}
                         </div>
                       </div>
@@ -285,7 +384,28 @@ export default function MenuPage() {
                     <div className="dish-card__stats">
                       <div className="dish-stat">
                         <span className="dish-stat__label">{t('menu.dish.price')}</span>
-                        <strong className="dish-stat__value dish-stat__value--price">{formatCurrency(dish.price)}</strong>
+                        {hasPromo ? (
+                          <strong className="dish-stat__value dish-stat__value--price">
+                            <span
+                              style={{
+                                textDecoration: 'line-through',
+                                color: '#8A8A8A',
+                                fontSize: '0.72em',
+                                fontWeight: 600,
+                                marginRight: 6,
+                              }}
+                            >
+                              {formatCurrency(dish.price)}
+                            </span>
+                            <span style={{ color: '#FF9800', fontWeight: 900 }}>
+                              {formatCurrency(effectivePrice)}
+                            </span>
+                          </strong>
+                        ) : (
+                          <strong className="dish-stat__value dish-stat__value--price">
+                            {formatCurrency(dish.price)}
+                          </strong>
+                        )}
                       </div>
                       <div className="dish-stat">
                         <span className="dish-stat__label">{t('menu.dish.foodCost')}</span>

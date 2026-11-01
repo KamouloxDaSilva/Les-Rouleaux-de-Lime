@@ -9,9 +9,11 @@ import {
   createSupplier,
   createExpense,
   createPromotion,
+  createTask,
   MENU_CATEGORIES,
   EXPENSE_CATEGORIES,
   PROMO_TYPES,
+  TASK_TYPES,
 } from '../data/model';
 import { loadDataset, saveDataset } from '../data/storage';
 import BackButton from '../components/BackButton';
@@ -20,12 +22,46 @@ import FormModal from '../components/FormModal';
 import './TeamPage.css';
 
 const CATEGORY_EMOJI = { dish: '🥗', drink: '🥤', dessert: '🍰', sauce: '🥫' };
-const UNIT_OPTIONS = ['g', 'kg', 't', 'ml', 'cl', 'l', 'pièce', 'cái', 'tờ', 'hộp', 'gói', 'bó'];
+
+// IDs stockés dans ingredient.unit — ne JAMAIS changer ces valeurs (rétrocompat données)
+const UNIT_IDS = ['g', 'kg', 't', 'ml', 'cl', 'l', 'pièce', 'cái', 'tờ', 'hộp', 'gói', 'bó'];
+
+// Correspondance ID stocké → clé i18n de traduction
+const UNIT_I18N_KEYS = {
+  'g': 'g',
+  'kg': 'kg',
+  't': 't',
+  'ml': 'ml',
+  'cl': 'cl',
+  'l': 'l',
+  'pièce': 'piece',
+  'cái': 'piece_vi',
+  'tờ': 'sheet',
+  'hộp': 'box',
+  'gói': 'pack',
+  'bó': 'bunch',
+};
+
+/** Traduit un ID d'unité stocké en libellé lisible selon la langue active. */
+function unitLabel(t, unitId) {
+  if (!unitId) return '';
+  const key = UNIT_I18N_KEYS[unitId] || unitId;
+  const path = `team.units.${key}`;
+  const val = t(path);
+  return val === path ? unitId : val;
+}
+
+/** Clé de regroupement d'une tâche (les sort_order ne sont significatifs qu'à l'intérieur d'un bucket). */
+function bucketKey(task) {
+  if (!task) return 'day';
+  if (task.type === 'day') return `day_${Number.isInteger(task.day_of_week) ? task.day_of_week : 0}`;
+  return task.type || 'day';
+}
 
 export default function TeamPage() {
   const { t, formatCurrency } = useI18n();
   const [dataset, setDataset] = useState(null);
-  const [view, setView] = useState('dashboard'); // dashboard, employees, costs, planning, ingredients, suppliers, stock, expenses, promotions
+  const [view, setView] = useState('dashboard');
 
   // --- ÉTATS POUR LES MODALES ---
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -41,8 +77,8 @@ export default function TeamPage() {
 
   // --- ÉTATS PLANNING ---
   const [selectedDay, setSelectedDay] = useState(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
-  const [tasks, setTasks] = useState([{ id: 1, text: '🧹 Nettoyage cuisine', done: false }]);
   const [newTask, setNewTask] = useState('');
+  const [newTaskType, setNewTaskType] = useState('day');
 
   useEffect(() => {
     setDataset(loadDataset());
@@ -56,6 +92,7 @@ export default function TeamPage() {
   }
 
   // --- HELPERS ---
+
   function handleBack() {
     setView('dashboard');
     setIsFormOpen(false);
@@ -70,26 +107,62 @@ export default function TeamPage() {
       t('common.delete'),
       `${t('common.delete')} "${name}" ?`,
       () => {
-        const next = { ...dataset, [collection]: dataset[collection].filter(item => item.id !== id) };
+        const next = { ...dataset, [collection]: (dataset[collection] || []).filter(item => item.id !== id) };
         commit(next);
         setConfirmConfig({ ...confirmConfig, isOpen: false });
       }
     );
   }
 
+  /**
+   * Retourne le prochain sort_order pour une collection simple (mono-bucket).
+   * Évite le bug où tous les items avaient sort_order = 0 → swap no-op.
+   */
+  function nextSortOrder(collection) {
+    const list = dataset[collection] || [];
+    return list.reduce((m, it) => Math.max(m, Number(it.sort_order) || 0), -1) + 1;
+  }
+
+  /**
+   * Déplace un item dans une collection simple (employees, fixed_costs, ingredients, suppliers).
+   * Robuste : swap de positions dans le tableau puis renumérotation séquentielle 0..n-1.
+   */
   function moveItem(collection, item, direction) {
-    const list = [...dataset[collection]].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const source = dataset[collection] || [];
+    const list = [...source].sort((a, b) => {
+      const sa = Number(a.sort_order) || 0;
+      const sb = Number(b.sort_order) || 0;
+      return sa - sb;
+    });
     const index = list.findIndex(i => i.id === item.id);
-    if (direction === 'up' && index > 0) {
-      const temp = list[index].sort_order;
-      list[index].sort_order = list[index - 1].sort_order;
-      list[index - 1].sort_order = temp;
-    } else if (direction === 'down' && index < list.length - 1) {
-      const temp = list[index].sort_order;
-      list[index].sort_order = list[index + 1].sort_order;
-      list[index + 1].sort_order = temp;
-    }
-    commit({ ...dataset, [collection]: list });
+    if (index < 0) return;
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= list.length) return;
+    [list[index], list[swapIndex]] = [list[swapIndex], list[index]];
+    const renumbered = list.map((it, i) => ({ ...it, sort_order: i }));
+    commit({ ...dataset, [collection]: renumbered });
+  }
+
+  /**
+   * Déplace une tâche à l'intérieur de son bucket (type + day_of_week pour type='day').
+   * Les sort_order des tâches ne sont significatifs qu'à l'intérieur d'un bucket.
+   */
+  function moveTask(task, direction) {
+    const allTasks = dataset.tasks || [];
+    const bucket = bucketKey(task);
+    const sameBucket = allTasks
+      .filter(tk => bucketKey(tk) === bucket)
+      .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+    const idx = sameBucket.findIndex(tk => tk.id === task.id);
+    if (idx < 0) return;
+    const neighborIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (neighborIdx < 0 || neighborIdx >= sameBucket.length) return;
+    const reordered = [...sameBucket];
+    [reordered[idx], reordered[neighborIdx]] = [reordered[neighborIdx], reordered[idx]];
+    const renumbered = reordered.map((tk, i) => ({ ...tk, sort_order: i }));
+    const map = new Map(renumbered.map(tk => [tk.id, tk]));
+    const nextTasks = allTasks.map(tk => map.get(tk.id) || tk);
+    commit({ ...dataset, tasks: nextTasks });
   }
 
   // --- SAUVEGARDE EMPLOYÉS ---
@@ -105,7 +178,7 @@ export default function TeamPage() {
     if (empForm.id) {
       nextEmployees = dataset.employees.map(emp => emp.id === empForm.id ? { ...emp, ...empData } : emp);
     } else {
-      nextEmployees = [...dataset.employees, createEmployee(empData)];
+      nextEmployees = [...dataset.employees, createEmployee({ ...empData, sort_order: nextSortOrder('employees') })];
     }
     commit({ ...dataset, employees: nextEmployees });
     setIsFormOpen(false);
@@ -120,7 +193,7 @@ export default function TeamPage() {
     if (costForm.id) {
       nextCosts = dataset.fixed_costs.map(c => c.id === costForm.id ? { ...c, name: costForm.name, amount, frequency: costForm.frequency } : c);
     } else {
-      nextCosts = [...dataset.fixed_costs, createFixedCost({ restaurant_id: restaurant.id, name: costForm.name, amount, frequency: costForm.frequency })];
+      nextCosts = [...dataset.fixed_costs, createFixedCost({ restaurant_id: restaurant.id, name: costForm.name, amount, frequency: costForm.frequency, sort_order: nextSortOrder('fixed_costs') })];
     }
     commit({ ...dataset, fixed_costs: nextCosts });
     setIsFormOpen(false);
@@ -135,7 +208,7 @@ export default function TeamPage() {
     if (ingForm.id) {
       nextIngs = dataset.ingredients.map(i => i.id === ingForm.id ? { ...i, name: ingForm.name, category: ingForm.category, unit: ingForm.unit, unit_cost: cost, supplier_id: ingForm.supplier_id } : i);
     } else {
-      nextIngs = [...dataset.ingredients, createIngredient({ restaurant_id: restaurant.id, name: ingForm.name, category: ingForm.category, unit: ingForm.unit, unit_cost: cost, supplier_id: ingForm.supplier_id })];
+      nextIngs = [...dataset.ingredients, createIngredient({ restaurant_id: restaurant.id, name: ingForm.name, category: ingForm.category, unit: ingForm.unit, unit_cost: cost, supplier_id: ingForm.supplier_id, sort_order: nextSortOrder('ingredients') })];
     }
     commit({ ...dataset, ingredients: nextIngs });
     setIsFormOpen(false);
@@ -149,7 +222,7 @@ export default function TeamPage() {
     if (supForm.id) {
       nextSups = dataset.suppliers.map(s => s.id === supForm.id ? { ...s, name: supForm.name, phone: supForm.phone, notes: supForm.notes } : s);
     } else {
-      nextSups = [...dataset.suppliers, createSupplier({ restaurant_id: restaurant.id, ...supForm })];
+      nextSups = [...dataset.suppliers, createSupplier({ restaurant_id: restaurant.id, ...supForm, sort_order: nextSortOrder('suppliers') })];
     }
     commit({ ...dataset, suppliers: nextSups });
     setIsFormOpen(false);
@@ -182,17 +255,38 @@ export default function TeamPage() {
     commit({ ...dataset, ingredients: nextIngs });
   }
 
-  // --- PLANNING ---
+  // --- PLANNING (Chantier 12 — Fixes UI) ---
+  function nextTaskSortOrder(type, dayOfWeek) {
+    const allTasks = dataset.tasks || [];
+    const bucket = type === 'day' ? `day_${dayOfWeek}` : type;
+    const sameBucket = allTasks.filter(tk => bucketKey(tk) === bucket);
+    return sameBucket.reduce((m, tk) => Math.max(m, Number(tk.sort_order) || 0), -1) + 1;
+  }
+
   function addTask() {
     if (!newTask.trim()) return;
-    setTasks([...tasks, { id: Date.now(), text: newTask, done: false }]);
+    const dayOfWeek = newTaskType === 'day' ? selectedDay : null;
+    const newTaskObj = createTask({
+      restaurant_id: restaurant.id,
+      text: newTask.trim(),
+      done: false,
+      type: newTaskType,
+      day_of_week: dayOfWeek,
+      sort_order: nextTaskSortOrder(newTaskType, dayOfWeek),
+    });
+    commit({ ...dataset, tasks: [...(dataset.tasks || []), newTaskObj] });
     setNewTask('');
   }
+
   function toggleTask(id) {
-    setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+    const nextTasks = (dataset.tasks || []).map(tk =>
+      tk.id === id ? { ...tk, done: !tk.done, updatedAt: new Date().toISOString() } : tk
+    );
+    commit({ ...dataset, tasks: nextTasks });
   }
+
   function deleteTask(id) {
-    setTasks(tasks.filter(t => t.id !== id));
+    commit({ ...dataset, tasks: (dataset.tasks || []).filter(tk => tk.id !== id) });
   }
 
   if (!dataset || !restaurant) return <div className="team-page">{t('common.loading')}</div>;
@@ -257,7 +351,7 @@ export default function TeamPage() {
               <div className="team-card card-orange" onClick={() => setView('stock')}>
                 <span className="icon">📦</span>
                 <h3>{t('team.stock')}</h3>
-                <p style={{ color: lowStockCount > 0 ? '#FFF' : 'inherit' }}>{lowStockCount} alertes</p>
+                <p style={{ color: lowStockCount > 0 ? '#FFF' : 'inherit' }}>{lowStockCount} {t('team.stock').toLowerCase()}</p>
               </div>
               <div className="team-card card-green" onClick={() => setView('suppliers')}>
                 <span className="icon">🚚</span>
@@ -287,7 +381,7 @@ export default function TeamPage() {
             + {t('team.addEmployee')}
           </button>
           <div className="list">
-            {[...dataset.employees].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map((emp, idx, arr) => (
+            {[...dataset.employees].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)).map((emp, idx, arr) => (
               <div key={emp.id} className="list-item">
                 <div className="list-item-info">
                   <h4>{emp.name}</h4>
@@ -312,7 +406,7 @@ export default function TeamPage() {
             + {t('team.addFixedCost')}
           </button>
           <div className="list">
-            {[...dataset.fixed_costs].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map((cost, idx, arr) => (
+            {[...dataset.fixed_costs].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)).map((cost, idx, arr) => (
               <div key={cost.id} className="list-item">
                 <div className="list-item-info">
                   <h4>{cost.name}</h4>
@@ -330,18 +424,18 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= INGRÉDIENTS ================= */}
+      {/* ================= INGRÉDIENTS (Fix #4 : unités traduites) ================= */}
       {view === 'ingredients' && (
         <div className="section-container">
           <button className="btn-primary full-width" onClick={() => { setIngForm({ id: null, name: '', category: 'dish', unit: 'g', unit_cost: '', supplier_id: '' }); setIsFormOpen(true); }}>
             + {t('menu.ingredients.add')}
           </button>
           <div className="list">
-            {[...dataset.ingredients].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map((ing, idx, arr) => (
+            {[...dataset.ingredients].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)).map((ing, idx, arr) => (
               <div key={ing.id} className="list-item ingredient-card">
                 <div className="list-item-info">
                   <h4>{CATEGORY_EMOJI[ing.category]} {ing.name}</h4>
-                  <p>{formatCurrency(ing.unit_cost)} / {ing.unit} {ing.supplier_id && `· ${dataset.suppliers.find(s=>s.id===ing.supplier_id)?.name || ''}`}</p>
+                  <p>{formatCurrency(ing.unit_cost)} / {unitLabel(t, ing.unit)} {ing.supplier_id && `· ${dataset.suppliers.find(s=>s.id===ing.supplier_id)?.name || ''}`}</p>
                 </div>
                 <div className="list-item-actions">
                   <button className="btn-icon" onClick={() => moveItem('ingredients', ing, 'up')} disabled={idx === 0}>↑</button>
@@ -362,7 +456,7 @@ export default function TeamPage() {
             + {t('team.addSupplier')}
           </button>
           <div className="list">
-            {dataset.suppliers.map(sup => (
+            {[...dataset.suppliers].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)).map(sup => (
               <div key={sup.id} className="list-item">
                 <div className="list-item-info">
                   <h4>{sup.name}</h4>
@@ -394,7 +488,7 @@ export default function TeamPage() {
                 </div>
                 <div className="list-item-actions">
                   <span style={{ fontWeight: 'bold', color: '#E53935' }}>-{formatCurrency(exp.amount)}</span>
-                  <button className="btn-delete" onClick={() => handleDeleteItem('expenses', exp.id, exp.note || 'Dépense')}>🗑️</button>
+                  <button className="btn-delete" onClick={() => handleDeleteItem('expenses', exp.id, exp.note || t('team.expenses'))}>🗑️</button>
                 </div>
               </div>
             ))}
@@ -414,14 +508,14 @@ export default function TeamPage() {
               return (
                 <div key={promo.id} className={`list-item ${promo.active ? 'promo-active' : 'promo-inactive'}`}>
                   <div className="list-item-info">
-                    <h4>🏷️ {dish ? dish.name : 'Plat inconnu'}</h4>
+                    <h4>🏷️ {dish ? dish.name : '?'}</h4>
                     <p>
                       {promo.type === 'percentage' ? `-${promo.value}%` : `-${formatCurrency(promo.value)}`}
                       {promo.start_date && ` · ${promo.start_date}`} {promo.end_date && `→ ${promo.end_date}`}
                     </p>
                   </div>
                   <div className="list-item-actions">
-                    <button className="btn-delete" onClick={() => handleDeleteItem('promotions', promo.id, dish?.name || 'Promo')}>🗑️</button>
+                    <button className="btn-delete" onClick={() => handleDeleteItem('promotions', promo.id, dish?.name || t('team.promotions'))}>🗑️</button>
                   </div>
                 </div>
               );
@@ -430,7 +524,7 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= STOCK ================= */}
+      {/* ================= STOCK (Fix #4 : unité traduite) ================= */}
       {view === 'stock' && (
         <div className="section-container">
           <div className="list">
@@ -444,7 +538,7 @@ export default function TeamPage() {
                   <div className="list-item-info" style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '4px' }}>
                       <h4>{ing.name}</h4>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{stock} {ing.unit}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{stock} {unitLabel(t, ing.unit)}</span>
                     </div>
                     <div style={{ width: '100%', height: '8px', background: '#F0F0F0', borderRadius: '4px', overflow: 'hidden' }}>
                       <div style={{ width: `${pct}%`, height: '100%', background: color }} />
@@ -461,7 +555,7 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= PLANNING ================= */}
+      {/* ================= PLANNING (Fix #2 : 3 types de tâches persistés) ================= */}
       {view === 'planning' && (
         <div className="section-container">
           <div className="planning-week">
@@ -477,7 +571,7 @@ export default function TeamPage() {
             })}
           </div>
 
-          <div className="card planning-content">
+          <div className="card planning-content" style={{ marginBottom: '12px' }}>
             <div className="planning-row">
               <label>{t('team.openTime')}</label>
               <input type="time" defaultValue="08:00" className="form-input" />
@@ -486,31 +580,85 @@ export default function TeamPage() {
               <label>{t('team.closeTime')}</label>
               <input type="time" defaultValue="20:00" className="form-input" />
             </div>
+          </div>
 
-            <div style={{ marginTop: '12px' }}>
-              <label style={{ fontWeight: 600, fontSize: '0.9rem', color: '#4A4A4A' }}>{t('team.planningTasks')}</label>
-              <div className="tasks-list">
-                {tasks.map(task => (
-                  <div key={task.id} className="task-item">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: task.done ? 'line-through' : 'none', opacity: task.done ? 0.5 : 1 }}>
-                      <input type="checkbox" checked={task.done} onChange={() => toggleTask(task.id)} />
-                      <span>{task.text}</span>
-                    </label>
-                    <button className="btn-delete" style={{ fontSize: '1rem' }} onClick={() => deleteTask(task.id)}>✕</button>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                <input className="form-input" placeholder={t('team.taskPlaceholder')} value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} />
-                <button className="btn-primary" style={{ padding: '0 16px', borderRadius: '12px' }} onClick={addTask}>+</button>
-              </div>
+          {/* --- Formulaire d'ajout : 3 types --- */}
+          <div className="card planning-content" style={{ marginBottom: '12px' }}>
+            <label style={{ fontWeight: 700, fontSize: '0.9rem', color: '#2C2C2C' }}>
+              {t('team.addTask')}
+            </label>
+            <div className="task-type-selector">
+              {TASK_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={`task-type-btn ${newTaskType === type ? 'task-type-btn--active' : ''}`}
+                  onClick={() => setNewTaskType(type)}
+                >
+                  {t(`team.taskTypes.${type}`)}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                className="form-input"
+                placeholder={t('team.taskPlaceholder')}
+                value={newTask}
+                onChange={e => setNewTask(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addTask()}
+              />
+              <button
+                type="button"
+                className="btn-primary"
+                style={{ padding: '0 16px', borderRadius: '12px' }}
+                onClick={addTask}
+              >
+                +
+              </button>
             </div>
           </div>
+
+          {/* --- 3 sections : Tâches du jour / de la semaine / permanentes --- */}
+          {TASK_TYPES.map((type) => {
+            const tasksForType = (dataset.tasks || [])
+              .filter(tk => tk.type === type)
+              .filter(tk => type !== 'day' || Number(tk.day_of_week) === selectedDay)
+              .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+
+            return (
+              <div key={type} className="card planning-content" style={{ marginBottom: '12px' }}>
+                <label style={{ fontWeight: 700, fontSize: '0.9rem', color: '#2C2C2C' }}>
+                  {t(`team.taskTypes.${type}`)}
+                </label>
+                {tasksForType.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#8A8A8A', fontStyle: 'italic' }}>
+                    {t('team.noTasks')}
+                  </p>
+                ) : (
+                  <div className="tasks-list">
+                    {tasksForType.map((task, idx) => (
+                      <div key={task.id} className="task-item">
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, textDecoration: task.done ? 'line-through' : 'none', opacity: task.done ? 0.5 : 1 }}>
+                          <input type="checkbox" checked={task.done} onChange={() => toggleTask(task.id)} />
+                          <span>{task.text}</span>
+                        </label>
+                        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                          <button className="btn-icon" onClick={() => moveTask(task, 'up')} disabled={idx === 0}>↑</button>
+                          <button className="btn-icon" onClick={() => moveTask(task, 'down')} disabled={idx === tasksForType.length - 1}>↓</button>
+                          <button className="btn-delete" style={{ fontSize: '1rem' }} onClick={() => deleteTask(task.id)}>✕</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
       {/* ================= MODALES ================= */}
-      
+
       {/* Formulaire Employé */}
       <FormModal isOpen={isFormOpen && view === 'employees'} onClose={() => setIsFormOpen(false)} title={empForm.id ? t('common.edit') : t('team.addEmployee')}>
         <form className="form-card" onSubmit={saveEmployee}>
@@ -544,7 +692,7 @@ export default function TeamPage() {
         </form>
       </FormModal>
 
-      {/* Formulaire Ingrédient */}
+      {/* Formulaire Ingrédient (Fix #4 : unités traduites) */}
       <FormModal isOpen={isFormOpen && view === 'ingredients'} onClose={() => setIsFormOpen(false)} title={ingForm.id ? t('common.edit') : t('menu.ingredients.add')}>
         <form className="form-card" onSubmit={saveIngredient}>
           <input className="form-input" type="text" placeholder={t('menu.ingredients.name')} value={ingForm.name} onChange={e => setIngForm({ ...ingForm, name: e.target.value })} required />
@@ -553,7 +701,7 @@ export default function TeamPage() {
           </select>
           <div className="row-inputs">
             <select className="form-select" value={ingForm.unit} onChange={e => setIngForm({ ...ingForm, unit: e.target.value })}>
-              {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+              {UNIT_IDS.map(u => <option key={u} value={u}>{unitLabel(t, u)}</option>)}
             </select>
             <input className="form-input" type="number" placeholder={t('menu.ingredients.unitCost')} value={ingForm.unit_cost} onChange={e => setIngForm({ ...ingForm, unit_cost: e.target.value })} required />
           </div>

@@ -143,6 +143,36 @@ export default {
       marketing: 'Marketing',
       other: 'Other',
     },
+
+    // --- FIX #3 (Chantier 12 — Fixes UI) ---
+    // Clé manquante utilisée par le Header pour view === 'costs'.
+    // Sans elle, l'UI affiche la chaîne brute "team.costs" dans les 3 langues.
+    costs: 'Fixed Costs',
+
+    // --- FIX #2 (Chantier 12 — Fixes UI) ---
+    // Task types for the Planning tab
+    taskTypes: {
+      day: 'Daily task',
+      week: 'Weekly task',
+      permanent: 'Permanent task',
+    },
+
+    // --- FIX #4 (Chantier 12 — Fixes UI) ---
+    // Translated unit labels (stored IDs remain 'cái', 'tờ', etc.)
+    units: {
+      g: 'g',
+      kg: 'kg',
+      t: 't',
+      ml: 'ml',
+      cl: 'cl',
+      l: 'L',
+      piece: 'pc',
+      piece_vi: 'pc',
+      sheet: 'sheet',
+      box: 'box',
+      pack: 'pack',
+      bunch: 'bunch',
+    },
   },
   placeholder: { comingSoon: 'Coming soon...' },
   settings: {
@@ -210,14 +240,12 @@ export default {
       comparison: 'Comparison',
     },
     periods: {
-      // ✅ v5 : "all" supprimée, "day" ajoutée
       day: 'Day',
       week: 'Week',
       month: 'Month',
       year: 'Year',
     },
     chartTypes: {
-      // ✅ v5 : "bubble" supprimée, "donut" + "groupedBar" ajoutées
       line: 'Line',
       donut: 'Donut',
       bar: 'Bar',
@@ -228,13 +256,11 @@ export default {
       absolute: 'Absolute',
     },
     groupedBar: {
-      // ✅ v5 : nouveau bloc
       trend: 'vs prev. period',
       current: 'Current',
       previous: 'Previous',
     },
     fallback: {
-      // ✅ v5 : nouveau bloc
       chartUnavailable: 'Not available for this detail',
     },
     blocks: {
@@ -301,9 +327,7 @@ export default {
       expenses: 'Expenses',
       items: 'Items',
     },
-    // ✅ v5 : bloc "bubble" entièrement supprimé (remplacé par Donut + GroupedBar)
     drillDown: {
-      // Conservé pour compatibilité (plus référencé par StatsPage v5)
       revenue: 'Revenue details',
       profit: 'Margin details',
       items: 'Item details',
