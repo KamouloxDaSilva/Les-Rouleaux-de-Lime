@@ -1,0 +1,35 @@
+/* src/components/EmptyState.css */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 8px;
+}
+
+.empty-state__emoji {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.empty-state__title {
+  font-family: var(--font-title);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.empty-state__desc {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  max-width: 320px;
+  margin: 0;
+}
+
+.empty-state__cta {
+  margin-top: 12px;
+}

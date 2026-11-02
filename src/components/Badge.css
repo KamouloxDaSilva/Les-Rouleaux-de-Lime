@@ -1,0 +1,41 @@
+/* src/components/Badge.css */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.badge--default {
+  background: rgba(44, 44, 44, 0.08);
+  color: var(--color-text);
+}
+.badge--info {
+  background: rgba(60, 145, 166, 0.14);
+  color: var(--color-blue);
+}
+.badge--warning {
+  background: rgba(255, 152, 0, 0.18);
+  color: #B26A00;
+}
+.badge--success {
+  background: rgba(67, 160, 71, 0.16);
+  color: var(--color-success);
+}
+.badge--danger {
+  background: rgba(229, 57, 53, 0.16);
+  color: var(--color-danger);
+}
+.badge--promo {
+  background: var(--color-orange);
+  color: #FFF;
+  box-shadow: 0 2px 6px rgba(255, 152, 0, 0.35);
+}

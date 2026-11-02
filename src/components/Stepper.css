@@ -1,0 +1,62 @@
+/* src/components/Stepper.css */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  background: var(--color-surface);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stepper__btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #FFF;
+  background: var(--color-blue);
+  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.stepper__btn--minus { background: var(--color-blue); }
+.stepper__btn--plus  { background: var(--color-blue); }
+.stepper__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stepper__btn:focus-visible {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 2px;
+}
+
+.stepper__input {
+  width: 64px;
+  height: 44px;
+  text-align: center;
+  border: none;
+  border-radius: 10px;
+  background: rgba(60, 145, 166, 0.08);
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 1rem;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.stepper__input::-webkit-outer-spin-button,
+.stepper__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stepper__input:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stepper__btn { transition: none; }
+}
