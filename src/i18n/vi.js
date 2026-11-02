@@ -71,6 +71,72 @@ export default {
     },
     pricePerKg: 'Giá/kg',
     pricePerUnit: 'Giá/đơn vị',
+
+    // --- v9 : Formules (Suất ăn) — Chantier 19/20 ---
+    formulas: {
+      title: 'Suất ăn',
+      add: 'Thêm suất ăn',
+      edit: 'Sửa suất ăn',
+      delete: 'Xóa suất ăn',
+      empty: 'Chưa có suất ăn',
+      confirmDelete: 'Xóa suất ăn này?',
+      fields: {
+        name: 'Tên',
+        description: 'Mô tả',
+        emoji: 'Biểu tượng',
+        color: 'Màu sắc',
+        composition: 'Thành phần',
+        pricingMode: 'Cách tính giá',
+        fixedPrice: 'Giá cố định',
+        discountPct: 'Giảm giá (%)',
+        active: 'Đang bán',
+      },
+      pricingModes: {
+        fixed: 'Giá cố định',
+        calculated: 'Tính toán',
+        discounted: 'Giảm giá',
+      },
+      slots: {
+        main: 'Món chính',
+        drink: 'Đồ uống',
+        sauce: 'Nước sốt',
+        dessert: 'Tráng miệng',
+        side: 'Món phụ',
+      },
+      composition: {
+        addDish: 'Thêm món',
+        selectDish: 'Chọn món',
+        quantity: 'Số lượng',
+        slot: 'Vị trí',
+        empty: 'Chưa có món trong suất ăn',
+      },
+      totalPrice: 'Tổng giá',
+      totalCost: 'Tổng giá vốn',
+      totalMargin: 'Tổng lợi nhuận',
+    },
+
+    // --- v9 : Calculs (hệ đơn vị, hao hụt) — Chantier 19/20 ---
+    calculations: {
+      yieldFactor: 'Tỷ lệ hao hụt',
+      yieldFactorHint: 'Ví dụ: 0,9 = mất 10% khi sơ chế',
+      trackStock: 'Theo dõi kho',
+      trackStockHint: 'Tắt cho nguyên liệu luôn có sẵn (nước, đá)',
+      referenceUnitCost: 'Giá tham chiếu',
+      realUnitCost: 'Giá thực tế',
+      perKg: '/kg',
+      perL: '/L',
+      perUnit: '/đơn vị',
+      baseUnit: 'Đơn vị cơ bản',
+      quantityInBase: 'Số lượng (đơn vị cơ bản)',
+      preparation: 'Sơ chế',
+      isPrepared: 'Tự làm',
+      preparedBatch: 'Lô sơ chế',
+      variableWeight: 'Trọng lượng thay đổi',
+      averageWeight: 'Trọng lượng TB',
+      weightRange: 'Khoảng',
+      shelfLife: 'Hạn sử dụng',
+      shelfLifeDays: 'ngày',
+    },
   },
   team: {
     title: 'Quản lý',
@@ -117,7 +183,6 @@ export default {
     yearlyCost: 'Chi phí năm',
     fixedCostsYearly: 'Tổng chi phí năm',
 
-    // --- NOUVELLES CLÉS (Chantier 12) ---
     sections: {
       hr: 'Nhân sự',
       finance: 'Tài chính',
@@ -143,22 +208,12 @@ export default {
       marketing: 'Tiếp thị',
       other: 'Khác',
     },
-
-    // --- FIX #3 (Chantier 12 — Fixes UI) ---
-    // Clé manquante utilisée par le Header pour view === 'costs'.
-    // Sans elle, l'UI affiche la chaîne brute "team.costs" dans les 3 langues.
     costs: 'Chi phí cố định',
-
-    // --- FIX #2 (Chantier 12 — Fixes UI) ---
-    // Types de tâches pour l'onglet Planning
     taskTypes: {
       day: 'Nhiệm vụ trong ngày',
       week: 'Nhiệm vụ trong tuần',
       permanent: 'Nhiệm vụ thường xuyên',
     },
-
-    // --- FIX #4 (Chantier 12 — Fixes UI) ---
-    // Libellés d'unités traduits (les IDs stockés restent 'cái', 'tờ', etc.)
     units: {
       g: 'g',
       kg: 'kg',
@@ -172,6 +227,103 @@ export default {
       box: 'hộp',
       pack: 'gói',
       bunch: 'bó',
+    },
+
+    // --- v9 : Champs ingrédient — Chantier 23 ---
+    ingredientV9: {
+      baseUnit: 'Đơn vị cơ bản',
+      purchaseOptions: 'Quy cách mua',
+      addPurchaseOption: 'Thêm quy cách',
+      recipeUnits: 'Đơn vị công thức',
+      addRecipeUnit: 'Thêm đơn vị',
+      yieldFactor: 'Tỷ lệ hao hụt (%)',
+      trackStock: 'Theo dõi kho',
+      referenceUnitCost: 'Giá tham chiếu',
+      preferredSupplier: 'Nhà cung cấp ưu tiên',
+      isPrepared: 'Tự làm',
+      preparedBatch: 'Lô sơ chế',
+      variableWeight: 'Trọng lượng thay đổi',
+      averageUnitWeight: 'Trọng lượng TB',
+      weightRange: 'Khoảng',
+      storageType: 'Loại bảo quản',
+      shelfLifeDays: 'Hạn sử dụng (ngày)',
+      stockQuantity: 'Tồn kho',
+      minStock: 'Tồn tối thiểu',
+      stockAlert: 'Cảnh báo kho',
+    },
+
+    // --- v9 : Offres fournisseurs — Chantier 25 ---
+    supplierOffers: {
+      title: 'Ưu đãi nhà cung cấp',
+      add: 'Thêm ưu đãi',
+      edit: 'Sửa ưu đãi',
+      delete: 'Xóa ưu đãi',
+      empty: 'Chưa có ưu đãi',
+      fields: {
+        supplier: 'Nhà cung cấp',
+        purchaseOption: 'Quy cách',
+        cost: 'Chi phí',
+        isAvailable: 'Có sẵn',
+        isPreferred: 'Ưu tiên',
+        minOrderQuantity: 'SL tối thiểu',
+        leadTimeDays: 'Thời gian giao (ngày)',
+        lastPurchaseDate: 'Lần mua cuối',
+        notes: 'Ghi chú',
+      },
+    },
+
+    // --- v9 : Comparateur — Chantier 25 ---
+    comparator: {
+      title: 'So sánh giá',
+      bestPrice: 'Giá tốt nhất',
+      preferred: 'Ưu tiên',
+      priceDiff: 'Chênh lệch',
+      noOffer: 'Không có ưu đãi',
+      perBaseUnit: 'mỗi đơn vị cơ bản',
+    },
+
+    // --- v9 : Phiếu nhập hàng — Chantier 24/25 ---
+    receipts: {
+      title: 'Phiếu nhập hàng',
+      add: 'Thêm phiếu',
+      empty: 'Chưa có phiếu',
+      types: {
+        receipt: 'Nhập hàng',
+        return: 'Trả hàng',
+        correction: 'Điều chỉnh',
+      },
+      fields: {
+        date: 'Ngày',
+        supplier: 'Nhà cung cấp',
+        lines: 'Chi tiết',
+        quantity: 'Số lượng',
+        cost: 'Chi phí',
+        stockDelta: 'Thay đổi kho',
+        total: 'Tổng',
+        notes: 'Ghi chú',
+      },
+    },
+
+    // --- v9 : Quản lý kho — Chantier 24 ---
+    stockManagement: {
+      title: 'Bổ sung hàng',
+      reappro: 'Cần bổ sung',
+      suggestedQuantity: 'SL đề xuất',
+      packCount: 'Số quy cách',
+      alert: 'Cảnh báo kho',
+      outOfStock: 'Hết hàng',
+      nonTracked: 'Không theo dõi',
+      nonTrackedHint: 'Không trừ kho',
+      negativeStock: 'Cho phép tồn âm',
+      targetStock: 'Tồn mục tiêu',
+      toOrder: 'Cần đặt',
+      movementTypes: {
+        sale: 'Bán hàng',
+        receipt: 'Nhập hàng',
+        return: 'Trả hàng',
+        correction: 'Điều chỉnh',
+        preparation: 'Sơ chế',
+      },
     },
   },
   placeholder: { comingSoon: 'Đang phát triển...' },
@@ -395,6 +547,12 @@ export default {
     error: 'Lỗi',
     success: 'Thành công',
     loading: 'Đang tải…',
+    // --- v9 : Đơn vị cơ bản (SPEC_UNITES §1) ---
+    baseUnits: {
+      g: { label: 'Gam', short: 'g' },
+      ml: { label: 'Mililit', short: 'ml' },
+      piece: { label: 'Cái', short: 'cái' },
+    },
   },
   splash: { tagline: 'Les Rouleaux de Lime' },
   firstLaunch: {
@@ -408,6 +566,28 @@ export default {
     useDemoHint: 'Khám phá với dữ liệu mẫu',
     importSuccess: 'Đã nhập dữ liệu',
     importError: 'Lỗi nhập dữ liệu',
+  },
+  // --- v9 : 12 danh mục nguyên liệu (SPEC_UNITES §5) ---
+  ingredientCategories: {
+    meat: 'Thịt',
+    fish: 'Cá',
+    vegetable: 'Rau củ',
+    fruit: 'Trái cây',
+    staple: 'Tinh bột',
+    dairy: 'Sữa',
+    spice: 'Gia vị',
+    sauce: 'Nước sốt',
+    oil: 'Dầu',
+    beverage: 'Đồ uống',
+    packaging: 'Bao bì',
+    cleaning: 'Vệ sinh',
+  },
+  // --- v9 : 4 loại bảo quản (SPEC_UNITES §3.1) ---
+  storageTypes: {
+    fresh: 'Tươi',
+    frozen: 'Đông lạnh',
+    ambient: 'Nhiệt độ phòng',
+    refrigerated: 'Bảo quản lạnh',
   },
   languages: { vi: 'Tiếng Việt', fr: 'Français', en: 'English' },
 };

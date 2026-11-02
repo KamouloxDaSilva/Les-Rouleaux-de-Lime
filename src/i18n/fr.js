@@ -71,6 +71,72 @@ export default {
     },
     pricePerKg: 'Prix / kg',
     pricePerUnit: 'Prix / unité',
+
+    // --- v9 : Formules — Chantier 19/20 ---
+    formulas: {
+      title: 'Formules',
+      add: 'Ajouter une formule',
+      edit: 'Modifier la formule',
+      delete: 'Supprimer la formule',
+      empty: 'Aucune formule',
+      confirmDelete: 'Supprimer cette formule ?',
+      fields: {
+        name: 'Nom',
+        description: 'Description',
+        emoji: 'Émoji',
+        color: 'Couleur',
+        composition: 'Composition',
+        pricingMode: 'Mode de tarification',
+        fixedPrice: 'Prix fixe',
+        discountPct: 'Remise (%)',
+        active: 'Active',
+      },
+      pricingModes: {
+        fixed: 'Prix fixe',
+        calculated: 'Calculé',
+        discounted: 'Remisé',
+      },
+      slots: {
+        main: 'Plat principal',
+        drink: 'Boisson',
+        sauce: 'Sauce',
+        dessert: 'Dessert',
+        side: 'Accompagnement',
+      },
+      composition: {
+        addDish: 'Ajouter un plat',
+        selectDish: 'Choisir un plat',
+        quantity: 'Quantité',
+        slot: 'Emplacement',
+        empty: 'Aucun plat dans la formule',
+      },
+      totalPrice: 'Prix total',
+      totalCost: 'Coût total',
+      totalMargin: 'Marge totale',
+    },
+
+    // --- v9 : Calculs — Chantier 19/20 ---
+    calculations: {
+      yieldFactor: 'Rendement',
+      yieldFactorHint: 'Ex : 0,9 = 10% perdu à la préparation',
+      trackStock: 'Suivi du stock',
+      trackStockHint: 'Désactiver pour les ingrédients toujours disponibles (eau, glaçons)',
+      referenceUnitCost: 'Coût de référence',
+      realUnitCost: 'Coût réel',
+      perKg: '/kg',
+      perL: '/L',
+      perUnit: '/unité',
+      baseUnit: 'Unité de base',
+      quantityInBase: 'Quantité (unité de base)',
+      preparation: 'Préparation',
+      isPrepared: 'Préparé maison',
+      preparedBatch: 'Lot de préparation',
+      variableWeight: 'Poids variable',
+      averageWeight: 'Poids moyen',
+      weightRange: 'Fourchette',
+      shelfLife: 'Conservation',
+      shelfLifeDays: 'jours',
+    },
   },
   team: {
     title: 'Gestion',
@@ -117,7 +183,6 @@ export default {
     yearlyCost: 'Coût annuel',
     fixedCostsYearly: 'Total annuel',
 
-    // --- NOUVELLES CLÉS (Chantier 12) ---
     sections: {
       hr: 'Ressources Humaines',
       finance: 'Finances',
@@ -143,22 +208,12 @@ export default {
       marketing: 'Marketing',
       other: 'Divers',
     },
-
-    // --- FIX #3 (Chantier 12 — Fixes UI) ---
-    // Clé manquante utilisée par le Header pour view === 'costs'.
-    // Sans elle, l'UI affiche la chaîne brute "team.costs" dans les 3 langues.
     costs: 'Charges fixes',
-
-    // --- FIX #2 (Chantier 12 — Fixes UI) ---
-    // Types de tâches pour l'onglet Planning
     taskTypes: {
       day: 'Tâche du jour',
       week: 'Tâche de la semaine',
       permanent: 'Tâche permanente',
     },
-
-    // --- FIX #4 (Chantier 12 — Fixes UI) ---
-    // Libellés d'unités traduits (les IDs stockés restent 'cái', 'tờ', etc.)
     units: {
       g: 'g',
       kg: 'kg',
@@ -172,6 +227,103 @@ export default {
       box: 'boîte',
       pack: 'paquet',
       bunch: 'botte',
+    },
+
+    // --- v9 : Champs ingrédient — Chantier 23 ---
+    ingredientV9: {
+      baseUnit: 'Unité de base',
+      purchaseOptions: 'Conditionnements d\'achat',
+      addPurchaseOption: 'Ajouter un conditionnement',
+      recipeUnits: 'Unités de recette',
+      addRecipeUnit: 'Ajouter une unité',
+      yieldFactor: 'Rendement (%)',
+      trackStock: 'Suivi du stock',
+      referenceUnitCost: 'Coût de référence',
+      preferredSupplier: 'Fournisseur préféré',
+      isPrepared: 'Préparé maison',
+      preparedBatch: 'Lot de préparation',
+      variableWeight: 'Poids variable',
+      averageUnitWeight: 'Poids moyen',
+      weightRange: 'Fourchette',
+      storageType: 'Type de stockage',
+      shelfLifeDays: 'Conservation (jours)',
+      stockQuantity: 'Stock',
+      minStock: 'Stock minimum',
+      stockAlert: 'Alerte stock',
+    },
+
+    // --- v9 : Offres fournisseurs — Chantier 25 ---
+    supplierOffers: {
+      title: 'Offres fournisseurs',
+      add: 'Ajouter une offre',
+      edit: 'Modifier l\'offre',
+      delete: 'Supprimer l\'offre',
+      empty: 'Aucune offre',
+      fields: {
+        supplier: 'Fournisseur',
+        purchaseOption: 'Conditionnement',
+        cost: 'Coût',
+        isAvailable: 'Disponible',
+        isPreferred: 'Préférée',
+        minOrderQuantity: 'Quantité min.',
+        leadTimeDays: 'Délai (jours)',
+        lastPurchaseDate: 'Dernier achat',
+        notes: 'Notes',
+      },
+    },
+
+    // --- v9 : Comparateur — Chantier 25 ---
+    comparator: {
+      title: 'Comparateur',
+      bestPrice: 'Meilleur prix',
+      preferred: 'Préférée',
+      priceDiff: 'Écart',
+      noOffer: 'Aucune offre',
+      perBaseUnit: 'par unité de base',
+    },
+
+    // --- v9 : Bons de réception — Chantier 24/25 ---
+    receipts: {
+      title: 'Bons de réception',
+      add: 'Ajouter un bon',
+      empty: 'Aucun bon',
+      types: {
+        receipt: 'Réception',
+        return: 'Retour',
+        correction: 'Correction',
+      },
+      fields: {
+        date: 'Date',
+        supplier: 'Fournisseur',
+        lines: 'Lignes',
+        quantity: 'Quantité',
+        cost: 'Coût',
+        stockDelta: 'Mouvement stock',
+        total: 'Total',
+        notes: 'Notes',
+      },
+    },
+
+    // --- v9 : Gestion du stock — Chantier 24 ---
+    stockManagement: {
+      title: 'Réapprovisionnement',
+      reappro: 'À réapprovisionner',
+      suggestedQuantity: 'Quantité suggérée',
+      packCount: 'Nombre de conditionnements',
+      alert: 'Alerte stock',
+      outOfStock: 'Stock épuisé',
+      nonTracked: 'Non suivi',
+      nonTrackedHint: 'Pas de déduction de stock',
+      negativeStock: 'Stock négatif autorisé',
+      targetStock: 'Stock cible',
+      toOrder: 'À commander',
+      movementTypes: {
+        sale: 'Vente',
+        receipt: 'Réception',
+        return: 'Retour',
+        correction: 'Correction',
+        preparation: 'Préparation',
+      },
     },
   },
   placeholder: { comingSoon: 'En développement...' },
@@ -395,6 +547,11 @@ export default {
     error: 'Erreur',
     success: 'Succès',
     loading: 'Chargement…',
+    baseUnits: {
+      g: { label: 'Gramme', short: 'g' },
+      ml: { label: 'Millilitre', short: 'ml' },
+      piece: { label: 'Pièce', short: 'pce' },
+    },
   },
   splash: { tagline: 'Les Rouleaux de Lime' },
   firstLaunch: {
@@ -408,6 +565,28 @@ export default {
     useDemoHint: 'Explorer avec des exemples',
     importSuccess: 'Import réussi',
     importError: 'Erreur d\'import',
+  },
+  // --- v9 : 12 catégories d'ingrédients (SPEC_UNITES §5) ---
+  ingredientCategories: {
+    meat: 'Viande',
+    fish: 'Poisson',
+    vegetable: 'Légumes',
+    fruit: 'Fruits',
+    staple: 'Féculents',
+    dairy: 'Produits laitiers',
+    spice: 'Épices',
+    sauce: 'Sauces',
+    oil: 'Huiles',
+    beverage: 'Boissons',
+    packaging: 'Emballages',
+    cleaning: 'Nettoyage',
+  },
+  // --- v9 : 4 types de stockage (SPEC_UNITES §3.1) ---
+  storageTypes: {
+    fresh: 'Frais',
+    frozen: 'Congelé',
+    ambient: 'Ambiant',
+    refrigerated: 'Réfrigéré',
   },
   languages: { vi: 'Tiếng Việt', fr: 'Français', en: 'English' },
 };
