@@ -1,5 +1,11 @@
 // src/data/storage.js
-import { SCHEMA_VERSION, createEmptyDataset, validateDataset, MENU_CATEGORIES } from './model.js';
+import {
+  SCHEMA_VERSION,
+  createEmptyDataset,
+  createIngredient,
+  validateDataset,
+  MENU_CATEGORIES,
+} from './model.js';
 
 export const STORAGE_KEY = `rdl.dataset.v${SCHEMA_VERSION}`;
 
@@ -13,9 +19,38 @@ function getStorage() {
   } catch { return null; }
 }
 
-// Migration v4 → v5 : anciens plats (category = texte libre type "Gỏi cuốn")
-// deviennent section "dish" + subcategory = ancien libellé.
-// Les ingrédients n'avaient pas de catégorie → "dish" par défaut.
+// ─────────────────────────────────────────────────────────────────────
+// Helpers de migration
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Retourne le facteur de conversion `unit` → `base_unit` d'un ingrédient.
+ * Utilisé pour convertir `recipe[].quantity` (v8, exprimée dans l'unité
+ * libre de l'ingrédient) vers `recipe[].quantity_in_base` (v9).
+ * Si l'ingrédient est inconnu ou l'unité non convertible, facteur = 1.
+ */
+function getUnitToBaseFactor(ingredient) {
+  if (!ingredient) return 1;
+  const unit = String(ingredient.unit || '').trim().toLowerCase();
+  const baseUnit = ingredient.base_unit;
+  if (baseUnit === 'g') {
+    if (unit === 'kg') return 1000;
+    if (unit === 't') return 1000000;
+    return 1;
+  }
+  if (baseUnit === 'ml') {
+    if (unit === 'l' || unit === 'lit' || unit === 'lít') return 1000;
+    if (unit === 'cl') return 10;
+    return 1;
+  }
+  return 1; // piece et unités inconnues
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Migrations v4 → v9
+// ─────────────────────────────────────────────────────────────────────
+
+// v4 → v5 : anciens plats (category texte libre) → section 'dish' + subcategory
 function migrateFromV4(dataset) {
   if (!dataset || typeof dataset !== 'object') return dataset;
   const next = { ...dataset };
@@ -42,7 +77,7 @@ function migrateFromV4(dataset) {
   return next;
 }
 
-// Migration v5 → v6 : ajout de "days_per_week" pour les employés
+// v5 → v6 : ajout days_per_week employés
 function migrateFromV5(dataset) {
   if (!dataset || typeof dataset !== 'object') return dataset;
   const next = { ...dataset };
@@ -59,9 +94,7 @@ function migrateFromV5(dataset) {
   return next;
 }
 
-// Migration v6 → v7 : Chantier 12 (Refonte Gestion)
-// Ajout des collections suppliers, expenses, promotions
-// Ajout des champs sort_order, stock_quantity, min_stock, supplier_id
+// v6 → v7 : collections suppliers / expenses / promotions + sort_order
 function migrateFromV6(dataset) {
   if (!dataset || typeof dataset !== 'object') return dataset;
   const next = { ...dataset };
@@ -101,11 +134,7 @@ function migrateFromV6(dataset) {
   return next;
 }
 
-/**
- * Réassigne des sort_order séquentiels (0, 1, 2, …) à une collection triable.
- * Conserve l'ordre courant basé sur les sort_order existants puis sur l'index.
- * Résout le bug historique où tous les sort_order étaient `0` (swap → no-op).
- */
+/** Réassigne sort_order séquentiellement (fix historique tous à 0). */
 function resequenceSortOrders(items) {
   if (!Array.isArray(items)) return [];
   return [...items]
@@ -119,16 +148,13 @@ function resequenceSortOrders(items) {
     .map(({ item }, idx) => ({ ...item, sort_order: idx }));
 }
 
-// Migration v7 → v8 : Chantier 12 — Fixes UI
-// Ajout de la collection `tasks` (Planning avec 3 types)
-// Renumérotation des sort_order (fix boutons ↑ / ↓)
+// v7 → v8 : collection tasks + renumérotation sort_order
 function migrateFromV7(dataset) {
   if (!dataset || typeof dataset !== 'object') return dataset;
   const next = { ...dataset };
 
   next.tasks = Array.isArray(next.tasks) ? next.tasks : [];
 
-  // Fix tri : on renumérote proprement toutes les collections triables
   next.employees = resequenceSortOrders(next.employees || []);
   next.fixed_costs = resequenceSortOrders(next.fixed_costs || []);
   next.ingredients = resequenceSortOrders(next.ingredients || []);
@@ -140,13 +166,66 @@ function migrateFromV7(dataset) {
   return next;
 }
 
+/**
+ * v8 → v9 — Chantier 14
+ * - Ajoute les collections v9 : supplier_offers, formulas, purchase_receipts
+ * - Complète chaque ingredient avec tous les champs v9 (via createIngredient)
+ * - Convertit chaque dish.recipe[].quantity → .quantity_in_base (en conservant quantity)
+ * - Préserve TOUTES les données v8 existantes
+ */
+function migrateFromV8(dataset) {
+  if (!dataset || typeof dataset !== 'object') return dataset;
+  const next = { ...dataset };
+
+  // 1) Collections v9 (vides si absentes)
+  next.supplier_offers = Array.isArray(next.supplier_offers) ? next.supplier_offers : [];
+  next.formulas = Array.isArray(next.formulas) ? next.formulas : [];
+  next.purchase_receipts = Array.isArray(next.purchase_receipts) ? next.purchase_receipts : [];
+
+  // 2) Enrichissement des ingrédients via createIngredient
+  //    → dérive automatiquement base_unit (depuis unit) et reference_unit_cost
+  //      (depuis unit_cost + unit), et complète les champs v9 manquants.
+  const ingredients = (next.ingredients || []).map((ing) => {
+    if (!ing || typeof ing !== 'object') return ing;
+    return createIngredient(ing);
+  });
+  next.ingredients = ingredients;
+
+  const ingMap = new Map(ingredients.filter(Boolean).map((i) => [i.id, i]));
+
+  // 3) Conversion dish.recipe[].quantity → quantity_in_base
+  //    On conserve quantity pour backward compat (calculations.js l'utilise encore).
+  next.dishes = (next.dishes || []).map((dish) => {
+    if (!dish || typeof dish !== 'object') return dish;
+    if (!Array.isArray(dish.recipe)) return dish;
+    return {
+      ...dish,
+      recipe: dish.recipe.map((item) => {
+        if (!item || typeof item !== 'object') return item;
+        // Si déjà migré (v9 partiel), on ne touche pas
+        if (Number.isFinite(item.quantity_in_base)) return item;
+        const ing = ingMap.get(item.ingredient_id);
+        const factor = getUnitToBaseFactor(ing);
+        const qty = Number.isFinite(item.quantity) ? item.quantity : 0;
+        return { ...item, quantity_in_base: qty * factor };
+      }),
+    };
+  });
+
+  next.schema_version = 9;
+  return next;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// loadDataset — cascade v9 → v8 → v7 → … → v3
+// ─────────────────────────────────────────────────────────────────────
+
 export function loadDataset() {
   const storage = getStorage();
   if (!storage) return createEmptyDataset();
 
+  // 1) Version courante (v9)
   let raw = null;
-
-  // 1) Version courante (v8)
   try { raw = storage.getItem(STORAGE_KEY); } catch (e) { return createEmptyDataset(); }
   if (raw) {
     try {
@@ -156,6 +235,9 @@ export function loadDataset() {
       if (!parsed.expenses) parsed.expenses = [];
       if (!parsed.promotions) parsed.promotions = [];
       if (!parsed.tasks) parsed.tasks = [];
+      if (!parsed.supplier_offers) parsed.supplier_offers = [];
+      if (!parsed.formulas) parsed.formulas = [];
+      if (!parsed.purchase_receipts) parsed.purchase_receipts = [];
 
       const { ok } = validateDataset(parsed);
       if (ok) return parsed;
@@ -163,12 +245,25 @@ export function loadDataset() {
     raw = null;
   }
 
-  // 2) Migration depuis v7
+  // 2) Migration depuis v8 → v9
+  try { raw = storage.getItem('rdl.dataset.v8'); } catch (e) { raw = null; }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      const migrated = migrateFromV8(parsed);
+      if (!migrated.planning) migrated.planning = [];
+      if (!migrated.tasks) migrated.tasks = [];
+      try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
+      return migrated;
+    } catch (e) { raw = null; }
+  }
+
+  // 3) v7 → V7 → V8
   try { raw = storage.getItem('rdl.dataset.v7'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      const migrated = migrateFromV7(parsed);
+      const migrated = migrateFromV8(migrateFromV7(parsed));
       if (!migrated.planning) migrated.planning = [];
       if (!migrated.tasks) migrated.tasks = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
@@ -176,12 +271,12 @@ export function loadDataset() {
     } catch (e) { raw = null; }
   }
 
-  // 3) Migration depuis v6
+  // 4) v6 → V6 → V7 → V8
   try { raw = storage.getItem('rdl.dataset.v6'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      const migrated = migrateFromV7(migrateFromV6(parsed));
+      const migrated = migrateFromV8(migrateFromV7(migrateFromV6(parsed)));
       if (!migrated.planning) migrated.planning = [];
       if (!migrated.tasks) migrated.tasks = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
@@ -189,12 +284,12 @@ export function loadDataset() {
     } catch (e) { raw = null; }
   }
 
-  // 4) Migration depuis v5
+  // 5) v5 → V5 → V6 → V7 → V8
   try { raw = storage.getItem('rdl.dataset.v5'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      const migrated = migrateFromV7(migrateFromV6(migrateFromV5(parsed)));
+      const migrated = migrateFromV8(migrateFromV7(migrateFromV6(migrateFromV5(parsed))));
       if (!migrated.planning) migrated.planning = [];
       if (!migrated.tasks) migrated.tasks = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
@@ -202,12 +297,14 @@ export function loadDataset() {
     } catch (e) { raw = null; }
   }
 
-  // 5) Migration depuis v4
+  // 6) v4 → V4 → V5 → V6 → V7 → V8
   try { raw = storage.getItem('rdl.dataset.v4'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      const migrated = migrateFromV7(migrateFromV6(migrateFromV5(migrateFromV4(parsed))));
+      const migrated = migrateFromV8(
+        migrateFromV7(migrateFromV6(migrateFromV5(migrateFromV4(parsed))))
+      );
       if (!migrated.planning) migrated.planning = [];
       if (!migrated.tasks) migrated.tasks = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
@@ -215,12 +312,14 @@ export function loadDataset() {
     } catch (e) { raw = null; }
   }
 
-  // 6) Migration depuis v3
+  // 7) v3 → V4 → V5 → V6 → V7 → V8
   try { raw = storage.getItem('rdl.dataset.v3'); } catch (e) { raw = null; }
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      const migrated = migrateFromV7(migrateFromV6(migrateFromV5(migrateFromV4(parsed))));
+      const migrated = migrateFromV8(
+        migrateFromV7(migrateFromV6(migrateFromV5(migrateFromV4(parsed))))
+      );
       if (!migrated.planning) migrated.planning = [];
       if (!migrated.tasks) migrated.tasks = [];
       try { storage.setItem(STORAGE_KEY, JSON.stringify(migrated)); } catch (e) {}
@@ -230,6 +329,10 @@ export function loadDataset() {
 
   return createEmptyDataset();
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// save / reset / export / import
+// ─────────────────────────────────────────────────────────────────────
 
 export function saveDataset(dataset) {
   const { ok, errors } = validateDataset(dataset);
@@ -253,23 +356,31 @@ export function exportDatasetAsJSON(dataset) {
 }
 
 export function importDatasetFromJSON(text) {
-  if (typeof text !== 'string' || !text.trim()) return { ok: false, errors: ['contenu vide'] };
+  if (typeof text !== 'string' || !text.trim()) {
+    return { ok: false, errors: ['contenu vide'] };
+  }
   let parsed = null;
-  try { parsed = JSON.parse(text); } catch (e) { return { ok: false, errors: ['JSON invalide'] }; }
+  try { parsed = JSON.parse(text); } catch (e) {
+    return { ok: false, errors: ['JSON invalide'] };
+  }
 
-  // Chaîne de migration selon la version d'origine du fichier importé
   const v = Number(parsed?.schema_version) || 0;
   let migrated = parsed;
   if (v < 5) migrated = migrateFromV4(migrated);
   if (v < 6) migrated = migrateFromV5(migrated);
   if (v < 7) migrated = migrateFromV6(migrated);
   if (v < 8) migrated = migrateFromV7(migrated);
+  if (v < 9) migrated = migrateFromV8(migrated);
 
+  // Filet de sécurité (au cas où l'import v9 partiel manquerait une collection)
   if (!migrated.planning) migrated.planning = [];
   if (!migrated.suppliers) migrated.suppliers = [];
   if (!migrated.expenses) migrated.expenses = [];
   if (!migrated.promotions) migrated.promotions = [];
   if (!migrated.tasks) migrated.tasks = [];
+  if (!migrated.supplier_offers) migrated.supplier_offers = [];
+  if (!migrated.formulas) migrated.formulas = [];
+  if (!migrated.purchase_receipts) migrated.purchase_receipts = [];
 
   const { ok, errors } = validateDataset(migrated);
   if (!ok) return { ok: false, errors };
