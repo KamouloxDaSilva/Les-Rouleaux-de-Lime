@@ -1,0 +1,124 @@
+/* src/components/CalendarStrip.css */
+.calendar-strip {
+  margin-bottom: 20px;
+  padding: 12px 10px 14px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.calendar-strip__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.calendar-strip__nav {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #3C91A6;
+  background: rgba(60, 145, 166, 0.08);
+  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.calendar-strip__nav:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.calendar-strip__nav:focus-visible {
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
+}
+
+.calendar-strip__month {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8A8A8A;
+  text-align: center;
+}
+
+.calendar-strip__days {
+  display: flex;
+  gap: 4px;
+}
+
+.calendar-strip__day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 6px 0 8px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  position: relative;
+}
+
+.calendar-strip__day-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: #3C91A6;
+  margin-bottom: 2px;
+}
+
+.calendar-strip__day-number {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #2C2C2C;
+}
+
+.calendar-strip__day--weekend .calendar-strip__day-label,
+.calendar-strip__day--weekend .calendar-strip__day-number {
+  color: #FF9800;
+}
+
+.calendar-strip__day--active {
+  background: #3C91A6;
+  box-shadow: 0 6px 16px rgba(60, 145, 166, 0.35);
+  transform: translateY(-2px);
+}
+.calendar-strip__day--active .calendar-strip__day-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+.calendar-strip__day--active .calendar-strip__day-number {
+  color: #FFFFFF;
+}
+
+.calendar-strip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3C91A6;
+  margin-top: 2px;
+}
+
+.calendar-strip__day:focus-visible {
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-strip,
+  .calendar-strip__day,
+  .calendar-strip__nav {
+    animation: none;
+    transition: none;
+  }
+  .calendar-strip__day--active {
+    transform: none;
+  }
+}

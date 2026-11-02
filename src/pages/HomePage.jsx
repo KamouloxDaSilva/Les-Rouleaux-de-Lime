@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
 import { loadDataset } from '../data/storage';
 import { getActiveRestaurant } from '../data/model';
+import CalendarStrip from '../components/CalendarStrip';
 import './HomePage.css';
 
 function toIsoDate(d) {
@@ -10,14 +11,6 @@ function toIsoDate(d) {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
-}
-
-function isSameDay(a, b) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
 }
 
 function computeDishFoodCost(dish, ingredientMap) {
@@ -43,37 +36,38 @@ export default function HomePage({ onNavigate }) {
       const data = loadDataset();
       return data && typeof data === 'object' ? data : {};
     } catch (e) {
-      if (typeof console !== 'undefined') console.warn('[HomePage] loadDataset failed:', e);
+      if (typeof console !== 'undefined') {
+        console.warn('[HomePage] loadDataset failed:', e);
+      }
       return {};
     }
   }, []);
 
-  const closings  = Array.isArray(dataset.daily_closings) ? dataset.daily_closings : [];
-  const dishes    = Array.isArray(dataset.dishes) ? dataset.dishes : [];
-  const ingredients = Array.isArray(dataset.ingredients) ? dataset.ingredients : [];
+  const closings = Array.isArray(dataset.daily_closings)
+    ? dataset.daily_closings
+    : [];
+  const dishes = Array.isArray(dataset.dishes) ? dataset.dishes : [];
+  const ingredients = Array.isArray(dataset.ingredients)
+    ? dataset.ingredients
+    : [];
 
-  const dishMap       = useMemo(() => new Map(dishes.map(d => [d.id, d])), [dishes]);
-  const ingredientMap = useMemo(() => new Map(ingredients.map(i => [i.id, i])), [ingredients]);
+  const dishMap = useMemo(
+    () => new Map(dishes.map((d) => [d.id, d])),
+    [dishes]
+  );
+  const ingredientMap = useMemo(
+    () => new Map(ingredients.map((i) => [i.id, i])),
+    [ingredients]
+  );
 
   const activeRestaurant = getActiveRestaurant(dataset);
   const currency = activeRestaurant?.currency || 'VND';
 
-  const today  = new Date();
+  const today = new Date();
   const locale = t('home.locale');
-  const days   = t('home.days');
-
-  const startOfWeek = new Date(today);
-  const dow = today.getDay();
-  startOfWeek.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
-    return d;
-  });
 
   const selectedIso = toIsoDate(selectedDate);
-  const closing = closings.find(c => c.date === selectedIso) || null;
+  const closing = closings.find((c) => c.date === selectedIso) || null;
 
   const dayStats = useMemo(() => {
     if (!closing || !Array.isArray(closing.sales)) {
@@ -89,7 +83,7 @@ export default function HomePage({ onNavigate }) {
       if (!dish) continue;
       const price = Number(dish.price) || 0;
       const unitFood = computeDishFoodCost(dish, ingredientMap);
-      revenue  += qty * price;
+      revenue += qty * price;
       foodCost += qty * unitFood;
     }
     return { revenue, margin: revenue - foodCost, itemsSold };
@@ -108,11 +102,6 @@ export default function HomePage({ onNavigate }) {
     }
   };
 
-  const weekLabel = `${t('home.timeline.weekOf')} ${startOfWeek.toLocaleString(locale, {
-    day: 'numeric',
-    month: 'long',
-  })}`;
-
   return (
     <div className="home-page">
       <header className="home-header">
@@ -123,47 +112,35 @@ export default function HomePage({ onNavigate }) {
         </h1>
       </header>
 
-      <section className="timeline" aria-label={weekLabel}>
-        <div className="timeline__caption">{weekLabel}</div>
-        <div className="timeline__days">
-          {weekDays.map((d, index) => {
-            const isWeekend = index >= 5;
-            const isActive = isSameDay(d, selectedDate);
-            return (
-              <button
-                key={index}
-                type="button"
-                className={
-                  'day-card' +
-                  (isWeekend ? ' day-card--weekend' : '') +
-                  (isActive ? ' day-card--active' : '')
-                }
-                onClick={() => setSelectedDate(d)}
-                aria-pressed={isActive}
-                aria-label={`${days[index]} ${d.getDate()}`}
-              >
-                <span className="day-card__label">{days[index]}</span>
-                <span className="day-card__number">{d.getDate()}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      <CalendarStrip
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+      />
 
       {closing ? (
         <section className="summary">
           <h2 className="summary__title">{t('home.todaySummary')}</h2>
           <div className="summary__grid">
             <div className="summary__card summary__card--revenue">
-              <span className="summary__label">{t('home.summary.revenue')}</span>
-              <span className="summary__value">{formatMoney(dayStats.revenue)}</span>
+              <span className="summary__label">
+                {t('home.summary.revenue')}
+              </span>
+              <span className="summary__value">
+                {formatMoney(dayStats.revenue)}
+              </span>
             </div>
             <div className="summary__card summary__card--margin">
-              <span className="summary__label">{t('home.summary.margin')}</span>
-              <span className="summary__value">{formatMoney(dayStats.margin)}</span>
+              <span className="summary__label">
+                {t('home.summary.margin')}
+              </span>
+              <span className="summary__value">
+                {formatMoney(dayStats.margin)}
+              </span>
             </div>
             <div className="summary__card summary__card--items">
-              <span className="summary__label">{t('home.summary.itemsSold')}</span>
+              <span className="summary__label">
+                {t('home.summary.itemsSold')}
+              </span>
               <span className="summary__value">{dayStats.itemsSold}</span>
             </div>
           </div>
@@ -178,7 +155,9 @@ export default function HomePage({ onNavigate }) {
               onError={() => setMascotOk(false)}
             />
           ) : (
-            <div className="empty__emoji" aria-hidden="true">🍽️</div>
+            <div className="empty__emoji" aria-hidden="true">
+              🍽️
+            </div>
           )}
           <h3 className="empty__title">{t('home.empty.title')}</h3>
           <p className="empty__desc">{t('home.empty.desc')}</p>
