@@ -1,12 +1,37 @@
 // src/pages/ClosingPage.jsx
-// Chantier 12 — Partie 2 (UI) : Utilisation du prix promo dans le calcul du CA
-import { useEffect, useMemo, useState } from 'react';
+// Chantier 21 — Clôture v3 (calendrier + bilan)
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useI18n } from '../i18n';
-import { WEATHER_OPTIONS, createDailyClosing, getActiveRestaurant } from '../data/model.js';
+import {
+  WEATHER_OPTIONS,
+  MENU_CATEGORIES,
+  createDailyClosing,
+  getActiveRestaurant,
+} from '../data/model.js';
 import { loadDataset, saveDataset } from '../data/storage.js';
 import { createDefaultFixtures } from '../data/fixtures.js';
-import { getDishSellingPrice } from '../data/calculations.js';
+import { getDishSellingPrice, getDishFoodCost } from '../data/calculations.js';
+import CalendarStrip from '../components/CalendarStrip.jsx';
+import Stepper from '../components/Stepper.jsx';
+import PillSelector from '../components/PillSelector.jsx';
+import Toast from '../components/Toast.jsx';
+import Badge from '../components/Badge.jsx';
+import EmptyState from '../components/EmptyState.jsx';
 import './ClosingPage.css';
+
+const CLOSING_CATEGORIES = [
+  { id: 'dish', i18nKey: 'menu.sections.dish' },
+  { id: 'drink', i18nKey: 'menu.sections.drink' },
+  { id: 'dessert', i18nKey: 'menu.sections.dessert' },
+  { id: 'sauce', i18nKey: 'menu.sections.sauce' },
+];
+
+const WEATHER_EMOJIS = {
+  sunny: '☀️',
+  cloudy: '☁️',
+  rainy: '🌧️',
+  stormy: '⛈️',
+};
 
 function formatDateString(date) {
   const year = date.getFullYear();
@@ -15,46 +40,37 @@ function formatDateString(date) {
   return `${year}-${month}-${day}`;
 }
 
-function getTodayString() {
-  return formatDateString(new Date());
-}
-
-function addDays(date, days) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function getStartOfWeek(date) {
-  const d = new Date(date);
-  const day = d.getDay(); // 0 = dimanche
-  const diff = day === 0 ? -6 : 1 - day; // lundi comme premier jour
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-// La Clôture suit désormais les 4 catégories (Sauces incluses)
-const CLOSING_CATEGORIES = [
-  { id: 'dish', i18nKey: 'menu.sections.dish' },
-  { id: 'drink', i18nKey: 'menu.sections.drink' },
-  { id: 'dessert', i18nKey: 'menu.sections.dessert' },
-  { id: 'sauce', i18nKey: 'menu.sections.sauce' },
-];
-
 export default function ClosingPage() {
-  const { t, formatCurrency, locale } = useI18n();
+  const { t, formatCurrency } = useI18n();
+
   const [dataset, setDataset] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(getTodayString());
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [weather, setWeather] = useState('');
   const [notes, setNotes] = useState('');
   const [sales, setSales] = useState({});
-  const [feedback, setFeedback] = useState(null);
   const [activeCategory, setActiveCategory] = useState('dish');
+  const [toast, setToast] = useState({ open: false, message: '', variant: 'info' });
 
-  // Date affichée dans la bande semaine
-  const [viewDate, setViewDate] = useState(() => new Date());
+  const selectedDateStr = useMemo(
+    () => formatDateString(selectedDate),
+    [selectedDate]
+  );
 
+  const locale = t('home.locale');
+
+  const formattedDate = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      }).format(selectedDate);
+    } catch (e) {
+      return '';
+    }
+  }, [selectedDate, locale]);
+
+  // ── Chargement initial du dataset ────────────────────────────
   useEffect(() => {
     const loaded = loadDataset();
     const isEmpty = loaded.dishes.length === 0 && loaded.daily_closings.length === 0;
@@ -65,106 +81,114 @@ export default function ClosingPage() {
     setDataset(initial);
   }, []);
 
-  // Garde la semaine affichée synchronisée avec la date sélectionnée
-  useEffect(() => {
-    const [year, month, day] = selectedDate.split('-').map(Number);
-    if (year && month && day) {
-      setViewDate(new Date(year, month - 1, day));
-    }
-  }, [selectedDate]);
+  const restaurant = useMemo(
+    () => (dataset ? getActiveRestaurant(dataset) : null),
+    [dataset]
+  );
 
-  const restaurant = useMemo(() => dataset ? getActiveRestaurant(dataset) : null, [dataset]);
-  const promotions = dataset?.promotions || [];
-
-  // Tous les plats concernés par la clôture (4 catégories)
+  // ── Plats à afficher : actifs + inactifs ayant déjà des ventes
+  //    dans la clôture sélectionnée (préserve l'historique) ───────
   const closingDishes = useMemo(() => {
     if (!dataset || !restaurant) return [];
-    const categoryIds = CLOSING_CATEGORIES.map((c) => c.id);
-    return dataset.dishes.filter(
-      (d) => d.active && d.restaurant_id === restaurant.id && categoryIds.includes(d.category)
-    );
-  }, [dataset, restaurant]);
+    const existing = dataset.daily_closings.find((c) => c.date === selectedDateStr);
+    const soldIds = new Set((existing?.sales || []).map((s) => s.dish_id));
+    return dataset.dishes.filter((d) => {
+      if (!d || d.restaurant_id !== restaurant.id) return false;
+      if (!MENU_CATEGORIES.includes(d.category)) return false;
+      return d.active === true || soldIds.has(d.id);
+    });
+  }, [dataset, restaurant, selectedDateStr]);
 
-  // Plats affichés dans l'onglet actif
-  const activeDishes = useMemo(() => {
-    return closingDishes.filter((d) => d.category === activeCategory);
-  }, [closingDishes, activeCategory]);
+  const activeDishes = useMemo(
+    () => closingDishes.filter((d) => d.category === activeCategory),
+    [closingDishes, activeCategory]
+  );
 
-  /**
-   * Prix de vente effectif pour un plat à la date sélectionnée.
-   * Applique la promo active (le cas échéant) sur cette date précise —
-   * et non sur "aujourd'hui" — afin que la saisie d'une clôture passée
-   * utilise bien le prix qui était en vigueur ce jour-là.
-   */
-  const getSellingPriceForDate = (dish) => {
-    try {
-      const p = getDishSellingPrice(dish, promotions, selectedDate);
-      const numeric = Number(p);
-      if (Number.isFinite(numeric) && numeric > 0) return numeric;
-    } catch (e) {
-      /* fallback silencieux */
-    }
-    return Number(dish.price) || 0;
-  };
+  const isAlreadyClosed = useMemo(() => {
+    if (!dataset) return false;
+    return dataset.daily_closings.some((c) => c.date === selectedDateStr);
+  }, [dataset, selectedDateStr]);
 
+  // ── Re-sync du formulaire quand la date change ───────────────
   useEffect(() => {
     if (!dataset) return;
-    const existing = dataset.daily_closings.find((c) => c.date === selectedDate);
+    const existing = dataset.daily_closings.find((c) => c.date === selectedDateStr);
     if (existing) {
       setWeather(existing.weather || '');
       setNotes(existing.notes || '');
       const map = {};
-      existing.sales.forEach((s) => { map[s.dish_id] = { sold: s.quantity_sold ?? 0 }; });
+      (existing.sales || []).forEach((s) => {
+        map[s.dish_id] = s.quantity_sold ?? 0;
+      });
       setSales(map);
     } else {
       setWeather('');
       setNotes('');
       setSales({});
     }
-    setFeedback(null);
-  }, [selectedDate, dataset]);
+  }, [selectedDateStr, dataset]);
 
-  function updateSale(dishId, field, value) {
-    setSales((prev) => ({
-      ...prev,
-      [dishId]: { ...(prev[dishId] || {}), [field]: value },
-    }));
-  }
+  // ── Helpers prix / coût ──────────────────────────────────────
+  const getEffectivePrice = useCallback(
+    (dish) => {
+      if (!dataset || !dish) return 0;
+      return getDishSellingPrice(dataset, dish, selectedDateStr);
+    },
+    [dataset, selectedDateStr]
+  );
 
-  function bumpSale(dishId, field, delta) {
-    setSales((prev) => {
-      const current = prev[dishId] || { sold: 0 };
-      const nextVal = Math.max(0, (current[field] ?? 0) + delta);
-      return { ...prev, [dishId]: { ...current, [field]: nextVal } };
+  // ── Bilan temps réel ─────────────────────────────────────────
+  const summary = useMemo(() => {
+    if (!dataset) {
+      return { revenue: 0, items: 0, foodCost: 0, margin: 0, marginPct: 0 };
+    }
+    const ingredients = dataset.ingredients || [];
+    let revenue = 0;
+    let items = 0;
+    let foodCost = 0;
+    closingDishes.forEach((dish) => {
+      const sold = Number(sales[dish.id]) || 0;
+      if (!sold) return;
+      revenue += getDishSellingPrice(dataset, dish, selectedDateStr) * sold;
+      items += sold;
+      foodCost += getDishFoodCost(dish, ingredients) * sold;
     });
-  }
+    const margin = revenue - foodCost;
+    const marginPct = revenue > 0 ? (margin / revenue) * 100 : 0;
+    return { revenue, items, foodCost, margin, marginPct };
+  }, [dataset, closingDishes, sales, selectedDateStr]);
 
-  // CA estimé : utilise le prix promo si une promo est active à la date sélectionnée
-  const estimatedRevenue = useMemo(() => {
-    return closingDishes.reduce((sum, dish) => {
-      const sold = sales[dish.id]?.sold ?? 0;
-      if (!sold) return sum;
-      return sum + getSellingPriceForDate(dish) * sold;
-    }, 0);
-  }, [closingDishes, sales, promotions, selectedDate]);
+  // ── Handlers ─────────────────────────────────────────────────
+  const updateSale = useCallback((dishId, value) => {
+    const n = Math.max(0, Number(value) || 0);
+    setSales((prev) => ({ ...prev, [dishId]: n }));
+  }, []);
 
-  const totalItemsSold = useMemo(() => {
-    return closingDishes.reduce((sum, dish) => {
-      return sum + (sales[dish.id]?.sold ?? 0);
-    }, 0);
-  }, [closingDishes, sales]);
+  const handleSelectDate = useCallback((date) => {
+    setSelectedDate(date);
+  }, []);
 
-  function handleSave() {
+  const closeToast = useCallback(
+    () => setToast((prev) => ({ ...prev, open: false })),
+    []
+  );
+
+  const handleSave = useCallback(() => {
     if (!dataset || !restaurant) return;
+
     const salesArray = closingDishes
-      .map((dish) => ({ dish_id: dish.id, quantity_sold: Number(sales[dish.id]?.sold) || 0 }))
+      .map((dish) => ({
+        dish_id: dish.id,
+        quantity_sold: Number(sales[dish.id]) || 0,
+      }))
       .filter((s) => s.quantity_sold > 0);
 
-    const existingIndex = dataset.daily_closings.findIndex((c) => c.date === selectedDate);
     const nextClosings = [...dataset.daily_closings];
-    if (existingIndex >= 0) {
-      nextClosings[existingIndex] = {
-        ...nextClosings[existingIndex],
+    const idx = nextClosings.findIndex((c) => c.date === selectedDateStr);
+
+    if (idx >= 0) {
+      nextClosings[idx] = {
+        ...nextClosings[idx],
         weather,
         notes,
         sales: salesArray,
@@ -174,280 +198,234 @@ export default function ClosingPage() {
       nextClosings.push(
         createDailyClosing({
           restaurant_id: restaurant.id,
-          date: selectedDate,
+          date: selectedDateStr,
           weather,
           notes,
           sales: salesArray,
         })
       );
     }
+
     const nextDataset = { ...dataset, daily_closings: nextClosings };
     try {
       saveDataset(nextDataset);
       setDataset(nextDataset);
-      setFeedback({ type: 'success', message: t('closing.saveSuccess') });
+      setToast({
+        open: true,
+        message: t('closing.saveSuccess'),
+        variant: 'success',
+      });
     } catch (e) {
-      setFeedback({ type: 'error', message: e.message });
+      setToast({
+        open: true,
+        message: e?.message || t('common.error'),
+        variant: 'error',
+      });
     }
-  }
+  }, [
+    dataset,
+    restaurant,
+    closingDishes,
+    sales,
+    selectedDateStr,
+    weather,
+    notes,
+    t,
+  ]);
 
-  // --- LOGIQUE DU CALENDRIER COMPACT ---
-  const weekStart = useMemo(() => getStartOfWeek(viewDate), [viewDate]);
-  const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
-    [weekStart]
-  );
-
-  const weekTitle = useMemo(() => {
-    const formatted = new Intl.DateTimeFormat(locale, {
-      month: 'short',
-      day: 'numeric',
-    }).format(weekStart);
-    return `${t('closing.weekOf')} ${formatted}`;
-  }, [locale, t, weekStart]);
-
-  const formattedSelectedDate = useMemo(() => {
-    const [year, month, day] = selectedDate.split('-').map(Number);
-    const d = new Date(year, month - 1, day);
-    return new Intl.DateTimeFormat(locale, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(d);
-  }, [locale, selectedDate]);
-
-  const handlePrevWeek = () => setViewDate((prev) => addDays(prev, -7));
-  const handleNextWeek = () => setViewDate((prev) => addDays(prev, 7));
-
-  const handleDayClick = (dayDate) => {
-    setSelectedDate(formatDateString(dayDate));
-  };
-
-  const renderWeekCalendar = () => {
+  if (!dataset || !restaurant) {
     return (
-      <div className="week-calendar">
-        <div className="week-calendar-header">
-          <button
-            type="button"
-            className="week-nav-btn"
-            onClick={handlePrevWeek}
-            aria-label={t('closing.prevWeek')}
-          >
-            ‹
-          </button>
-          <span className="week-title">{weekTitle}</span>
-          <button
-            type="button"
-            className="week-nav-btn"
-            onClick={handleNextWeek}
-            aria-label={t('closing.nextWeek')}
-          >
-            ›
-          </button>
-        </div>
-
-        <div className="week-days">
-          {weekDays.map((dayDate) => {
-            const dateStr = formatDateString(dayDate);
-            const isSelected = dateStr === selectedDate;
-            const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
-            const weekdayLabel = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(dayDate);
-
-            return (
-              <button
-                key={dateStr}
-                type="button"
-                className={`week-day ${isSelected ? 'selected' : ''} ${isWeekend ? 'weekend' : ''}`}
-                onClick={() => handleDayClick(dayDate)}
-              >
-                <span className="week-day-name">{weekdayLabel}</span>
-                <span className="week-day-number">{dayDate.getDate()}</span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="closing-page closing-page--loading">
+        <p>{t('common.loading')}</p>
       </div>
     );
-  };
+  }
 
-  if (!dataset || !restaurant) return <div>{t('common.loading')}</div>;
+  const categoryOptions = CLOSING_CATEGORIES.map((c) => ({
+    value: c.id,
+    label: t(c.i18nKey),
+  }));
 
   return (
     <div className="closing-page">
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={closeToast}
+      />
+
       <h1 className="closing-title">{t('closing.title')}</h1>
 
-      {feedback && (
-        <div className={`closing-feedback closing-feedback--${feedback.type}`}>
-          {feedback.message}
+      {/* Bande semaine + sélection jour */}
+      <CalendarStrip
+        selectedDate={selectedDate}
+        onSelectDate={handleSelectDate}
+      />
+
+      {/* Indicateur informatif (modification libre même après minuit) */}
+      {isAlreadyClosed && (
+        <div className="closing-status" role="status">
+          <span className="closing-status__icon" aria-hidden="true">🔒</span>
+          <span className="closing-status__text">{t('closing.alreadyClosed')}</span>
         </div>
       )}
 
-      <div className="closing-top-grid">
-        {/* CALENDRIER COMPACT */}
-        <div className="card date-card">
-          <label className="closing-label">{t('closing.date')}</label>
-          {renderWeekCalendar()}
-        </div>
-
-        {/* MÉTÉO */}
-        <div className="card weather-card">
-          <span className="closing-label">{t('closing.weather')}</span>
-          <div className="weather-options-row">
-            {WEATHER_OPTIONS.map((w) => (
+      {/* Météo */}
+      <section className="closing-section">
+        <span className="closing-label">{t('closing.weather')}</span>
+        <div
+          className="weather-grid"
+          role="radiogroup"
+          aria-label={t('closing.weather')}
+        >
+          {WEATHER_OPTIONS.map((w) => {
+            const checked = weather === w;
+            return (
               <button
                 key={w}
                 type="button"
-                className={`weather-btn-clean ${weather === w ? 'active' : ''} weather-${w}`}
+                role="radio"
+                aria-checked={checked}
+                className={
+                  'weather-option' + (checked ? ' weather-option--active' : '')
+                }
                 onClick={() => setWeather(w)}
               >
-                <span className="weather-icon">
-                  {w === 'sunny' ? '☀️' : w === 'cloudy' ? '☁️' : w === 'rainy' ? '🌧️' : '⛈️'}
+                <span className="weather-option__emoji" aria-hidden="true">
+                  {WEATHER_EMOJIS[w]}
                 </span>
-                <span className="weather-label">{t(`closing.weatherOptions.${w}`)}</span>
+                <span className="weather-option__label">
+                  {t(`closing.weatherOptions.${w}`)}
+                </span>
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* RÉSUMÉ DU JOUR */}
-        <div className="card closing-summary-card">
-          <span className="closing-label">{t('closing.daySummary')}</span>
-          <div className="closing-summary-date">{formattedSelectedDate}</div>
-
-          <div className="closing-summary-stats">
-            <div>
-              <span>{t('closing.estimatedRevenue')}</span>
-              <strong>{formatCurrency(estimatedRevenue)}</strong>
-            </div>
-            <div>
-              <span>{t('closing.itemsSold')}</span>
-              <strong>{totalItemsSold}</strong>
-            </div>
-            <div>
-              <span>{t('closing.weather')}</span>
-              <strong>{weather ? t(`closing.weatherOptions.${weather}`) : '—'}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section className="closing-section card">
-        <h2 className="closing-section-title">{t('closing.sales')}</h2>
-
-        <div className="category-tabs">
-          {CLOSING_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              className={`category-tab ${activeCategory === cat.id ? 'active' : ''}`}
-              onClick={() => setActiveCategory(cat.id)}
-            >
-              {t(cat.i18nKey)}
-            </button>
-          ))}
-        </div>
-
-        <div className="closing-sales-header">
-          <span>{t('closing.dishName')}</span>
-          <span>{t('closing.sold')}</span>
-        </div>
-
-        <ul className="closing-dishes">
-          {activeDishes.map((dish) => {
-            const s = sales[dish.id] || { sold: 0 };
-            const basePrice = Number(dish.price) || 0;
-            const sellingPrice = getSellingPriceForDate(dish);
-            const hasPromo = sellingPrice > 0 && sellingPrice < basePrice;
-
-            return (
-              <li key={dish.id} className="closing-dish-item">
-                <div className="dish-info">
-                  <span className="dish-name">
-                    {dish.name}
-                    {hasPromo && (
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          marginLeft: 6,
-                          padding: '1px 6px',
-                          background: '#FF9800',
-                          color: '#FFFFFF',
-                          fontSize: '0.55rem',
-                          fontWeight: 800,
-                          letterSpacing: '0.04em',
-                          borderRadius: 999,
-                          verticalAlign: 'middle',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        PROMO
-                      </span>
-                    )}
-                  </span>
-                  {hasPromo ? (
-                    <span className="dish-price">
-                      <span
-                        style={{
-                          textDecoration: 'line-through',
-                          color: '#8A8A8A',
-                          fontSize: '0.75em',
-                          fontWeight: 600,
-                          marginRight: 6,
-                        }}
-                      >
-                        {formatCurrency(basePrice)}
-                      </span>
-                      <span style={{ color: '#FF9800', fontWeight: 800 }}>
-                        {formatCurrency(sellingPrice)}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="dish-price">{formatCurrency(basePrice)}</span>
-                  )}
-                </div>
-                <div className="qty-stepper">
-                  <button
-                    type="button"
-                    className="qty-btn"
-                    onClick={() => bumpSale(dish.id, 'sold', -1)}
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    className="qty-input"
-                    min="0"
-                    value={s.sold || ''}
-                    placeholder="0"
-                    onChange={(e) =>
-                      updateSale(
-                        dish.id,
-                        'sold',
-                        Math.max(0, parseInt(e.target.value, 10) || 0)
-                      )
-                    }
-                  />
-                  <button
-                    type="button"
-                    className="qty-btn"
-                    onClick={() => bumpSale(dish.id, 'sold', 1)}
-                  >
-                    +
-                  </button>
-                </div>
-              </li>
             );
           })}
-        </ul>
+        </div>
       </section>
 
-      <section className="closing-section card">
-        <label className="closing-label" htmlFor="notes">
+      {/* Bilan temps réel */}
+      <section className="closing-section">
+        <div className="summary-header">
+          <span className="closing-label" style={{ marginBottom: 0 }}>
+            {t('closing.daySummary')}
+          </span>
+          <span className="summary-date">{formattedDate}</span>
+        </div>
+
+        <div className="closing-summary-grid">
+          <div className="summary-stat summary-stat--wide">
+            <span className="summary-stat__label">
+              {t('stats.metrics.revenue')}
+            </span>
+            <span className="summary-stat__value summary-stat__value--orange">
+              {formatCurrency(summary.revenue)}
+            </span>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat__label">
+              {t('stats.metrics.items')}
+            </span>
+            <span className="summary-stat__value">{summary.items}</span>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat__label">
+              {t('stats.metrics.foodCost')}
+            </span>
+            <span className="summary-stat__value">
+              {formatCurrency(summary.foodCost)}
+            </span>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat__label">
+              {t('stats.metrics.margin')}
+            </span>
+            <span className="summary-stat__value summary-stat__value--blue">
+              {formatCurrency(summary.margin)}
+            </span>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat__label">
+              {t('stats.metrics.marginPct')}
+            </span>
+            <span className="summary-stat__value">
+              {summary.marginPct.toFixed(1)}%
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Ventes par catégorie */}
+      <section className="closing-section">
+        <h2 className="closing-section__title">{t('closing.sales')}</h2>
+
+        <PillSelector
+          value={activeCategory}
+          options={categoryOptions}
+          onChange={setActiveCategory}
+          ariaLabel={t('closing.sales')}
+        />
+
+        {activeDishes.length === 0 ? (
+          <EmptyState
+            emoji="🍽️"
+            title={t('menu.empty')}
+            desc={t('closing.dishName')}
+          />
+        ) : (
+          <ul className="closing-dishes">
+            {activeDishes.map((dish) => {
+              const sold = Number(sales[dish.id]) || 0;
+              const basePrice = Number(dish.price) || 0;
+              const effectivePrice = getEffectivePrice(dish);
+              const hasPromo =
+                effectivePrice > 0 && effectivePrice < basePrice;
+
+              return (
+                <li key={dish.id} className="closing-dish-item">
+                  <div className="dish-info">
+                    <div className="dish-name-row">
+                      <span className="dish-name">{dish.name}</span>
+                      {hasPromo && <Badge variant="promo">PROMO</Badge>}
+                    </div>
+                    <div className="dish-price-row">
+                      {hasPromo ? (
+                        <>
+                          <span className="dish-price dish-price--original">
+                            {formatCurrency(basePrice)}
+                          </span>
+                          <span className="dish-price dish-price--effective">
+                            {formatCurrency(effectivePrice)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="dish-price">
+                          {formatCurrency(basePrice)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <Stepper
+                    value={sold}
+                    min={0}
+                    max={999}
+                    onChange={(v) => updateSale(dish.id, v)}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      {/* Notes libres */}
+      <section className="closing-section">
+        <label className="closing-label" htmlFor="closing-notes">
           {t('closing.notes')}
         </label>
         <textarea
-          id="notes"
+          id="closing-notes"
           className="closing-notes"
           rows={3}
           placeholder={t('closing.notesPlaceholder')}
@@ -456,12 +434,17 @@ export default function ClosingPage() {
         />
       </section>
 
-      <div className="closing-footer-fixed">
-        <div className="closing-total">
-          <span>{t('closing.estimatedRevenue')}</span>
-          <strong>{formatCurrency(estimatedRevenue)}</strong>
+      {/* Footer fixe : total + save */}
+      <div className="closing-footer">
+        <div className="closing-footer__total">
+          <span>{t('stats.metrics.revenue')}</span>
+          <strong>{formatCurrency(summary.revenue)}</strong>
         </div>
-        <button type="button" className="btn-primary" onClick={handleSave}>
+        <button
+          type="button"
+          className="closing-save-btn"
+          onClick={handleSave}
+        >
           {t('closing.saveButton')}
         </button>
       </div>

@@ -1,337 +1,243 @@
 /* src/pages/ClosingPage.css */
+/* Chantier 21 — Clôture v3 */
+
 .closing-page {
   padding: 16px;
   padding-bottom: 160px;
-  background: var(--color-cream);
+  background: var(--color-cream, #FAEBD5);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.closing-page--loading {
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--color-text-muted, #8A8A8A);
+  font-size: 0.95rem;
 }
 
 .closing-title {
-  font-family: var(--font-title);
-  color: var(--color-blue);
+  font-family: var(--font-title, 'Baloo 2', sans-serif);
+  color: var(--color-blue, #3C91A6);
   font-size: 1.6rem;
-  margin: 8px 0 16px;
+  margin: 4px 0 0;
   text-align: center;
 }
 
-/* --- Grille du haut (Calendrier + Météo + Résumé) --- */
-.closing-top-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+/* ── Indicateur 🔒/🔓 (informatif) ─────────────────────────── */
+.closing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  padding: 8px 14px;
+  background: rgba(60, 145, 166, 0.12);
+  color: var(--color-blue, #3C91A6);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.closing-status__icon {
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
-.date-card,
-.weather-card,
-.closing-summary-card {
+/* ── Sections ──────────────────────────────────────────────── */
+.closing-section {
+  background: #FFFFFF;
+  border-radius: 20px;
   padding: 16px;
-  margin-bottom: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   animation: fadeInUp 0.3s ease-out both;
 }
 
 .closing-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #8A8A8A);
   margin-bottom: 12px;
 }
 
-/* --- CALENDRIER COMPACT (BANDE SEMAINE) --- */
-.week-calendar {
-  background: #FFF;
-  border-radius: 16px;
-  padding: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  border: 1px solid #EAEAEA;
-  animation: fadeInUp 0.3s ease-out both;
-  animation-delay: 80ms;
+.closing-section__title {
+  font-family: var(--font-title, 'Baloo 2', sans-serif);
+  font-size: 1.05rem;
+  color: var(--color-text, #2C2C2C);
+  margin: 0 0 12px;
 }
 
-.week-calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.week-title {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--color-text);
-  text-transform: capitalize;
-}
-
-.week-nav-btn {
-  background: transparent;
-  border: none;
-  font-size: 1.4rem;
-  line-height: 1;
-  color: var(--color-blue);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 50%;
-}
-.week-nav-btn:active {
-  background: #F0F0F0;
-}
-
-.week-days {
-  display: flex;
-  gap: 6px;
-}
-
-.week-day {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 8px 2px;
-  border-radius: 12px;
-  background: #F8F8F8;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.week-day-name {
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.week-day-number {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.week-day.weekend .week-day-name,
-.week-day.weekend .week-day-number {
-  color: var(--color-orange);
-}
-
-.week-day.selected {
-  background: var(--color-blue);
-  border-color: var(--color-blue);
-  box-shadow: 0 4px 10px rgba(60, 145, 166, 0.25);
-  transform: translateY(-2px);
-}
-
-.week-day.selected .week-day-name,
-.week-day.selected .week-day-number {
-  color: #FFF;
-}
-
-/* --- RÉSUMÉ DU JOUR --- */
-.closing-summary-date {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--color-text);
-  margin-bottom: 12px;
-  text-transform: capitalize;
-}
-
-.closing-summary-stats {
-  display: flex;
+/* ── Météo ─────────────────────────────────────────────────── */
+.weather-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  flex-wrap: wrap;
 }
 
-.closing-summary-stats > div {
-  flex: 1 1 30%;
-  min-width: 90px;
+.weather-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 80px;
+  padding: 10px 4px;
+  background: #F8F8F8;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease,
+    border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.weather-option:active {
+  transform: scale(0.97);
+}
+.weather-option:focus-visible {
+  outline: 2px solid var(--color-blue, #3C91A6);
+  outline-offset: 2px;
+}
+
+.weather-option__emoji {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+.weather-option__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-text-muted, #8A8A8A);
+  text-align: center;
+}
+.weather-option--active {
+  background: var(--color-blue, #3C91A6);
+  border-color: var(--color-blue, #3C91A6);
+  box-shadow: 0 4px 12px rgba(60, 145, 166, 0.25);
+}
+.weather-option--active .weather-option__label {
+  color: #FFFFFF;
+}
+
+/* ── Bilan temps réel ──────────────────────────────────────── */
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.summary-date {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #8A8A8A);
+  text-transform: capitalize;
+}
+
+.closing-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.summary-stat {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding: 10px 12px;
   background: #FAFAFA;
   border: 1px solid #EFEFEF;
   border-radius: 12px;
-  padding: 8px 10px;
+  min-width: 0;
 }
-
-.closing-summary-stats span {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
+.summary-stat--wide {
+  grid-column: 1 / -1;
+}
+.summary-stat__label {
+  font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #8A8A8A);
+}
+.summary-stat__value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-text, #2C2C2C);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.summary-stat__value--orange {
+  color: var(--color-orange, #FF9800);
+  font-size: 1.25rem;
+}
+.summary-stat__value--blue {
+  color: var(--color-blue, #3C91A6);
 }
 
-.closing-summary-stats strong {
-  font-size: 0.95rem;
-  color: var(--color-text);
-}
-
-/* --- Météo --- */
-.weather-options-row {
-  display: flex;
-  gap: 8px;
-}
-
-.weather-btn-clean {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 4px;
-  border-radius: 12px;
-  background: #F8F8F8;
-  border: 2px solid transparent;
-  transition: all 0.2s ease-in-out;
-}
-
-.weather-btn-clean .weather-icon {
-  font-size: 1.4rem;
-}
-
-.weather-btn-clean .weather-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-.weather-btn-clean.active {
-  background: var(--color-blue);
-  border-color: var(--color-blue);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(60, 145, 166, 0.2);
-}
-
-.weather-btn-clean.active .weather-label {
-  color: #FFF;
-}
-
-/* --- Section Ventes --- */
-.category-tabs {
-  display: flex;
-  background: #F0F0F0;
-  padding: 4px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-}
-
-.category-tab {
-  flex: 1;
-  padding: 8px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  background: transparent;
-  border: none;
-}
-
-.category-tab.active {
-  background: #FFF;
-  color: var(--color-orange);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.closing-sales-header {
-  display: grid;
-  grid-template-columns: 1fr 100px;
-  gap: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  margin-bottom: 12px;
-  padding: 0 4px;
-}
-
-.closing-sales-header span:last-child {
-  text-align: center;
-}
-
+/* ── Liste des plats ───────────────────────────────────────── */
 .closing-dishes {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .closing-dish-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px;
-  background: #FAFAFA;
+  background: #FFFFFF;
   border: 1px solid #EFEFEF;
-  border-radius: 12px;
-  margin-bottom: 8px;
+  border-radius: 14px;
   animation: fadeInUp 0.3s ease-out both;
 }
 
 .dish-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
-
-.dish-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--color-text);
-}
-
-.dish-price {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.qty-stepper {
+.dish-name-row {
   display: flex;
   align-items: center;
-  background: #FFF;
-  border: 1px solid #E0E0E0;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  gap: 6px;
+  flex-wrap: wrap;
 }
-
-.qty-btn {
-  width: 36px;
-  height: 36px;
-  background: var(--color-blue);
-  color: #FFF;
-  font-size: 1.2rem;
+.dish-name {
   font-weight: 700;
-  border: none;
-  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--color-text, #2C2C2C);
+}
+.dish-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dish-price {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #8A8A8A);
+}
+.dish-price--original {
+  text-decoration: line-through;
+  font-size: 0.78rem;
+}
+.dish-price--effective {
+  color: var(--color-orange, #FF9800);
+  font-weight: 800;
+  font-size: 0.9rem;
 }
 
-.qty-btn:active {
-  opacity: 0.8;
-}
-
-.qty-input {
-  width: 50px;
-  border: none;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 700;
-  background: #FFF;
-  color: var(--color-text);
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.qty-input::-webkit-outer-spin-button,
-.qty-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
+/* ── Notes ─────────────────────────────────────────────────── */
 .closing-notes {
   width: 100%;
   padding: 12px;
@@ -340,21 +246,31 @@
   background: #FAFAFA;
   resize: vertical;
   font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--color-text, #2C2C2C);
+  min-height: 80px;
+  box-sizing: border-box;
+}
+.closing-notes:focus-visible {
+  outline: 2px solid var(--color-blue, #3C91A6);
+  outline-offset: 2px;
 }
 
-.closing-footer-fixed {
+/* ── Footer fixe : total + save ────────────────────────────── */
+.closing-footer {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 70px;
-  background: #FFF;
+  max-width: 600px;
+  margin: 0 auto;
+  background: #FFFFFF;
   padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
-  max-width: 600px;
-  margin: 0 auto;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
   z-index: 10;
@@ -362,89 +278,79 @@
   animation-delay: 200ms;
 }
 
-.closing-total {
+.closing-footer__total {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.closing-footer__total span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #8A8A8A);
+}
+.closing-footer__total strong {
+  font-size: 1.15rem;
+  color: var(--color-orange, #FF9800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.closing-total span {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+.closing-save-btn {
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: 14px;
+  background: var(--color-orange, #FF9800);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.closing-save-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(255, 152, 0, 0.25);
+}
+.closing-save-btn:focus-visible {
+  outline: 2px solid var(--color-blue, #3C91A6);
+  outline-offset: 2px;
 }
 
-.closing-total strong {
-  font-size: 1.3rem;
-  color: var(--color-orange);
+/* ── Stagger sur les plats ─────────────────────────────────── */
+.closing-dishes > .closing-dish-item:nth-child(1) { animation-delay: 0ms; }
+.closing-dishes > .closing-dish-item:nth-child(2) { animation-delay: 40ms; }
+.closing-dishes > .closing-dish-item:nth-child(3) { animation-delay: 80ms; }
+.closing-dishes > .closing-dish-item:nth-child(4) { animation-delay: 120ms; }
+.closing-dishes > .closing-dish-item:nth-child(5) { animation-delay: 160ms; }
+.closing-dishes > .closing-dish-item:nth-child(6) { animation-delay: 200ms; }
+.closing-dishes > .closing-dish-item:nth-child(n+7) { animation-delay: 240ms; }
+
+/* ── Tablette : bilan en 1 rangée ──────────────────────────── */
+@media (min-width: 700px) {
+  .closing-summary-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .summary-stat--wide {
+    grid-column: auto;
+  }
+  .summary-stat__value--orange {
+    font-size: 1.1rem;
+  }
 }
 
-.closing-feedback {
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.closing-feedback--success {
-  background: #E8F5E9;
-  color: #2E7D32;
-}
-
-.closing-feedback--error {
-  background: #FFEBEE;
-  color: #C62828;
-}
-
-/* =========================================================
-   Stagger cascade via animation-delay
-   ========================================================= */
-.closing-top-grid > .date-card:nth-child(1) {
-  animation-delay: 0ms;
-}
-.closing-top-grid > .weather-card:nth-child(2) {
-  animation-delay: 40ms;
-}
-.closing-top-grid > .closing-summary-card:nth-child(3) {
-  animation-delay: 80ms;
-}
-
-.closing-dishes > .closing-dish-item:nth-child(1) {
-  animation-delay: 0ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(2) {
-  animation-delay: 40ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(3) {
-  animation-delay: 80ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(4) {
-  animation-delay: 120ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(5) {
-  animation-delay: 160ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(6) {
-  animation-delay: 200ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(7) {
-  animation-delay: 240ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(8) {
-  animation-delay: 280ms;
-}
-.closing-dishes > .closing-dish-item:nth-child(n+9) {
-  animation-delay: 320ms;
-}
-
-/* Respect de la préférence système (accessibilité) */
+/* ── Accessibilité : prefers-reduced-motion ────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .date-card,
-  .weather-card,
-  .closing-summary-card,
-  .week-calendar,
+  .closing-section,
   .closing-dish-item,
-  .closing-footer-fixed {
-    animation: none;
+  .weather-option,
+  .closing-footer,
+  .closing-save-btn {
+    animation: none !important;
+    transition: none !important;
   }
 }
