@@ -8,6 +8,9 @@
 // - track_stock === false -> cout = 0 (R4.5 SPEC_UNITES)
 // - Nouveaux helpers : getIngredientRealUnitCost, convertToBase
 // - getIngredientPricePerKg / getIngredientDisplayPrice gerent base_unit v9
+//
+// Chantier 26 :
+// - Nouveau helper applyStockDeltas (R4.3, R4.2, R4.5)
 
 // ---------------------------------------------------------------------
 // Helpers internes
@@ -245,4 +248,99 @@ export function getIngredientDisplayPrice(ingredient) {
     return { value: perKg, unit: isVolume ? 'L' : 'kg' };
   }
   return { value: cost, unit };
+}
+
+// ---------------------------------------------------------------------
+// v9 - Chantier 26 : auto-deduction stock (R4.3, R4.2, R4.5)
+// ---------------------------------------------------------------------
+
+/**
+ * Applique les variations de vente aux stocks d'ingredients.
+ *
+ * R4.3 : delta_stock = delta_vendu * quantity_in_base / yield_factor
+ * R4.2 : stock negatif autorise, stock_alert = (newStock < 0)
+ * R4.5 : ingredient track_stock === false -> aucun effet
+ *
+ * @param {Array}  ingredients  - tableau d'ingredients (NON mute)
+ * @param {Array}  dishes       - plats concernes (avec recipe)
+ * @param {Object} deltaByDish  - { [dish_id]: deltaQuantity }
+ * @returns {{ ingredients: Array, depleted: Array }}
+ *   - ingredients : nouveau tableau ; les ingredients inchanges gardent
+ *     leur reference (pas de re-render inutile)
+ *   - depleted : ingredients dont le stock est passe sous 0 et qui ont
+ *     subi une deduction (delta > 0) -> a lister dans le toast warning
+ */
+export function applyStockDeltas(ingredients, dishes, deltaByDish) {
+  if (!Array.isArray(ingredients) || !Array.isArray(dishes)) {
+    return { ingredients: ingredients || [], depleted: [] };
+  }
+  if (!deltaByDish || typeof deltaByDish !== 'object') {
+    return { ingredients, depleted: [] };
+  }
+
+  const ingredientMap = new Map(
+    ingredients.filter(Boolean).map((i) => [i.id, i])
+  );
+  // Accumulation par ingredient (positif = a deduire du stock)
+  const accum = new Map();
+
+  dishes.forEach((dish) => {
+    if (!dish || !Array.isArray(dish.recipe)) return;
+    const delta = Number(deltaByDish[dish.id]);
+    if (!Number.isFinite(delta) || delta === 0) return;
+
+    dish.recipe.forEach((item) => {
+      if (!item) return;
+      const ing = ingredientMap.get(item.ingredient_id);
+      if (!ing) return;
+      if (ing.track_stock === false) return; // R4.5
+
+      // v9 strict : quantity_in_base. Fallback v8 defensif sur quantity
+      // (unite libre -> NB : ne devrait plus arriver apres migration v8->v9).
+      const qib = Number.isFinite(item.quantity_in_base)
+        ? item.quantity_in_base
+        : (Number.isFinite(item.quantity) ? item.quantity : 0);
+      if (!qib) return;
+
+      const yf = getYieldFactor(ing);
+      const stockDelta = (delta * qib) / yf; // R4.3
+      const prev = accum.get(ing.id) || 0;
+      accum.set(ing.id, prev + stockDelta);
+    });
+  });
+
+  if (accum.size === 0) {
+    return { ingredients, depleted: [] };
+  }
+
+  const depleted = [];
+  let anyUpdate = false;
+
+  const nextIngredients = ingredients.map((ing) => {
+    if (!ing) return ing;
+    const stockDelta = accum.get(ing.id);
+    if (!Number.isFinite(stockDelta) || stockDelta === 0) return ing;
+
+    anyUpdate = true;
+    const newStock = safeNumber(ing.stock_quantity) - stockDelta;
+    const stockAlert = newStock < 0; // R4.2 (litteral : "sous 0")
+
+    // Toast : signaler les ingredients dont le stock est passe sous 0
+    // a cause d'une DEDUCTION (delta > 0). Une correction a la baisse
+    // (stockDelta < 0) qui laisse le stock negatif n'est PAS signalee.
+    if (stockAlert && stockDelta > 0) {
+      depleted.push({ ...ing, stock_quantity: newStock });
+    }
+
+    return {
+      ...ing,
+      stock_quantity: newStock,
+      stock_alert: stockAlert,
+    };
+  });
+
+  return {
+    ingredients: anyUpdate ? nextIngredients : ingredients,
+    depleted,
+  };
 }

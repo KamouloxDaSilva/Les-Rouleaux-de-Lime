@@ -1,5 +1,6 @@
 // src/pages/ClosingPage.jsx
 // Chantier 21 — Clôture v3 (calendrier + bilan)
+// Chantier 26 — Auto-déduction stock à la vente (R4.3)
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useI18n } from '../i18n';
 import {
@@ -10,7 +11,11 @@ import {
 } from '../data/model.js';
 import { loadDataset, saveDataset } from '../data/storage.js';
 import { createDefaultFixtures } from '../data/fixtures.js';
-import { getDishSellingPrice, getDishFoodCost } from '../data/calculations.js';
+import {
+  getDishSellingPrice,
+  getDishFoodCost,
+  applyStockDeltas,
+} from '../data/calculations.js';
 import CalendarStrip from '../components/CalendarStrip.jsx';
 import Stepper from '../components/Stepper.jsx';
 import PillSelector from '../components/PillSelector.jsx';
@@ -176,6 +181,7 @@ export default function ClosingPage() {
   const handleSave = useCallback(() => {
     if (!dataset || !restaurant) return;
 
+    // 1) Ligne de vente du jour (même logique qu'avant)
     const salesArray = closingDishes
       .map((dish) => ({
         dish_id: dish.id,
@@ -183,12 +189,38 @@ export default function ClosingPage() {
       }))
       .filter((s) => s.quantity_sold > 0);
 
-    const nextClosings = [...dataset.daily_closings];
-    const idx = nextClosings.findIndex((c) => c.date === selectedDateStr);
+    // 2) Récupérer les quantités précédentes de la clôture existante
+    //    (pour calculer le delta par plat, R4.3)
+    const existingIdx = dataset.daily_closings.findIndex(
+      (c) => c.date === selectedDateStr
+    );
+    const existing = existingIdx >= 0 ? dataset.daily_closings[existingIdx] : null;
+    const oldQtyByDish = {};
+    (existing?.sales || []).forEach((s) => {
+      oldQtyByDish[s.dish_id] = Number(s.quantity_sold) || 0;
+    });
 
-    if (idx >= 0) {
-      nextClosings[idx] = {
-        ...nextClosings[idx],
+    // 3) Calcul du delta par plat (nouveau − ancien)
+    const deltaByDish = {};
+    closingDishes.forEach((dish) => {
+      const newQty = Number(sales[dish.id]) || 0;
+      const oldQty = oldQtyByDish[dish.id] || 0;
+      const delta = newQty - oldQty;
+      if (delta !== 0) deltaByDish[dish.id] = delta;
+    });
+
+    // 4) Application aux stocks (R4.3 / R4.2 / R4.5)
+    const { ingredients: nextIngredients, depleted } = applyStockDeltas(
+      dataset.ingredients || [],
+      dataset.dishes || [],
+      deltaByDish
+    );
+
+    // 5) Construction du dataset mis à jour
+    const nextClosings = [...dataset.daily_closings];
+    if (existingIdx >= 0) {
+      nextClosings[existingIdx] = {
+        ...nextClosings[existingIdx],
         weather,
         notes,
         sales: salesArray,
@@ -206,15 +238,32 @@ export default function ClosingPage() {
       );
     }
 
-    const nextDataset = { ...dataset, daily_closings: nextClosings };
+    const nextDataset = {
+      ...dataset,
+      daily_closings: nextClosings,
+      ingredients: nextIngredients,
+    };
+
+    // 6) Commit atomique : save AVANT setState (règle Chantiers 20/22)
     try {
       saveDataset(nextDataset);
       setDataset(nextDataset);
-      setToast({
-        open: true,
-        message: t('closing.saveSuccess'),
-        variant: 'success',
-      });
+
+      // 7) Toast : warning stock prioritaire sur success
+      if (depleted.length > 0) {
+        const names = depleted.map((i) => i.name).join(', ');
+        setToast({
+          open: true,
+          message: `⚠️ ${t('team.stockManagement.outOfStock')} : ${names}`,
+          variant: 'warning',
+        });
+      } else {
+        setToast({
+          open: true,
+          message: t('closing.saveSuccess'),
+          variant: 'success',
+        });
+      }
     } catch (e) {
       setToast({
         open: true,
@@ -257,13 +306,11 @@ export default function ClosingPage() {
 
       <h1 className="closing-title">{t('closing.title')}</h1>
 
-      {/* Bande semaine + sélection jour */}
       <CalendarStrip
         selectedDate={selectedDate}
         onSelectDate={handleSelectDate}
       />
 
-      {/* Indicateur informatif (modification libre même après minuit) */}
       {isAlreadyClosed && (
         <div className="closing-status" role="status">
           <span className="closing-status__icon" aria-hidden="true">🔒</span>
@@ -271,7 +318,6 @@ export default function ClosingPage() {
         </div>
       )}
 
-      {/* Météo */}
       <section className="closing-section">
         <span className="closing-label">{t('closing.weather')}</span>
         <div
@@ -304,7 +350,6 @@ export default function ClosingPage() {
         </div>
       </section>
 
-      {/* Bilan temps réel */}
       <section className="closing-section">
         <div className="summary-header">
           <span className="closing-label" style={{ marginBottom: 0 }}>
@@ -355,7 +400,6 @@ export default function ClosingPage() {
         </div>
       </section>
 
-      {/* Ventes par catégorie */}
       <section className="closing-section">
         <h2 className="closing-section__title">{t('closing.sales')}</h2>
 
@@ -419,7 +463,6 @@ export default function ClosingPage() {
         )}
       </section>
 
-      {/* Notes libres */}
       <section className="closing-section">
         <label className="closing-label" htmlFor="closing-notes">
           {t('closing.notes')}
@@ -434,7 +477,6 @@ export default function ClosingPage() {
         />
       </section>
 
-      {/* Footer fixe : total + save */}
       <div className="closing-footer">
         <div className="closing-footer__total">
           <span>{t('stats.metrics.revenue')}</span>
