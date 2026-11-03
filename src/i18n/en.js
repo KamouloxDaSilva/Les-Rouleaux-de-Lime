@@ -71,8 +71,6 @@ export default {
     },
     pricePerKg: 'Price / kg',
     pricePerUnit: 'Price / unit',
-
-    // --- v9 : Formulas — Chantier 19/20 ---
     formulas: {
       title: 'Set Meals',
       add: 'Add set meal',
@@ -114,8 +112,6 @@ export default {
       totalCost: 'Total cost',
       totalMargin: 'Total margin',
     },
-
-    // --- v9 : Calculations — Chantier 19/20 ---
     calculations: {
       yieldFactor: 'Yield',
       yieldFactorHint: 'Ex: 0.9 = 10% lost during preparation',
@@ -182,7 +178,6 @@ export default {
     taskPlaceholder: 'Enter a task...',
     yearlyCost: 'Yearly cost',
     fixedCostsYearly: 'Yearly total',
-
     sections: {
       hr: 'Human Resources',
       finance: 'Finance',
@@ -228,8 +223,6 @@ export default {
       pack: 'pack',
       bunch: 'bunch',
     },
-
-    // --- v9 : Ingredient fields — Chantier 23 ---
     ingredientV9: {
       baseUnit: 'Base unit',
       purchaseOptions: 'Purchase options',
@@ -251,8 +244,6 @@ export default {
       minStock: 'Min stock',
       stockAlert: 'Stock alert',
     },
-
-    // --- v9 : Supplier offers — Chantier 25 ---
     supplierOffers: {
       title: 'Supplier offers',
       add: 'Add offer',
@@ -271,8 +262,6 @@ export default {
         notes: 'Notes',
       },
     },
-
-    // --- v9 : Comparator — Chantier 25 ---
     comparator: {
       title: 'Comparator',
       bestPrice: 'Best price',
@@ -281,8 +270,6 @@ export default {
       noOffer: 'No offer',
       perBaseUnit: 'per base unit',
     },
-
-    // --- v9 : Purchase receipts — Chantier 24/25 ---
     receipts: {
       title: 'Purchase receipts',
       add: 'Add receipt',
@@ -303,8 +290,6 @@ export default {
         notes: 'Notes',
       },
     },
-
-    // --- v9 : Stock management — Chantier 24 ---
     stockManagement: {
       title: 'Restocking',
       reappro: 'To restock',
@@ -490,12 +475,14 @@ export default {
       fixed: 'Fixed costs',
       ingredients: 'Ingredients',
       employees: 'Employees',
+      oneOff: 'One-off',
     },
     expensesComponents: {
       fixed: 'Fixed costs',
       ingredients: 'Ingredients',
       employees: 'Employees',
       total: 'Total',
+      oneOff: 'One-off expenses',
     },
     weather: {
       sunny: 'Sunny',
@@ -561,7 +548,6 @@ export default {
     importSuccess: 'Import successful',
     importError: 'Import error',
   },
-  // --- v9 : 12 ingredient categories (SPEC_UNITES §5) ---
   ingredientCategories: {
     meat: 'Meat',
     fish: 'Fish',
@@ -576,7 +562,6 @@ export default {
     packaging: 'Packaging',
     cleaning: 'Cleaning',
   },
-  // --- v9 : 4 storage types (SPEC_UNITES §3.1) ---
   storageTypes: {
     fresh: 'Fresh',
     frozen: 'Frozen',

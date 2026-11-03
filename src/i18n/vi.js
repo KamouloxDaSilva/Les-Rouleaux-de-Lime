@@ -71,8 +71,6 @@ export default {
     },
     pricePerKg: 'Giá/kg',
     pricePerUnit: 'Giá/đơn vị',
-
-    // --- v9 : Formules (Suất ăn) — Chantier 19/20 ---
     formulas: {
       title: 'Suất ăn',
       add: 'Thêm suất ăn',
@@ -114,8 +112,6 @@ export default {
       totalCost: 'Tổng giá vốn',
       totalMargin: 'Tổng lợi nhuận',
     },
-
-    // --- v9 : Calculs (hệ đơn vị, hao hụt) — Chantier 19/20 ---
     calculations: {
       yieldFactor: 'Tỷ lệ hao hụt',
       yieldFactorHint: 'Ví dụ: 0,9 = mất 10% khi sơ chế',
@@ -182,7 +178,6 @@ export default {
     taskPlaceholder: 'Nhập công việc...',
     yearlyCost: 'Chi phí năm',
     fixedCostsYearly: 'Tổng chi phí năm',
-
     sections: {
       hr: 'Nhân sự',
       finance: 'Tài chính',
@@ -228,8 +223,6 @@ export default {
       pack: 'gói',
       bunch: 'bó',
     },
-
-    // --- v9 : Champs ingrédient — Chantier 23 ---
     ingredientV9: {
       baseUnit: 'Đơn vị cơ bản',
       purchaseOptions: 'Quy cách mua',
@@ -251,8 +244,6 @@ export default {
       minStock: 'Tồn tối thiểu',
       stockAlert: 'Cảnh báo kho',
     },
-
-    // --- v9 : Offres fournisseurs — Chantier 25 ---
     supplierOffers: {
       title: 'Ưu đãi nhà cung cấp',
       add: 'Thêm ưu đãi',
@@ -271,8 +262,6 @@ export default {
         notes: 'Ghi chú',
       },
     },
-
-    // --- v9 : Comparateur — Chantier 25 ---
     comparator: {
       title: 'So sánh giá',
       bestPrice: 'Giá tốt nhất',
@@ -281,8 +270,6 @@ export default {
       noOffer: 'Không có ưu đãi',
       perBaseUnit: 'mỗi đơn vị cơ bản',
     },
-
-    // --- v9 : Phiếu nhập hàng — Chantier 24/25 ---
     receipts: {
       title: 'Phiếu nhập hàng',
       add: 'Thêm phiếu',
@@ -303,8 +290,6 @@ export default {
         notes: 'Ghi chú',
       },
     },
-
-    // --- v9 : Quản lý kho — Chantier 24 ---
     stockManagement: {
       title: 'Bổ sung hàng',
       reappro: 'Cần bổ sung',
@@ -495,12 +480,14 @@ export default {
       fixed: 'Chi phí cố định',
       ingredients: 'Nguyên liệu',
       employees: 'Nhân viên',
+      oneOff: 'Phát sinh',
     },
     expensesComponents: {
       fixed: 'Chi phí cố định',
       ingredients: 'Nguyên liệu',
       employees: 'Nhân viên',
       total: 'Tổng',
+      oneOff: 'Chi phí phát sinh',
     },
     weather: {
       sunny: 'Nắng',
@@ -547,7 +534,6 @@ export default {
     error: 'Lỗi',
     success: 'Thành công',
     loading: 'Đang tải…',
-    // --- v9 : Đơn vị cơ bản (SPEC_UNITES §1) ---
     baseUnits: {
       g: { label: 'Gam', short: 'g' },
       ml: { label: 'Mililit', short: 'ml' },
@@ -567,7 +553,6 @@ export default {
     importSuccess: 'Đã nhập dữ liệu',
     importError: 'Lỗi nhập dữ liệu',
   },
-  // --- v9 : 12 danh mục nguyên liệu (SPEC_UNITES §5) ---
   ingredientCategories: {
     meat: 'Thịt',
     fish: 'Cá',
@@ -582,7 +567,6 @@ export default {
     packaging: 'Bao bì',
     cleaning: 'Vệ sinh',
   },
-  // --- v9 : 4 loại bảo quản (SPEC_UNITES §3.1) ---
   storageTypes: {
     fresh: 'Tươi',
     frozen: 'Đông lạnh',

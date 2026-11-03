@@ -71,8 +71,6 @@ export default {
     },
     pricePerKg: 'Prix / kg',
     pricePerUnit: 'Prix / unité',
-
-    // --- v9 : Formules — Chantier 19/20 ---
     formulas: {
       title: 'Formules',
       add: 'Ajouter une formule',
@@ -114,8 +112,6 @@ export default {
       totalCost: 'Coût total',
       totalMargin: 'Marge totale',
     },
-
-    // --- v9 : Calculs — Chantier 19/20 ---
     calculations: {
       yieldFactor: 'Rendement',
       yieldFactorHint: 'Ex : 0,9 = 10% perdu à la préparation',
@@ -182,7 +178,6 @@ export default {
     taskPlaceholder: 'Saisir une tâche...',
     yearlyCost: 'Coût annuel',
     fixedCostsYearly: 'Total annuel',
-
     sections: {
       hr: 'Ressources Humaines',
       finance: 'Finances',
@@ -228,8 +223,6 @@ export default {
       pack: 'paquet',
       bunch: 'botte',
     },
-
-    // --- v9 : Champs ingrédient — Chantier 23 ---
     ingredientV9: {
       baseUnit: 'Unité de base',
       purchaseOptions: 'Conditionnements d\'achat',
@@ -251,8 +244,6 @@ export default {
       minStock: 'Stock minimum',
       stockAlert: 'Alerte stock',
     },
-
-    // --- v9 : Offres fournisseurs — Chantier 25 ---
     supplierOffers: {
       title: 'Offres fournisseurs',
       add: 'Ajouter une offre',
@@ -271,8 +262,6 @@ export default {
         notes: 'Notes',
       },
     },
-
-    // --- v9 : Comparateur — Chantier 25 ---
     comparator: {
       title: 'Comparateur',
       bestPrice: 'Meilleur prix',
@@ -281,8 +270,6 @@ export default {
       noOffer: 'Aucune offre',
       perBaseUnit: 'par unité de base',
     },
-
-    // --- v9 : Bons de réception — Chantier 24/25 ---
     receipts: {
       title: 'Bons de réception',
       add: 'Ajouter un bon',
@@ -303,8 +290,6 @@ export default {
         notes: 'Notes',
       },
     },
-
-    // --- v9 : Gestion du stock — Chantier 24 ---
     stockManagement: {
       title: 'Réapprovisionnement',
       reappro: 'À réapprovisionner',
@@ -495,12 +480,14 @@ export default {
       fixed: 'Charges fixes',
       ingredients: 'Ingrédients',
       employees: 'Employés',
+      oneOff: 'Ponctuelles',
     },
     expensesComponents: {
       fixed: 'Charges fixes',
       ingredients: 'Ingrédients',
       employees: 'Employés',
       total: 'Total',
+      oneOff: 'Dépenses ponctuelles',
     },
     weather: {
       sunny: 'Soleil',
@@ -566,7 +553,6 @@ export default {
     importSuccess: 'Import réussi',
     importError: 'Erreur d\'import',
   },
-  // --- v9 : 12 catégories d'ingrédients (SPEC_UNITES §5) ---
   ingredientCategories: {
     meat: 'Viande',
     fish: 'Poisson',
@@ -581,7 +567,6 @@ export default {
     packaging: 'Emballages',
     cleaning: 'Nettoyage',
   },
-  // --- v9 : 4 types de stockage (SPEC_UNITES §3.1) ---
   storageTypes: {
     fresh: 'Frais',
     frozen: 'Congelé',
