@@ -11,6 +11,9 @@ import {
   createPromotion,
   createTask,
   MENU_CATEGORIES,
+  INGREDIENT_CATEGORIES,
+  STORAGE_TYPES,
+  BASE_UNITS,
   EXPENSE_CATEGORIES,
   TASK_TYPES,
 } from '../data/model';
@@ -28,9 +31,155 @@ import Badge from '../components/Badge';
 import SkeletonLoader from '../components/SkeletonLoader';
 import './TeamPage.css';
 
-const CATEGORY_EMOJI = { dish: '🥗', drink: '🥤', dessert: '🍰', sauce: '🥫' };
+// ── Emojis catégories MENU (pour le stock) ──────────────────────────
+const MENU_CATEGORY_EMOJI = { dish: '🥗', drink: '🥤', dessert: '🍰', sauce: '🥫' };
 
-const UNIT_IDS = ['g', 'kg', 't', 'ml', 'cl', 'l', 'pièce', 'cái', 'tờ', 'hộp', 'gói', 'bó'];
+// ── Emojis catégories INGRÉDIENTS v9 ────────────────────────────────
+const INGREDIENT_CATEGORY_EMOJI = {
+  meat: '🥩', fish: '🐟', vegetable: '🥬', fruit: '🍎', staple: '🍚',
+  dairy: '🧀', spice: '🌿', sauce: '🥫', oil: '🫒', beverage: '🥤',
+  packaging: '📦', cleaning: '🧴',
+};
+
+// ── Presets par catégorie (SPEC_UNITES §5) ──────────────────────────
+const CATEGORY_PRESETS = {
+  meat: {
+    base_unit: 'g',
+    purchase_options: [
+      { label: 'kg', quantity_in_base: 1000 },
+      { label: 'barquette 500g', quantity_in_base: 500 },
+    ],
+    recipe_units: [
+      { label: 'g', quantity_in_base: 1, is_default: true },
+      { label: 'portion 150g', quantity_in_base: 150 },
+    ],
+  },
+  fish: {
+    base_unit: 'g',
+    purchase_options: [
+      { label: 'kg', quantity_in_base: 1000 },
+      { label: 'filet 200g', quantity_in_base: 200 },
+    ],
+    recipe_units: [
+      { label: 'g', quantity_in_base: 1, is_default: true },
+      { label: 'filet', quantity_in_base: 150 },
+    ],
+  },
+  vegetable: {
+    base_unit: 'g',
+    purchase_options: [
+      { label: 'kg', quantity_in_base: 1000 },
+      { label: 'botte 200g', quantity_in_base: 200 },
+    ],
+    recipe_units: [
+      { label: 'g', quantity_in_base: 1, is_default: true },
+      { label: 'feuille 10g', quantity_in_base: 10 },
+      { label: 'botte', quantity_in_base: 200 },
+    ],
+  },
+  fruit: {
+    base_unit: 'g',
+    purchase_options: [
+      { label: 'kg', quantity_in_base: 1000 },
+      { label: 'pièce', quantity_in_base: 150 },
+      { label: 'barquette', quantity_in_base: 500 },
+    ],
+    recipe_units: [
+      { label: 'g', quantity_in_base: 1, is_default: true },
+      { label: 'pièce', quantity_in_base: 150 },
+      { label: 'tranche 25g', quantity_in_base: 25 },
+    ],
+  },
+  staple: {
+    base_unit: 'g',
+    purchase_options: [
+      { label: 'kg', quantity_in_base: 1000 },
+      { label: 'sac 5kg', quantity_in_base: 5000 },
+    ],
+    recipe_units: [
+      { label: 'g', quantity_in_base: 1, is_default: true },
+      { label: 'portion 100g', quantity_in_base: 100 },
+      { label: 'bol 200g', quantity_in_base: 200 },
+    ],
+  },
+  dairy: {
+    base_unit: 'ml',
+    purchase_options: [
+      { label: 'L', quantity_in_base: 1000 },
+      { label: 'plaquette 250g', quantity_in_base: 250 },
+    ],
+    recipe_units: [
+      { label: 'ml', quantity_in_base: 1, is_default: true },
+      { label: 'c. à soupe 15ml', quantity_in_base: 15 },
+    ],
+  },
+  spice: {
+    base_unit: 'g',
+    purchase_options: [
+      { label: 'pot 50g', quantity_in_base: 50 },
+      { label: 'sachet 100g', quantity_in_base: 100 },
+    ],
+    recipe_units: [
+      { label: 'g', quantity_in_base: 1, is_default: true },
+      { label: 'c. à café 5g', quantity_in_base: 5 },
+      { label: 'pincée 1g', quantity_in_base: 1 },
+    ],
+  },
+  sauce: {
+    base_unit: 'ml',
+    purchase_options: [
+      { label: 'bouteille 750ml', quantity_in_base: 750 },
+      { label: 'pot 500g', quantity_in_base: 500 },
+    ],
+    recipe_units: [
+      { label: 'ml', quantity_in_base: 1, is_default: true },
+      { label: 'c. à soupe 15ml', quantity_in_base: 15 },
+    ],
+  },
+  oil: {
+    base_unit: 'ml',
+    purchase_options: [
+      { label: 'bouteille 1L', quantity_in_base: 1000 },
+      { label: 'bidon 5L', quantity_in_base: 5000 },
+    ],
+    recipe_units: [
+      { label: 'ml', quantity_in_base: 1, is_default: true },
+      { label: 'c. à soupe 15ml', quantity_in_base: 15 },
+    ],
+  },
+  beverage: {
+    base_unit: 'ml',
+    purchase_options: [
+      { label: 'canette 330ml', quantity_in_base: 330 },
+      { label: 'bouteille 750ml', quantity_in_base: 750 },
+    ],
+    recipe_units: [
+      { label: 'ml', quantity_in_base: 1, is_default: true },
+      { label: 'verre 250ml', quantity_in_base: 250 },
+    ],
+  },
+  packaging: {
+    base_unit: 'piece',
+    purchase_options: [
+      { label: 'pack 100', quantity_in_base: 100 },
+      { label: 'carton 1000', quantity_in_base: 1000 },
+    ],
+    recipe_units: [
+      { label: 'piece', quantity_in_base: 1, is_default: true },
+    ],
+  },
+  cleaning: {
+    base_unit: 'ml',
+    purchase_options: [
+      { label: 'bidon 5L', quantity_in_base: 5000 },
+      { label: 'bouteille 1L', quantity_in_base: 1000 },
+    ],
+    recipe_units: [
+      { label: 'ml', quantity_in_base: 1, is_default: true },
+    ],
+  },
+};
+
 const UNIT_I18N_KEYS = {
   g: 'g', kg: 'kg', t: 't', ml: 'ml', cl: 'cl', l: 'l',
   'pièce': 'piece', 'cái': 'piece_vi', 'tờ': 'sheet',
@@ -51,6 +200,10 @@ function bucketKey(task) {
     return `day_${Number.isInteger(task.day_of_week) ? task.day_of_week : 0}`;
   }
   return task.type || 'day';
+}
+
+function tempId() {
+  return `tmp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function HubCard({ className = '', icon, title, subtitle, onClick }) {
@@ -100,9 +253,26 @@ export default function TeamPage() {
     id: null, name: '', role: '', salary_type: 'monthly', amount: '', days_per_week: 5,
   });
   const [costForm, setCostForm] = useState({ id: null, name: '', amount: '', frequency: 'monthly' });
-  const [ingForm, setIngForm] = useState({
-    id: null, name: '', category: 'dish', unit: 'g', unit_cost: '', supplier_id: '',
-  });
+
+  const emptyIngForm = {
+    id: null,
+    name: '',
+    category: 'meat',
+    base_unit: 'g',
+    reference_unit_cost: '',
+    preferred_supplier_id: '',
+    storage_type: 'ambient',
+    shelf_life_days: '',
+    stock_quantity: 0,
+    min_stock: 0,
+    track_stock: true,
+    yield_factor_pct: 100,
+    purchase_options: [],
+    recipe_units: [],
+  };
+  const [ingForm, setIngForm] = useState(emptyIngForm);
+  const [ingredientSheetOpen, setIngredientSheetOpen] = useState(false);
+
   const [supForm, setSupForm] = useState({ id: null, name: '', phone: '', notes: '' });
   const [expForm, setExpForm] = useState({ id: null, name: '', amount: '', category: 'material', note: '' });
   const [promoForm, setPromoForm] = useState({
@@ -142,7 +312,7 @@ export default function TeamPage() {
       (a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0)
     );
     if (ingredientFilter !== 'all') {
-      list = list.filter((i) => (i.category || 'dish') === ingredientFilter);
+      list = list.filter((i) => (i.category || '') === ingredientFilter);
     }
     if (ingredientSearch.trim()) {
       const q = ingredientSearch.trim().toLowerCase();
@@ -189,6 +359,7 @@ export default function TeamPage() {
   function handleBack() {
     setView('dashboard');
     setIsFormOpen(false);
+    setIngredientSheetOpen(false);
     setTaskSheetOpen(false);
   }
 
@@ -316,44 +487,57 @@ export default function TeamPage() {
     }
   }
 
-  // --- SAUVEGARDE INGRÉDIENTS ---
+  // --- SAUVEGARDE INGRÉDIENTS (v9) ---
   function saveIngredient(e) {
     e.preventDefault();
-    const cost = Number(ingForm.unit_cost);
+    const yieldFactor = Math.max(0.01, (Number(ingForm.yield_factor_pct) || 100) / 100);
+    const payload = {
+      restaurant_id: restaurant.id,
+      name: ingForm.name,
+      category: ingForm.category,
+      base_unit: ingForm.base_unit,
+      reference_unit_cost: Number(ingForm.reference_unit_cost) || 0,
+      preferred_supplier_id: ingForm.preferred_supplier_id || '',
+      storage_type: ingForm.storage_type,
+      shelf_life_days: ingForm.shelf_life_days === '' ? null : Number(ingForm.shelf_life_days),
+      stock_quantity: Number(ingForm.stock_quantity) || 0,
+      min_stock: Number(ingForm.min_stock) || 0,
+      track_stock: ingForm.track_stock,
+      yield_factor: yieldFactor,
+      purchase_options: ingForm.purchase_options
+        .filter((o) => (o.label || '').trim())
+        .map((o) => ({
+          id: o.id,
+          label: o.label.trim(),
+          quantity_in_base: Number(o.quantity_in_base) || 1,
+        })),
+      recipe_units: ingForm.recipe_units
+        .filter((u) => (u.label || '').trim())
+        .map((u) => ({
+          id: u.id,
+          label: u.label.trim(),
+          quantity_in_base: Number(u.quantity_in_base) || 1,
+          is_default: u.is_default === true,
+        })),
+    };
+
     let nextIngs;
     if (ingForm.id) {
       nextIngs = dataset.ingredients.map((i) =>
-        i.id === ingForm.id
-          ? {
-              ...i,
-              name: ingForm.name,
-              category: ingForm.category,
-              unit: ingForm.unit,
-              unit_cost: cost,
-              supplier_id: ingForm.supplier_id,
-            }
-          : i
+        i.id === ingForm.id ? createIngredient({ ...i, ...payload, id: i.id }) : i
       );
     } else {
       nextIngs = [
         ...dataset.ingredients,
-        createIngredient({
-          restaurant_id: restaurant.id,
-          name: ingForm.name,
-          category: ingForm.category,
-          unit: ingForm.unit,
-          unit_cost: cost,
-          supplier_id: ingForm.supplier_id,
-          sort_order: nextSortOrder('ingredients'),
-        }),
+        createIngredient({ ...payload, sort_order: nextSortOrder('ingredients') }),
       ];
     }
     const ok = commit({ ...dataset, ingredients: nextIngs }, {
       success: t('closing.saveSuccess'),
     });
     if (ok) {
-      setIsFormOpen(false);
-      setIngForm({ id: null, name: '', category: 'dish', unit: 'g', unit_cost: '', supplier_id: '' });
+      setIngredientSheetOpen(false);
+      setIngForm(emptyIngForm);
     }
   }
 
@@ -496,8 +680,107 @@ export default function TeamPage() {
     );
   }
 
-  // --- PILLS FILTRE CATÉGORIE (Ingrédients + Stock) ---
-  function renderCategoryFilterPills(currentFilter, onFilterChange) {
+  // --- FORMULAIRE INGRÉDIENT v9 ---
+  function openIngredientForm(ing = null) {
+    if (ing) {
+      setIngForm({
+        id: ing.id,
+        name: ing.name || '',
+        category: ing.category || 'meat',
+        base_unit: ing.base_unit || 'g',
+        reference_unit_cost: ing.reference_unit_cost != null ? String(ing.reference_unit_cost) : '',
+        preferred_supplier_id: ing.preferred_supplier_id || '',
+        storage_type: ing.storage_type || 'ambient',
+        shelf_life_days: ing.shelf_life_days != null ? String(ing.shelf_life_days) : '',
+        stock_quantity: ing.stock_quantity || 0,
+        min_stock: ing.min_stock || 0,
+        track_stock: ing.track_stock !== false,
+        yield_factor_pct: Math.round((ing.yield_factor || 1) * 100),
+        purchase_options: (ing.purchase_options || []).map((o) => ({ ...o, id: o.id || tempId() })),
+        recipe_units: (ing.recipe_units || []).map((u) => ({ ...u, id: u.id || tempId() })),
+      });
+    } else {
+      setIngForm(emptyIngForm);
+    }
+    setIngredientSheetOpen(true);
+  }
+
+  function applyPresets() {
+    const preset = CATEGORY_PRESETS[ingForm.category];
+    if (!preset) return;
+    setIngForm((f) => ({
+      ...f,
+      base_unit: preset.base_unit,
+      purchase_options: preset.purchase_options.map((o) => ({ ...o, id: tempId() })),
+      recipe_units: preset.recipe_units.map((u) => ({ ...u, id: tempId() })),
+    }));
+    showToast(t('common.success'), 'success');
+  }
+
+  function addPurchaseOption() {
+    setIngForm((f) => ({
+      ...f,
+      purchase_options: [
+        ...f.purchase_options,
+        { id: tempId(), label: '', quantity_in_base: 1 },
+      ],
+    }));
+  }
+
+  function removePurchaseOption(id) {
+    setIngForm((f) => ({
+      ...f,
+      purchase_options: f.purchase_options.filter((o) => o.id !== id),
+    }));
+  }
+
+  function updatePurchaseOption(id, field, value) {
+    setIngForm((f) => ({
+      ...f,
+      purchase_options: f.purchase_options.map((o) =>
+        o.id === id ? { ...o, [field]: value } : o
+      ),
+    }));
+  }
+
+  function addRecipeUnit() {
+    setIngForm((f) => ({
+      ...f,
+      recipe_units: [
+        ...f.recipe_units,
+        { id: tempId(), label: '', quantity_in_base: 1, is_default: false },
+      ],
+    }));
+  }
+
+  function removeRecipeUnit(id) {
+    setIngForm((f) => ({
+      ...f,
+      recipe_units: f.recipe_units.filter((u) => u.id !== id),
+    }));
+  }
+
+  function updateRecipeUnit(id, field, value) {
+    setIngForm((f) => ({
+      ...f,
+      recipe_units: f.recipe_units.map((u) =>
+        u.id === id ? { ...u, [field]: value } : u
+      ),
+    }));
+  }
+
+  function setDefaultRecipeUnit(id) {
+    setIngForm((f) => ({
+      ...f,
+      recipe_units: f.recipe_units.map((u) => ({
+        ...u,
+        is_default: u.id === id,
+      })),
+    }));
+  }
+
+  // --- PILLS FILTRE CATÉGORIE (générique) ---
+  function renderCategoryFilterPills(currentFilter, onFilterChange, categories, emojiMap, labelPrefix) {
     return (
       <div className="category-filter-row" role="group" aria-label={t('menu.tabs.ingredients')}>
         <button
@@ -507,15 +790,15 @@ export default function TeamPage() {
         >
           {t('stats.filters.all')}
         </button>
-        {MENU_CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat}
             type="button"
             className={`filter-pill ${currentFilter === cat ? 'filter-pill--active' : ''}`}
             onClick={() => onFilterChange(cat)}
           >
-            <span className="filter-pill__emoji" aria-hidden="true">{CATEGORY_EMOJI[cat]}</span>
-            <span className="filter-pill__label">{t(`menu.sections.${cat}`)}</span>
+            <span className="filter-pill__emoji" aria-hidden="true">{emojiMap[cat] || '🍽️'}</span>
+            <span className="filter-pill__label">{t(`${labelPrefix}.${cat}`)}</span>
           </button>
         ))}
       </div>
@@ -816,15 +1099,12 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= INGRÉDIENTS ================= */}
+      {/* ================= INGRÉDIENTS (v9) ================= */}
       {view === 'ingredients' && (
         <div className="section-container">
           <button
             className="btn-primary full-width"
-            onClick={() => {
-              setIngForm({ id: null, name: '', category: 'dish', unit: 'g', unit_cost: '', supplier_id: '' });
-              setIsFormOpen(true);
-            }}
+            onClick={() => openIngredientForm()}
           >
             + {t('menu.ingredients.add')}
           </button>
@@ -836,7 +1116,13 @@ export default function TeamPage() {
             className="team-searchbar"
           />
 
-          {renderCategoryFilterPills(ingredientFilter, setIngredientFilter)}
+          {renderCategoryFilterPills(
+            ingredientFilter,
+            setIngredientFilter,
+            INGREDIENT_CATEGORIES,
+            INGREDIENT_CATEGORY_EMOJI,
+            'ingredientCategories'
+          )}
 
           {filteredIngredients.length === 0 ? (
             <EmptyState
@@ -846,58 +1132,82 @@ export default function TeamPage() {
             />
           ) : (
             <div className="list">
-              {filteredIngredients.map((ing, idx) => (
-                <div key={ing.id} className="list-item ingredient-card">
-                  <div className="list-item-info">
-                    <h4>
-                      <span className="category-badge" aria-hidden="true">
-                        {CATEGORY_EMOJI[ing.category] || '🍽️'}
-                      </span>
-                      {ing.name}
-                    </h4>
-                    <p>
-                      {formatCurrency(ing.unit_cost)} / {unitLabel(t, ing.unit)}{' '}
-                      {ing.supplier_id &&
-                        `· ${dataset.suppliers.find((s) => s.id === ing.supplier_id)?.name || ''}`}
-                    </p>
+              {filteredIngredients.map((ing, idx) => {
+                const category = ing.category || '';
+                const emoji = INGREDIENT_CATEGORY_EMOJI[category] || '🍽️';
+                const categoryLabel = t(`ingredientCategories.${category}`);
+                const baseUnit = ing.base_unit || 'g';
+                const baseUnitShort = t(`common.baseUnits.${baseUnit}.short`);
+                const refCost = ing.reference_unit_cost != null ? ing.reference_unit_cost : (ing.unit_cost || 0);
+                const yieldPct = Math.round((ing.yield_factor || 1) * 100);
+                const supplier = dataset.suppliers.find((s) => s.id === ing.preferred_supplier_id);
+                return (
+                  <div key={ing.id} className="list-item ingredient-card">
+                    <div className="list-item-info">
+                      <h4>
+                        <span className="category-badge" aria-hidden="true">{emoji}</span>
+                        {ing.name}
+                      </h4>
+                      <p>
+                        {categoryLabel} · {formatCurrency(refCost)} / {baseUnitShort}
+                        {supplier && ` · ${supplier.name}`}
+                      </p>
+                      <div className="ingredient-badges">
+                        <Badge variant="info">
+                          {t('team.ingredientV9.baseUnit')} : {baseUnitShort}
+                        </Badge>
+                        {yieldPct < 100 && (
+                          <Badge variant="warning">
+                            {t('team.ingredientV9.yieldFactor')} {yieldPct}%
+                          </Badge>
+                        )}
+                        {ing.track_stock === false && (
+                          <Badge variant="default">
+                            {t('team.stockManagement.nonTracked')}
+                          </Badge>
+                        )}
+                        {ing.purchase_options && ing.purchase_options.length > 0 && (
+                          <Badge variant="success">
+                            {ing.purchase_options.length} {t('team.ingredientV9.purchaseOptions').toLowerCase()}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="list-item-actions">
+                      <button
+                        className="btn-icon"
+                        onClick={() => moveItem('ingredients', ing, 'up')}
+                        disabled={idx === 0}
+                        aria-label="↑"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        className="btn-icon"
+                        onClick={() => moveItem('ingredients', ing, 'down')}
+                        disabled={idx === filteredIngredients.length - 1}
+                        aria-label="↓"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        className="btn-edit"
+                        onClick={() => openIngredientForm(ing)}
+                        aria-label={t('common.edit')}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDeleteItem('ingredients', ing.id, ing.name)}
+                        aria-label={t('common.delete')}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
-                  <div className="list-item-actions">
-                    <button
-                      className="btn-icon"
-                      onClick={() => moveItem('ingredients', ing, 'up')}
-                      disabled={idx === 0}
-                      aria-label="↑"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      className="btn-icon"
-                      onClick={() => moveItem('ingredients', ing, 'down')}
-                      disabled={idx === filteredIngredients.length - 1}
-                      aria-label="↓"
-                    >
-                      ↓
-                    </button>
-                    <button
-                      className="btn-edit"
-                      onClick={() => {
-                        setIngForm({ ...ing, unit_cost: String(ing.unit_cost) });
-                        setIsFormOpen(true);
-                      }}
-                      aria-label={t('common.edit')}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDeleteItem('ingredients', ing.id, ing.name)}
-                      aria-label={t('common.delete')}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1078,7 +1388,13 @@ export default function TeamPage() {
       {/* ================= STOCK ================= */}
       {view === 'stock' && (
         <div className="section-container">
-          {renderCategoryFilterPills(stockFilter, setStockFilter)}
+          {renderCategoryFilterPills(
+            stockFilter,
+            setStockFilter,
+            MENU_CATEGORIES,
+            MENU_CATEGORY_EMOJI,
+            'menu.sections'
+          )}
 
           {filteredStock.length === 0 ? (
             <EmptyState emoji="📦" title={t('menu.ingredients.empty')} />
@@ -1095,18 +1411,21 @@ export default function TeamPage() {
                     : 0;
                 const color =
                   stock <= min ? '#E53935' : stock <= min * 1.5 ? '#FF9800' : '#43A047';
+                const unit = ing.base_unit
+                  ? t(`common.baseUnits.${ing.base_unit}.short`)
+                  : unitLabel(t, ing.unit);
                 return (
                   <div key={ing.id} className="list-item stock-item">
                     <div className="list-item-info stock-info">
                       <div className="stock-header">
                         <h4>
                           <span className="category-badge" aria-hidden="true">
-                            {CATEGORY_EMOJI[ing.category] || '🍽️'}
+                            {MENU_CATEGORY_EMOJI[ing.category] || INGREDIENT_CATEGORY_EMOJI[ing.category] || '🍽️'}
                           </span>
                           {ing.name}
                         </h4>
                         <span className="stock-qty">
-                          {stock} {unitLabel(t, ing.unit)}
+                          {stock} {unit}
                         </span>
                       </div>
                       <div className="stock-bar">
@@ -1267,6 +1586,253 @@ export default function TeamPage() {
         </form>
       </BottomSheet>
 
+      {/* ================= BOTTOM SHEET INGRÉDIENT v9 ================= */}
+      <BottomSheet
+        open={ingredientSheetOpen}
+        onClose={() => setIngredientSheetOpen(false)}
+        title={ingForm.id ? t('common.edit') : t('menu.ingredients.add')}
+      >
+        <form className="form-card" onSubmit={saveIngredient}>
+          {/* Nom */}
+          <input
+            className="form-input"
+            type="text"
+            placeholder={t('menu.ingredients.name')}
+            value={ingForm.name}
+            onChange={(e) => setIngForm({ ...ingForm, name: e.target.value })}
+            required
+          />
+
+          {/* Catégorie + bouton presets */}
+          <div className="ingredient-form-row">
+            <select
+              className="form-select"
+              value={ingForm.category}
+              onChange={(e) => setIngForm({ ...ingForm, category: e.target.value })}
+            >
+              {INGREDIENT_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {INGREDIENT_CATEGORY_EMOJI[cat]} {t(`ingredientCategories.${cat}`)}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="preset-btn"
+              onClick={applyPresets}
+              aria-label={t('team.ingredientV9.purchaseOptions')}
+            >
+              {t('common.add')}
+            </button>
+          </div>
+
+          {/* Unité de base + Coût de référence */}
+          <div className="ingredient-form-row">
+            <select
+              className="form-select"
+              value={ingForm.base_unit}
+              onChange={(e) => setIngForm({ ...ingForm, base_unit: e.target.value })}
+            >
+              {BASE_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {t(`common.baseUnits.${u}.label`)}
+                </option>
+              ))}
+            </select>
+            <input
+              className="form-input"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder={`${t('team.ingredientV9.referenceUnitCost')} / ${t(`common.baseUnits.${ingForm.base_unit}.short`)}`}
+              value={ingForm.reference_unit_cost}
+              onChange={(e) => setIngForm({ ...ingForm, reference_unit_cost: e.target.value })}
+              required
+            />
+          </div>
+
+          {/* Fournisseur préféré */}
+          <select
+            className="form-select"
+            value={ingForm.preferred_supplier_id}
+            onChange={(e) => setIngForm({ ...ingForm, preferred_supplier_id: e.target.value })}
+          >
+            <option value="">{t('team.noSupplier')}</option>
+            {dataset.suppliers.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+
+          {/* Type de stockage + Conservation */}
+          <div className="ingredient-form-row">
+            <select
+              className="form-select"
+              value={ingForm.storage_type}
+              onChange={(e) => setIngForm({ ...ingForm, storage_type: e.target.value })}
+            >
+              {STORAGE_TYPES.map((st) => (
+                <option key={st} value={st}>{t(`storageTypes.${st}`)}</option>
+              ))}
+            </select>
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              placeholder={t('team.ingredientV9.shelfLifeDays')}
+              value={ingForm.shelf_life_days}
+              onChange={(e) => setIngForm({ ...ingForm, shelf_life_days: e.target.value })}
+            />
+          </div>
+
+          {/* Stock + Stock minimum */}
+          <div className="ingredient-form-row">
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              placeholder={t('team.ingredientV9.stockQuantity')}
+              value={ingForm.stock_quantity}
+              onChange={(e) => setIngForm({ ...ingForm, stock_quantity: e.target.value })}
+            />
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              placeholder={t('team.ingredientV9.minStock')}
+              value={ingForm.min_stock}
+              onChange={(e) => setIngForm({ ...ingForm, min_stock: e.target.value })}
+            />
+          </div>
+
+          {/* Suivi du stock */}
+          <div className="checkbox-row">
+            <input
+              id="track-stock"
+              type="checkbox"
+              checked={ingForm.track_stock}
+              onChange={(e) => setIngForm({ ...ingForm, track_stock: e.target.checked })}
+            />
+            <label htmlFor="track-stock">{t('team.ingredientV9.trackStock')}</label>
+          </div>
+
+          {/* Rendement */}
+          <div className="ingredient-form-row">
+            <input
+              className="form-input"
+              type="number"
+              min="1"
+              max="100"
+              placeholder={t('team.ingredientV9.yieldFactor')}
+              value={ingForm.yield_factor_pct}
+              onChange={(e) => setIngForm({ ...ingForm, yield_factor_pct: e.target.value })}
+            />
+            <span style={{ fontSize: '0.85rem', color: '#8A8A8A', flex: '0 0 auto' }}>
+              %
+            </span>
+          </div>
+
+          {/* Conditionnements d'achat */}
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.ingredientV9.purchaseOptions')}
+            </span>
+            <div className="dynamic-list">
+              {ingForm.purchase_options.map((opt) => (
+                <div key={opt.id} className="dynamic-row">
+                  <div className="dynamic-row-inputs">
+                    <input
+                      className="form-input"
+                      type="text"
+                      placeholder={t('team.ingredientV9.purchaseOptions')}
+                      value={opt.label}
+                      onChange={(e) => updatePurchaseOption(opt.id, 'label', e.target.value)}
+                    />
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder={t(`common.baseUnits.${ingForm.base_unit}.short`)}
+                      value={opt.quantity_in_base}
+                      onChange={(e) => updatePurchaseOption(opt.id, 'quantity_in_base', e.target.value)}
+                    />
+                  </div>
+                  <div className="dynamic-row-actions">
+                    <button
+                      type="button"
+                      className="btn-delete"
+                      onClick={() => removePurchaseOption(opt.id)}
+                      aria-label={t('common.delete')}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="dynamic-add-btn" onClick={addPurchaseOption}>
+              + {t('team.ingredientV9.addPurchaseOption')}
+            </button>
+          </div>
+
+          {/* Unités de recette */}
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.ingredientV9.recipeUnits')}
+            </span>
+            <div className="dynamic-list">
+              {ingForm.recipe_units.map((unit) => (
+                <div key={unit.id} className="dynamic-row">
+                  <div className="dynamic-row-inputs">
+                    <input
+                      className="form-input"
+                      type="text"
+                      placeholder={t('team.ingredientV9.recipeUnits')}
+                      value={unit.label}
+                      onChange={(e) => updateRecipeUnit(unit.id, 'label', e.target.value)}
+                    />
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder={t(`common.baseUnits.${ingForm.base_unit}.short`)}
+                      value={unit.quantity_in_base}
+                      onChange={(e) => updateRecipeUnit(unit.id, 'quantity_in_base', e.target.value)}
+                    />
+                    <input
+                      className="default-radio"
+                      type="radio"
+                      name="default-recipe-unit"
+                      checked={unit.is_default === true}
+                      onChange={() => setDefaultRecipeUnit(unit.id)}
+                      aria-label={t('common.save')}
+                    />
+                  </div>
+                  <div className="dynamic-row-actions">
+                    <button
+                      type="button"
+                      className="btn-delete"
+                      onClick={() => removeRecipeUnit(unit.id)}
+                      aria-label={t('common.delete')}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="dynamic-add-btn" onClick={addRecipeUnit}>
+              + {t('team.ingredientV9.addRecipeUnit')}
+            </button>
+          </div>
+
+          <button type="submit" className="btn-primary">
+            {t('common.save')}
+          </button>
+        </form>
+      </BottomSheet>
+
       {/* ================= TOAST ================= */}
       <Toast
         open={toast.open}
@@ -1275,8 +1841,7 @@ export default function TeamPage() {
         onClose={closeToast}
       />
 
-      {/* ================= MODALES FORMULAIRES ================= */}
-
+      {/* ================= MODALES FORMULAIRES (autres vues) ================= */}
       <FormModal
         isOpen={isFormOpen && view === 'employees'}
         onClose={() => setIsFormOpen(false)}
@@ -1372,70 +1937,6 @@ export default function TeamPage() {
       </FormModal>
 
       <FormModal
-        isOpen={isFormOpen && view === 'ingredients'}
-        onClose={() => setIsFormOpen(false)}
-        title={ingForm.id ? t('common.edit') : t('menu.ingredients.add')}
-      >
-        <form className="form-card" onSubmit={saveIngredient}>
-          <input
-            className="form-input"
-            type="text"
-            placeholder={t('menu.ingredients.name')}
-            value={ingForm.name}
-            onChange={(e) => setIngForm({ ...ingForm, name: e.target.value })}
-            required
-          />
-          <select
-            className="form-select"
-            value={ingForm.category}
-            onChange={(e) => setIngForm({ ...ingForm, category: e.target.value })}
-          >
-            {MENU_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {CATEGORY_EMOJI[cat]} {t(`menu.sections.${cat}`)}
-              </option>
-            ))}
-          </select>
-          <div className="row-inputs">
-            <select
-              className="form-select"
-              value={ingForm.unit}
-              onChange={(e) => setIngForm({ ...ingForm, unit: e.target.value })}
-            >
-              {UNIT_IDS.map((u) => (
-                <option key={u} value={u}>
-                  {unitLabel(t, u)}
-                </option>
-              ))}
-            </select>
-            <input
-              className="form-input"
-              type="number"
-              placeholder={t('menu.ingredients.unitCost')}
-              value={ingForm.unit_cost}
-              onChange={(e) => setIngForm({ ...ingForm, unit_cost: e.target.value })}
-              required
-            />
-          </div>
-          <select
-            className="form-select"
-            value={ingForm.supplier_id}
-            onChange={(e) => setIngForm({ ...ingForm, supplier_id: e.target.value })}
-          >
-            <option value="">{t('team.noSupplier')}</option>
-            {dataset.suppliers.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="btn-primary">
-            {t('common.save')}
-          </button>
-        </form>
-      </FormModal>
-
-      <FormModal
         isOpen={isFormOpen && view === 'suppliers'}
         onClose={() => setIsFormOpen(false)}
         title={supForm.id ? t('common.edit') : t('team.addSupplier')}
@@ -1521,9 +2022,7 @@ export default function TeamPage() {
           >
             <option value="">{t('team.selectDish')}</option>
             {dataset.dishes.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
+              <option key={d.id} value={d.id}>{d.name}</option>
             ))}
           </select>
           <div className="row-inputs">

@@ -467,3 +467,144 @@
     box-shadow: none;
   }
 }
+/* =========================================================
+   Chantier 23 — Formulaire ingrédient v9
+   ========================================================= */
+
+.ingredient-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.ingredient-form-section-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #8A8A8A;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+}
+
+.ingredient-form-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.ingredient-form-row > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.preset-btn {
+  background: #3C91A6;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 0 14px;
+  min-height: 44px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex: 0 0 auto;
+}
+.preset-btn:active { background: #2F7A8C; }
+.preset-btn:focus-visible {
+  outline: 2px solid #FF9800;
+  outline-offset: 2px;
+}
+
+.dynamic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dynamic-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #FAFAFA;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #F0F0F0;
+}
+
+.dynamic-row-inputs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.dynamic-row-inputs .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.dynamic-row-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dynamic-add-btn {
+  background: transparent;
+  border: 2px dashed #3C91A6;
+  color: #3C91A6;
+  border-radius: 12px;
+  padding: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  min-height: 44px;
+  font-family: inherit;
+}
+.dynamic-add-btn:active { background: rgba(60, 145, 166, 0.08); }
+.dynamic-add-btn:focus-visible {
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
+}
+
+.ingredient-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.checkbox-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.checkbox-row label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2C2C2C;
+  cursor: pointer;
+}
+
+.default-radio {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preset-btn,
+  .dynamic-add-btn {
+    transition: none;
+  }
+}
