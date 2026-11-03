@@ -1,4 +1,4 @@
-/* src/pages/MenuPage.css — reconstruction complète (Chantier 11-D fix) */
+/* src/pages/MenuPage.css — Chantier 19 (fusion : form plat préservé + couche v3) */
 
 .menu-page {
   padding-top: 10px;
@@ -6,285 +6,371 @@
 }
 
 /* ---------- Header ---------- */
-.menu-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+.menu-page__header {
+  margin-bottom: 14px;
 }
 
-.menu-title {
+.menu-page__title {
+  font-family: var(--font-title);
   font-size: 1.8rem;
   font-weight: 900;
   color: #2C2C2C;
-  margin: 0;
   text-align: center;
+  margin: 0;
 }
 
-.menu-add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
-  background: #FF9800;
-  color: #FFFFFF;
-  border: none;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
-}
-
-.menu-add-plus {
-  font-size: 1.1rem;
-  line-height: 1;
-  font-weight: 900;
-}
-
-/* ---------- Feedback ---------- */
-.menu-feedback {
-  padding: 10px 14px;
-  border-radius: 12px;
-  margin-bottom: 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.menu-feedback--error {
-  background: #FFEBEE;
-  color: #C62828;
-}
-
-.menu-feedback--success {
-  background: #E8F5E9;
-  color: #2E7D32;
-}
-
-/* ---------- Catégories (pills) ---------- */
-.menu-categories {
+/* ---------- Actions ---------- */
+.menu-page__actions {
   display: flex;
   gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  margin-bottom: 18px;
-  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
 }
 
-.menu-categories::-webkit-scrollbar {
-  display: none;
-}
-
-.category-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: #FFFFFF;
-  color: #2C2C2C;
-  border: 2px solid transparent;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.15s ease;
-}
-
-.category-pill__emoji {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.category-pill__label {
-  line-height: 1;
-}
-
-.category-pill__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  background: #FAEBD5;
-  color: #3C91A6;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-
-.category-pill--active {
-  background: #3C91A6;
-  color: #FFFFFF;
-  border-color: #3C91A6;
-}
-
-.category-pill--active .category-pill__count {
-  background: #FFFFFF;
-  color: #3C91A6;
-}
-
-/* ---------- Liste des plats ---------- */
-.menu-list {
+.menu-action-btn {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 6px;
+  border-radius: 14px;
+  background: rgba(60, 145, 166, 0.10);
+  color: #3C91A6;
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.menu-action-btn--formula {
+  background: rgba(255, 152, 0, 0.12);
+  color: #FF9800;
+}
+.menu-action-btn:focus-visible {
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
+}
+.menu-action-btn__icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.menu-action-btn__label {
+  text-align: center;
+  line-height: 1.15;
+  word-break: break-word;
 }
 
-.dish-card {
-  background: #FFFFFF;
-  border-radius: 16px;
+/* ---------- Filtres ---------- */
+.menu-page__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Sections ---------- */
+.menu-page__dishes,
+.menu-page__formulas {
+  margin-bottom: 22px;
+}
+
+.menu-section-title {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  margin: 0 0 10px;
+  text-align: left;
+}
+
+/* ---------- Cartes plats ---------- */
+.menu-dish-list,
+.menu-formula-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-dish-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   border-left: 4px solid #3C91A6;
   animation: fadeInUp 0.3s ease-out both;
 }
-
-.dish-card--inactive {
+.menu-dish-card--inactive {
   opacity: 0.55;
   border-left-color: #BDBDBD;
 }
 
-.dish-card__header {
+.menu-dish-card__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.dish-card__title-block {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  flex: 1;
+}
+.menu-dish-card__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
-
-.dish-card__emoji {
-  font-size: 1.6rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.dish-card__name {
+.menu-dish-card__name {
+  font-family: var(--font-title);
   font-size: 1rem;
   font-weight: 800;
   color: #2C2C2C;
   margin: 0;
   line-height: 1.2;
+  word-break: break-word;
 }
-
-.dish-card__subcategory {
-  display: inline-block;
-  margin-top: 2px;
+.menu-dish-card__emoji {
+  margin-right: 6px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.menu-dish-card__sub {
+  font-size: 0.72rem;
   padding: 2px 8px;
   background: #EAF4F6;
   color: #3C91A6;
   border-radius: 999px;
-  font-size: 0.68rem;
   font-weight: 700;
+  align-self: flex-start;
 }
-
-/* ---------- Stats sur la carte ---------- */
-.dish-card__stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid #F0F0F0;
-  border-bottom: 1px solid #F0F0F0;
-  margin-bottom: 12px;
-}
-
-.dish-stat {
+.menu-dish-card__badges {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.menu-dish-card__prices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #F0F0F0;
+}
+.menu-dish-card__price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
-
-.dish-stat__label {
-  font-size: 0.65rem;
+.menu-dish-card__label {
+  font-size: 0.62rem;
   font-weight: 600;
-  color: #8A8A8A;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  color: #8A8A8A;
 }
-
-.dish-stat__value {
+.menu-dish-card__price {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #2C2C2C;
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.15;
+  word-break: break-word;
+}
+.menu-dish-card__price-old {
+  color: #B0B0B0;
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+.menu-dish-card__price-new {
+  color: #FF9800;
+  font-weight: 900;
+}
+.menu-dish-card__value {
   font-size: 0.9rem;
   font-weight: 800;
   color: #2C2C2C;
   word-break: break-word;
   line-height: 1.2;
 }
-
-.dish-stat__value small {
-  font-size: 0.7rem;
+.menu-dish-card__value small {
+  margin-left: 4px;
+  font-size: 0.68rem;
   font-weight: 600;
   opacity: 0.7;
 }
+.menu-dish-card__value--good { color: #2E7D32; }
+.menu-dish-card__value--warn { color: #FF9800; }
 
-.dish-stat__value--price { color: #2C2C2C; }
-.dish-stat__value--cost { color: #3C91A6; }
-.dish-stat__value--good { color: #2E7D32; }
-.dish-stat__value--warn { color: #FF9800; }
-
-/* ---------- Actions sur la carte ---------- */
-.dish-card__actions {
+.menu-dish-card__actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid #F0F0F0;
 }
 
 .btn-action {
-  padding: 8px 14px;
+  padding: 10px 14px;
   border-radius: 10px;
   border: none;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  min-height: 44px;
+  transition: transform 100ms ease;
+}
+.btn-action--edit { background: #EAF4F6; color: #3C91A6; }
+.btn-action--delete { background: #FFEBEE; color: #C62828; }
+.btn-action:focus-visible {
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
 }
 
-.btn-action--edit {
-  background: #EAF4F6;
-  color: #3C91A6;
-}
-
-.btn-action--delete {
-  background: #FFEBEE;
-  color: #C62828;
-}
-
-/* ---------- État vide ---------- */
-.menu-empty-card {
+/* ---------- Cartes formules ---------- */
+.menu-formula-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 40px 20px;
+  gap: 12px;
+  padding: 16px;
   background: #FFFFFF;
-  border-radius: 16px;
+  border-radius: 20px;
+  border-left: 4px solid var(--formula-color, #FF9800);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  animation: fadeInUp 0.3s ease-out both;
 }
-
-.menu-empty-emoji {
-  font-size: 3rem;
+.menu-formula-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.menu-formula-card__emoji {
+  font-size: 1.6rem;
   line-height: 1;
-  margin-bottom: 10px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 152, 0, 0.12);
+  border-radius: 12px;
+  flex-shrink: 0;
 }
-
-.menu-empty {
-  font-size: 0.9rem;
+.menu-formula-card__title-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menu-formula-card__name {
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  margin: 0;
+  line-height: 1.2;
+  word-break: break-word;
+}
+.menu-formula-card__desc {
+  font-size: 0.8rem;
   color: #8A8A8A;
   margin: 0;
+  line-height: 1.3;
+  word-break: break-word;
 }
+.menu-formula-card__composition {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  margin: 0;
+  border-top: 1px solid #F0F0F0;
+  border-bottom: 1px solid #F0F0F0;
+}
+.menu-formula-card__line {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+.menu-formula-card__line-slot {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #3C91A6;
+  padding: 2px 6px;
+  background: rgba(60, 145, 166, 0.10);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.menu-formula-card__line-name {
+  color: #2C2C2C;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.menu-formula-card__line-qty {
+  color: #8A8A8A;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.menu-formula-card__line-price {
+  color: #FF9800;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.menu-formula-card__line--empty {
+  display: block;
+  text-align: center;
+  color: #8A8A8A;
+  font-style: italic;
+  padding: 8px 0;
+}
+.menu-formula-card__totals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.menu-formula-card__total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.88rem;
+  color: #2C2C2C;
+}
+.menu-formula-card__total-row strong { font-weight: 800; }
+.menu-formula-card__total-row--margin strong { color: #3C91A6; }
 
-/* ---------- Formulaire d'édition ---------- */
+/* ---------- Stagger cascade ---------- */
+.menu-dish-list > .menu-dish-card:nth-child(1),
+.menu-formula-list > .menu-formula-card:nth-child(1) { animation-delay: 0ms; }
+.menu-dish-list > .menu-dish-card:nth-child(2),
+.menu-formula-list > .menu-formula-card:nth-child(2) { animation-delay: 40ms; }
+.menu-dish-list > .menu-dish-card:nth-child(3),
+.menu-formula-list > .menu-formula-card:nth-child(3) { animation-delay: 80ms; }
+.menu-dish-list > .menu-dish-card:nth-child(4),
+.menu-formula-list > .menu-formula-card:nth-child(4) { animation-delay: 120ms; }
+.menu-dish-list > .menu-dish-card:nth-child(5),
+.menu-formula-list > .menu-formula-card:nth-child(5) { animation-delay: 160ms; }
+.menu-dish-list > .menu-dish-card:nth-child(6),
+.menu-formula-list > .menu-formula-card:nth-child(6) { animation-delay: 200ms; }
+
+/* ---------- Formulaire (plat) — préservé ---------- */
 .menu-form {
   background: #FFFFFF;
   border-radius: 16px;
@@ -292,28 +378,17 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   animation: fadeInUp 0.3s ease-out both;
 }
-
-.menu-section-title {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #2C2C2C;
-  margin: 0 0 16px;
-  text-align: center;
-}
-
 .form-row {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: 14px;
 }
-
 .form-row label {
   font-size: 0.78rem;
   font-weight: 700;
   color: #2C2C2C;
 }
-
 .form-row input[type="text"],
 .form-row input[type="number"],
 .form-row select {
@@ -328,13 +403,12 @@
   -webkit-appearance: none;
   appearance: none;
 }
-
 .form-row input:focus,
 .form-row select:focus {
-  outline: none;
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
   border-color: #3C91A6;
 }
-
 .form-row--checkbox label {
   flex-direction: row;
   align-items: center;
@@ -343,34 +417,29 @@
   cursor: pointer;
 }
 
-/* ---------- Recette ---------- */
 .menu-recipe-builder {
   background: #FAEBD5;
   border-radius: 14px;
   padding: 16px;
   margin: 18px 0;
 }
-
 .menu-recipe-builder h3 {
   font-size: 0.95rem;
   font-weight: 800;
   color: #2C2C2C;
   margin: 0 0 12px;
 }
-
 .recipe-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 12px;
 }
-
 .recipe-item {
   display: flex;
   gap: 6px;
   align-items: center;
 }
-
 .recipe-item select {
   flex: 1;
   padding: 8px 10px;
@@ -380,13 +449,11 @@
   background: #FFFFFF;
   min-width: 0;
 }
-
 .recipe-qty {
   display: flex;
   align-items: center;
   gap: 4px;
 }
-
 .recipe-qty input {
   width: 64px;
   padding: 8px;
@@ -396,13 +463,11 @@
   background: #FFFFFF;
   text-align: center;
 }
-
 .recipe-qty span {
   font-size: 0.72rem;
   color: #8A8A8A;
   min-width: 24px;
 }
-
 .recipe-total {
   display: flex;
   justify-content: space-between;
@@ -412,14 +477,12 @@
   font-size: 0.85rem;
   color: #2C2C2C;
 }
-
 .recipe-total strong {
   font-size: 1rem;
   font-weight: 800;
   color: #3C91A6;
 }
 
-/* ---------- Boutons génériques ---------- */
 .btn {
   padding: 10px 18px;
   border-radius: 10px;
@@ -427,33 +490,33 @@
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  min-height: 44px;
+  transition: transform 100ms ease;
 }
-
 .btn-primary {
   background: #FF9800;
   color: #FFFFFF;
   box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
 }
-
 .btn-secondary {
   background: #3C91A6;
   color: #FFFFFF;
   margin-bottom: 12px;
 }
-
 .btn-ghost {
   background: transparent;
   color: #2C2C2C;
   border: 2px solid #E0E0E0;
 }
-
 .btn-danger {
   color: #C62828;
   border-color: #FFCDD2;
   padding: 8px 12px;
 }
-
+.btn:focus-visible {
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
+}
 .menu-form-actions {
   display: flex;
   gap: 10px;
@@ -463,13 +526,34 @@
 
 /* ---------- Accessibilité ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .dish-card,
-  .menu-form {
+  .menu-dish-card,
+  .menu-formula-card,
+  .menu-form,
+  .menu-action-btn,
+  .btn,
+  .btn-action {
     animation: none;
-  }
-  .category-pill,
-  .btn-action,
-  .btn {
     transition: none;
+  }
+}
+
+/* ---------- Très petits écrans ---------- */
+@media (max-width: 380px) {
+  .menu-action-btn {
+    min-height: 60px;
+    font-size: 0.68rem;
+    padding: 6px 4px;
+  }
+  .menu-action-btn__icon { font-size: 1.15rem; }
+  .menu-dish-card__prices { gap: 6px; }
+  .menu-dish-card__price { font-size: 0.88rem; }
+  .menu-dish-card__value { font-size: 0.85rem; }
+  .menu-formula-card__line {
+    grid-template-columns: auto 1fr auto;
+  }
+  .menu-formula-card__line-price {
+    grid-column: 2 / -1;
+    justify-self: end;
+    font-size: 0.8rem;
   }
 }
