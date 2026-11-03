@@ -10,6 +10,7 @@ import {
   importDatasetFromJSON,
 } from '../data/storage.js'
 import { createDefaultFixtures } from '../data/fixtures.js'
+import ConfirmModal from '../components/ConfirmModal'
 import './SettingsPage.css'
 
 const APP_VERSION = '0.5.0'
@@ -18,6 +19,8 @@ export default function SettingsPage() {
   const { t } = useI18n()
   const [dataset, setDataset] = useState(null)
   const [feedback, setFeedback] = useState(null)
+  // Chantier 28 — F1 : remplace window.confirm (bloqué iOS PWA)
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false)
 
   useEffect(() => {
     const loaded = loadDataset()
@@ -63,10 +66,19 @@ export default function SettingsPage() {
     e.target.value = ''
   }
 
+  // Chantier 28 — F1 : ouvre la modale au lieu de window.confirm
   function handleReset() {
-    if (!window.confirm(t('settings.sections.data.resetConfirm'))) return
+    setConfirmResetOpen(true)
+  }
+
+  function confirmReset() {
+    setConfirmResetOpen(false)
     const fresh = resetDataset()
     setDataset(fresh)
+  }
+
+  function cancelReset() {
+    setConfirmResetOpen(false)
   }
 
   if (!dataset || !restaurant) return <div className="settings-page">{t('common.loading')}</div>
@@ -114,6 +126,18 @@ export default function SettingsPage() {
           <div><dt>{t('settings.sections.about.schemaVersion')}</dt><dd>{dataset.schema_version ?? SCHEMA_VERSION}</dd></div>
         </dl>
       </section>
+
+      {/* Chantier 28 — F1 : modale de confirmation (remplace window.confirm) */}
+      <ConfirmModal
+        isOpen={confirmResetOpen}
+        title={t('settings.sections.data.reset')}
+        message={t('settings.sections.data.resetConfirm')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={confirmReset}
+        onCancel={cancelReset}
+        danger
+      />
     </div>
   )
 }

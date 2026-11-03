@@ -3,6 +3,7 @@
    Burihagio — Statistiques approfondies v5 (Chantier 11-F4)
    6 onglets · 4 graphiques (Courbe / Donut / Barre / Barres Groupées) · KPI partout
    Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C · #7A7A7A
+   Chantier 28 — F3 : pills ≥ 44px (cible tactile iOS)
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
@@ -42,7 +43,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   TABS PRINCIPAUX (6 onglets scrollables)
+   TABS PRINCIPAUX (6 onglets scrollables) — Chantier 28 F3 : 44px mini
    --------------------------------------------------------------------- */
 .stats-tabs {
   display: flex;
@@ -57,6 +58,10 @@
 
 .stats-tab {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 8px 14px;
   background: #FFFFFF;
   color: #7A7A7A;
@@ -123,7 +128,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   SÉLECTEUR DE PÉRIODE [Jour][Semaine][Mois][Année]
+   SÉLECTEUR DE PÉRIODE — Chantier 28 F3 : 44px mini
    --------------------------------------------------------------------- */
 .stats-period-selector {
   display: flex;
@@ -140,6 +145,10 @@
 
 .stats-period-btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   background: transparent;
   border: none;
   padding: 8px 4px;
@@ -159,7 +168,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   SÉLECTEUR DE TYPE DE GRAPHIQUE [Courbe][Donut][Barre][Barres Groupées]
+   SÉLECTEUR DE TYPE DE GRAPHIQUE — Chantier 28 F3 : 44px mini
    --------------------------------------------------------------------- */
 .stats-chart-type-toggle {
   display: flex;
@@ -172,6 +181,11 @@
 }
 
 .stats-chart-type-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
   background: transparent;
   border: none;
   padding: 6px 10px;
@@ -182,9 +196,6 @@
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
 }
 
 .stats-chart-type-btn--active {
@@ -1051,7 +1062,7 @@
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2;              /* ✅ FIX v5 : propriété standard */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   min-height: 2.3em;
 }
@@ -1091,7 +1102,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   SUBTABS (coûts)
+   SUBTABS (coûts) — Chantier 28 F3 : 44px mini
    --------------------------------------------------------------------- */
 .stats-subtabs {
   display: flex;
@@ -1105,6 +1116,10 @@
 
 .stats-subtab {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 7px 14px;
   background: #FFFFFF;
   color: #7A7A7A;
@@ -1283,7 +1298,6 @@
   .stats-line-svg-wrapper { aspect-ratio: auto; height: 220px; }
   .stats-grouped-svg { aspect-ratio: auto; height: 260px; }
 
-  /* Donut en 2 colonnes à partir de 480px */
   .stats-donut {
     flex-direction: row;
     justify-content: center;

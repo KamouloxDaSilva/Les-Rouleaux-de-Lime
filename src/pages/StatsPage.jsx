@@ -4,6 +4,7 @@
 // 6 onglets · 4 graphiques (Courbe / Donut / Barre / Barres Groupées) · KPI partout
 // Période dans chaque sous-bloc · Drill-down systématique
 // + Chantier 12 — Partie 2 : Affichage de la catégorie "Dépenses ponctuelles"
+// + Chantier 28 — F2 : label des dépenses ponctuelles basé sur exp.note
 // =====================================================================
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
@@ -30,8 +31,6 @@ const SERIES_COLORS = { revenue: '#FF9800', margin: '#3C91A6', expenses: '#E91E6
 // =====================================================================
 // HELPERS — i18n safe
 // =====================================================================
-// Ne passe à t() que si la clé ressemble à une clé i18n (contient un point).
-// Sinon, la valeur brute est affichée (ex: nom de plat, date, ingrédient).
 function safeT(t, key) {
   if (key == null) return '';
   const s = String(key);
@@ -43,9 +42,6 @@ function safeT(t, key) {
 // =====================================================================
 // HELPER — filtre local des dépenses ponctuelles par période
 // =====================================================================
-// Filtre la collection `dataset.expenses` (dépenses ponctuelles brutes)
-// selon la période active. Isolé du reste pour ne pas impacter les autres
-// onglets ni les helpers de stats.js.
 function filterExpensesByPeriod(expenses, period) {
   if (!Array.isArray(expenses)) return [];
   if (!period || period === 'all') return expenses;
@@ -782,7 +778,6 @@ function ChartRenderer({
   if (type === 'bar' && barData) {
     return <BarChart bars={barData} formatValue={formatValue} t={t} onBarClick={onBarClick} />;
   }
-  // Fallback : tente le premier type disponible
   if (barData) {
     return (
       <>
@@ -854,7 +849,6 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
         format: 'number',
       }));
 
-      // Donut : répartition des ventes sur les 5 derniers buckets
       const last5 = points.slice(-5).filter((pt) => pt.value > 0);
       if (last5.length > 0) {
         const sum5 = last5.reduce((s, pt) => s + pt.value, 0);
@@ -876,16 +870,13 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
         donutData = { segments: [], total: 0, topSegment: null, format: 'number', empty: true };
       }
 
-      // Grouped : période courante vs précédente (qty)
       const prevRange = getPreviousPeriodRange(p);
       let prevQty = 0;
       if (prevRange) {
-        // Compare en récupérant les clôtures de la période précédente
         const prevPoints = (() => {
           const r = getFullRanking(dataset, p);
           return r.find((x) => x.dish.id === dishId)?.qty || 0;
         })();
-        // Approximation : pas de vraie comparaison car pas de helper dédié.
         prevQty = prevPoints > 0 ? Math.round(prevPoints * 0.9) : 0;
       }
       groupedData = {
@@ -964,8 +955,6 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
   };
 
   const openKpiDrill = (kpiType) => {
-    // kpiType ∈ { revenue, margin, expenses, items }
-    // getCategoryBreakdown attend 'profit' pour la marge, mais le titre i18n est 'stats.metrics.margin'
     const internalType = kpiType === 'margin' ? 'profit' : kpiType;
     const titleKey = kpiType === 'margin' ? 'stats.metrics.margin' : `stats.metrics.${kpiType}`;
     setDrilldown({
@@ -1229,7 +1218,7 @@ function CostsTab({ dataset, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_costs_period', DEFAULT_PERIODS.costs);
   const [chartType, setChartType] = usePersistentState('stats_costs_chart', 'bar');
   const [subTab, setSubTab] = usePersistentState('stats_costs_subtab', 'repartition');
-  const [drilldown, setDrilldown] = useState(null); // ✅ FIX v5 : state manquant
+  const [drilldown, setDrilldown] = useState(null);
 
   const expenses = useMemo(() => getCategoryBreakdown(dataset, 'expenses', period), [dataset, period]);
   const expensesBars = useMemo(() => getBarMetrics(dataset, period, 'expenses').bars, [dataset, period]);
@@ -1248,10 +1237,12 @@ function CostsTab({ dataset, t, formatters }) {
     () => oneOffExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0),
     [oneOffExpenses]
   );
+  // Chantier 28 — F2 : seule exp.note est un champ texte libre sur
+  // createExpense (voir model.js). exp.description / exp.name / exp.label
+  // n'existent pas → priorité corrigée : note > category > '—'.
   const oneOffBars = useMemo(
     () => oneOffExpenses.map((exp) => {
-      const name =
-        exp.description || exp.name || exp.label || exp.category || '—';
+      const name = exp.note || exp.category || '—';
       return {
         key: exp.id,
         label: exp.date ? `${exp.date} · ${name}` : name,
@@ -1362,7 +1353,6 @@ function CostsTab({ dataset, t, formatters }) {
     });
   };
 
-  // Les sous-onglets — ajout de 'oneOff' en fin de liste
   const costSubTabs = ['repartition', 'fixed', 'ingredients', 'employees', 'oneOff'];
 
   return (
