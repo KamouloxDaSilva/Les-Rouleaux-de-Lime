@@ -716,3 +716,124 @@
     transition: none;
   }
 }
+/* =========================================================
+   Chantier 25 — Offres fournisseurs / Comparateur / Bons
+   ========================================================= */
+
+/* Comparateur */
+.comparator-ingredient {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #F0F0F0;
+}
+.comparator-ingredient h4 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #2C2C2C;
+}
+.comparator-offers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.comparator-offer-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr 0.9fr 0.5fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #FAFAFA;
+  border: 1px solid #EFEFEF;
+  font-size: 0.82rem;
+}
+.comparator-offer-row--best {
+  background: #E8F5E9;
+  border-color: #A5D6A7;
+}
+.comparator-offer-supplier {
+  font-weight: 700;
+  color: #2C2C2C;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comparator-offer-pack {
+  color: #7A7A7A;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comparator-offer-cost {
+  font-weight: 700;
+  color: #2C2C2C;
+  text-align: right;
+}
+.comparator-offer-unit {
+  font-weight: 800;
+  color: #3C91A6;
+  text-align: right;
+}
+.comparator-offer-diff {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #E53935;
+  text-align: right;
+}
+.comparator-badges {
+  display: flex;
+  gap: 4px;
+  font-size: 1rem;
+}
+
+/* Bons de réception */
+.receipt-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 12px;
+  background: #FAFAFA;
+  border-radius: 12px;
+  border: 1px solid #F0F0F0;
+}
+.receipt-lines-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #2C2C2C;
+}
+.receipt-line-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.7fr 0.7fr 0.8fr auto;
+  gap: 6px;
+  align-items: center;
+}
+.receipt-line-delta {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #3C91A6;
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .receipt-line-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "ing ing"
+      "opt opt"
+      "qty cost"
+      "delta remove";
+  }
+  .receipt-line-row > select:nth-child(1) { grid-area: ing; }
+  .receipt-line-row > select:nth-child(2) { grid-area: opt; }
+  .receipt-line-row > input:nth-child(3) { grid-area: qty; }
+  .receipt-line-row > input:nth-child(4) { grid-area: cost; }
+  .receipt-line-row > .receipt-line-delta { grid-area: delta; }
+  .receipt-line-row > .btn-delete { grid-area: remove; justify-self: end; }
+}

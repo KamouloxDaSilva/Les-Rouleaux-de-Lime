@@ -10,12 +10,16 @@ import {
   createExpense,
   createPromotion,
   createTask,
+  createSupplierOffer,
+  createPurchaseReceipt,
+  createPurchaseReceiptLine,
   MENU_CATEGORIES,
   INGREDIENT_CATEGORIES,
   STORAGE_TYPES,
   BASE_UNITS,
   EXPENSE_CATEGORIES,
   TASK_TYPES,
+  RECEIPT_TYPES,
 } from '../data/model';
 import { loadDataset, saveDataset } from '../data/storage';
 import BackButton from '../components/BackButton';
@@ -292,6 +296,41 @@ export default function TeamPage() {
   const [reapproOptionId, setReapproOptionId] = useState('');
   const [reapproQuantity, setReapproQuantity] = useState(1);
 
+  // --- NOUVEAU Chantier 25 : Offres fournisseurs ---
+  const emptyOfferForm = {
+    id: null,
+    ingredient_id: '',
+    supplier_id: '',
+    purchase_option_id: '',
+    cost: '',
+    is_available: true,
+    is_preferred: false,
+    min_order_quantity: 1,
+    lead_time_days: 0,
+    notes: '',
+  };
+  const [offerForm, setOfferForm] = useState(emptyOfferForm);
+  const [offerSheetOpen, setOfferSheetOpen] = useState(false);
+
+  // --- NOUVEAU Chantier 25 : Bons de réception ---
+  const emptyReceiptLine = {
+    ingredient_id: '',
+    purchase_option_id: '',
+    quantity: 1,
+    cost: 0,
+    stock_delta_in_base: 0,
+  };
+  const emptyReceiptForm = {
+    id: null,
+    type: 'receipt',
+    supplier_id: '',
+    date: new Date().toISOString().slice(0, 10),
+    lines: [],
+    notes: '',
+  };
+  const [receiptForm, setReceiptForm] = useState(emptyReceiptForm);
+  const [receiptSheetOpen, setReceiptSheetOpen] = useState(false);
+
   const selectedDayOfWeek = useMemo(() => {
     const d = selectedDate.getDay();
     return (d + 6) % 7; // 0 = lundi, 6 = dimanche
@@ -370,6 +409,8 @@ export default function TeamPage() {
     setTaskSheetOpen(false);
     setReapproSheetOpen(false);
     setReapproIngredient(null);
+    setOfferSheetOpen(false);
+    setReceiptSheetOpen(false);
   }
 
   function openConfirm(title, message, onConfirm) {
@@ -877,6 +918,331 @@ export default function TeamPage() {
     );
   }
 
+  // ========== CHANTIER 25 : OFFRES FOURNISSEURS ==========
+
+  function getPurchaseOption(ingredient, optionId) {
+    if (!ingredient) return null;
+    return (ingredient.purchase_options || []).find((o) => o.id === optionId) || null;
+  }
+
+  function getOfferPricePerBase(offer) {
+    if (!offer) return 0;
+    const ingredient = dataset.ingredients.find((i) => i.id === offer.ingredient_id);
+    if (!ingredient) return 0;
+    const opt = getPurchaseOption(ingredient, offer.purchase_option_id);
+    if (!opt || !opt.quantity_in_base) return 0;
+    return (Number(offer.cost) || 0) / opt.quantity_in_base;
+  }
+
+  function openNewOffer() {
+    setOfferForm({ ...emptyOfferForm });
+    setOfferSheetOpen(true);
+  }
+
+  function openEditOffer(offer) {
+    setOfferForm({
+      id: offer.id,
+      ingredient_id: offer.ingredient_id,
+      supplier_id: offer.supplier_id,
+      purchase_option_id: offer.purchase_option_id,
+      cost: String(offer.cost),
+      is_available: offer.is_available !== false,
+      is_preferred: offer.is_preferred === true,
+      min_order_quantity: offer.min_order_quantity || 1,
+      lead_time_days: offer.lead_time_days || 0,
+      notes: offer.notes || '',
+    });
+    setOfferSheetOpen(true);
+  }
+
+  function updateOfferField(field, value) {
+    setOfferForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleOfferIngredientChange(ingredientId) {
+    const ing = dataset.ingredients.find((i) => i.id === ingredientId);
+    const firstOption = ing && ing.purchase_options && ing.purchase_options[0];
+    setOfferForm((prev) => ({
+      ...prev,
+      ingredient_id: ingredientId,
+      purchase_option_id: firstOption ? firstOption.id : '',
+    }));
+  }
+
+  function saveOffer(e) {
+    e.preventDefault();
+    if (!offerForm.ingredient_id || !offerForm.supplier_id || !offerForm.purchase_option_id) {
+      showToast(t('common.error'), 'error');
+      return;
+    }
+    const ingredient = dataset.ingredients.find((i) => i.id === offerForm.ingredient_id);
+    const purchaseOption = getPurchaseOption(ingredient, offerForm.purchase_option_id);
+    if (!purchaseOption) {
+      showToast(t('common.error'), 'error');
+      return;
+    }
+
+    const offerData = {
+      restaurant_id: restaurant.id,
+      ingredient_id: offerForm.ingredient_id,
+      supplier_id: offerForm.supplier_id,
+      purchase_option_id: offerForm.purchase_option_id,
+      cost: Number(offerForm.cost) || 0,
+      is_available: offerForm.is_available !== false,
+      is_preferred: offerForm.is_preferred === true,
+      min_order_quantity: Number(offerForm.min_order_quantity) || 1,
+      lead_time_days: Number(offerForm.lead_time_days) || 0,
+      notes: offerForm.notes || '',
+    };
+
+    let nextOffers = [...(dataset.supplier_offers || [])];
+    let newOffer;
+
+    if (offerForm.id) {
+      newOffer = nextOffers.find((o) => o.id === offerForm.id);
+      if (newOffer) {
+        Object.assign(newOffer, offerData, { updatedAt: new Date().toISOString() });
+      }
+    } else {
+      newOffer = createSupplierOffer(offerData);
+      nextOffers.push(newOffer);
+    }
+
+    // R4.1 : si is_preferred, mettre à jour reference_unit_cost et désactiver les autres offres préférées
+    if (offerForm.is_preferred) {
+      nextOffers = nextOffers.map((o) => {
+        if (o.ingredient_id === offerForm.ingredient_id && o.id !== newOffer.id) {
+          return { ...o, is_preferred: false };
+        }
+        return o;
+      });
+      const refCost = (Number(offerForm.cost) || 0) / purchaseOption.quantity_in_base;
+      const nextIngredients = dataset.ingredients.map((i) =>
+        i.id === offerForm.ingredient_id ? { ...i, reference_unit_cost: refCost } : i
+      );
+      const ok = commit({ ...dataset, supplier_offers: nextOffers, ingredients: nextIngredients }, {
+        success: t('common.success'),
+      });
+      if (ok) {
+        setOfferSheetOpen(false);
+        setOfferForm(emptyOfferForm);
+      }
+    } else {
+      const ok = commit({ ...dataset, supplier_offers: nextOffers }, {
+        success: t('common.success'),
+      });
+      if (ok) {
+        setOfferSheetOpen(false);
+        setOfferForm(emptyOfferForm);
+      }
+    }
+  }
+
+  function handleDeleteOffer(offer) {
+    openConfirm(
+      t('common.delete'),
+      `${t('common.delete')} "${offer.id}" ?`,
+      () => {
+        const next = {
+          ...dataset,
+          supplier_offers: (dataset.supplier_offers || []).filter((o) => o.id !== offer.id),
+        };
+        const ok = commit(next, { success: t('common.success') });
+        if (ok) setConfirmConfig((c) => ({ ...c, isOpen: false }));
+      }
+    );
+  }
+
+  // ========== CHANTIER 25 : BONS DE RÉCEPTION ==========
+
+  function openNewReceipt() {
+    setReceiptForm({
+      ...emptyReceiptForm,
+      lines: [],
+      date: new Date().toISOString().slice(0, 10),
+    });
+    setReceiptSheetOpen(true);
+  }
+
+  function openEditReceipt(receipt) {
+    setReceiptForm({
+      id: receipt.id,
+      type: receipt.type,
+      supplier_id: receipt.supplier_id,
+      date: receipt.date,
+      lines: receipt.lines.map((l) => ({ ...l })),
+      notes: receipt.notes || '',
+    });
+    setReceiptSheetOpen(true);
+  }
+
+  function updateReceiptField(field, value) {
+    setReceiptForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function addReceiptLine() {
+    setReceiptForm((prev) => ({
+      ...prev,
+      lines: [...prev.lines, { ...emptyReceiptLine }],
+    }));
+  }
+
+  function removeReceiptLine(index) {
+    setReceiptForm((prev) => ({
+      ...prev,
+      lines: prev.lines.filter((_, i) => i !== index),
+    }));
+  }
+
+  function updateReceiptLine(index, field, value) {
+    setReceiptForm((prev) => {
+      const nextLines = [...prev.lines];
+      nextLines[index] = { ...nextLines[index], [field]: value };
+      return { ...prev, lines: nextLines };
+    });
+  }
+
+  function handleReceiptLineIngredientChange(index, ingredientId) {
+    const ing = dataset.ingredients.find((i) => i.id === ingredientId);
+    const firstOption = ing && ing.purchase_options && ing.purchase_options[0];
+    setReceiptForm((prev) => {
+      const nextLines = [...prev.lines];
+      nextLines[index] = {
+        ...nextLines[index],
+        ingredient_id: ingredientId,
+        purchase_option_id: firstOption ? firstOption.id : '',
+        quantity: 1,
+        cost: 0,
+        stock_delta_in_base: 0,
+      };
+      return { ...prev, lines: nextLines };
+    });
+  }
+
+  function computeReceiptLineStockDelta(line, receiptType) {
+    if (receiptType === 'correction') {
+      return Number(line.stock_delta_in_base) || 0;
+    }
+    const ing = dataset.ingredients.find((i) => i.id === line.ingredient_id);
+    const opt = getPurchaseOption(ing, line.purchase_option_id);
+    if (!opt || !opt.quantity_in_base) return 0;
+    const qty = Number(line.quantity) || 0;
+    const delta = qty * opt.quantity_in_base;
+    return receiptType === 'return' ? -delta : delta;
+  }
+
+  function saveReceipt(e) {
+    e.preventDefault();
+    if (!receiptForm.type || !receiptForm.date) {
+      showToast(t('common.error'), 'error');
+      return;
+    }
+
+    const lines = receiptForm.lines
+      .filter((l) => l.ingredient_id)
+      .map((l) => {
+        const stockDelta = computeReceiptLineStockDelta(l, receiptForm.type);
+        return createPurchaseReceiptLine({
+          ingredient_id: l.ingredient_id,
+          purchase_option_id: l.purchase_option_id,
+          quantity: Number(l.quantity) || 0,
+          cost: Number(l.cost) || 0,
+          stock_delta_in_base: stockDelta,
+        });
+      });
+
+    const total = lines.reduce((sum, l) => sum + (Number(l.cost) || 0), 0);
+
+    const receiptData = {
+      restaurant_id: restaurant.id,
+      type: receiptForm.type,
+      supplier_id: receiptForm.supplier_id,
+      date: receiptForm.date,
+      lines,
+      total,
+      notes: receiptForm.notes || '',
+    };
+
+    // Calcul de l'impact stock net (nouveau - ancien si édition)
+    const stockDeltas = {};
+    if (receiptForm.id) {
+      const oldReceipt = dataset.purchase_receipts.find((r) => r.id === receiptForm.id);
+      if (oldReceipt) {
+        for (const line of oldReceipt.lines) {
+          stockDeltas[line.ingredient_id] = (stockDeltas[line.ingredient_id] || 0) - (line.stock_delta_in_base || 0);
+        }
+      }
+    }
+    for (const line of lines) {
+      stockDeltas[line.ingredient_id] = (stockDeltas[line.ingredient_id] || 0) + (line.stock_delta_in_base || 0);
+    }
+
+    const nextIngredients = dataset.ingredients.map((ing) => {
+      const delta = stockDeltas[ing.id];
+      if (delta) {
+        return { ...ing, stock_quantity: (ing.stock_quantity || 0) + delta };
+      }
+      return ing;
+    });
+
+    let nextReceipts = [...(dataset.purchase_receipts || [])];
+    if (receiptForm.id) {
+      nextReceipts = nextReceipts.map((r) =>
+        r.id === receiptForm.id ? { ...r, ...receiptData, updatedAt: new Date().toISOString() } : r
+      );
+    } else {
+      nextReceipts.push(createPurchaseReceipt({ ...receiptData, sort_order: nextSortOrder('purchase_receipts') }));
+    }
+
+    const ok = commit({ ...dataset, ingredients: nextIngredients, purchase_receipts: nextReceipts }, {
+      success: t('common.success'),
+    });
+    if (ok) {
+      setReceiptSheetOpen(false);
+      setReceiptForm(emptyReceiptForm);
+    }
+  }
+
+  function handleDeleteReceipt(receipt) {
+    openConfirm(
+      t('common.delete'),
+      `${t('common.delete')} "${receipt.id}" ?`,
+      () => {
+        // Annuler l'impact stock
+        const stockDeltas = {};
+        for (const line of receipt.lines) {
+          stockDeltas[line.ingredient_id] = (stockDeltas[line.ingredient_id] || 0) - (line.stock_delta_in_base || 0);
+        }
+        const nextIngredients = dataset.ingredients.map((ing) => {
+          const delta = stockDeltas[ing.id];
+          if (delta) {
+            return { ...ing, stock_quantity: (ing.stock_quantity || 0) + delta };
+          }
+          return ing;
+        });
+        const next = {
+          ...dataset,
+          ingredients: nextIngredients,
+          purchase_receipts: (dataset.purchase_receipts || []).filter((r) => r.id !== receipt.id),
+        };
+        const ok = commit(next, { success: t('common.success') });
+        if (ok) setConfirmConfig((c) => ({ ...c, isOpen: false }));
+      }
+    );
+  }
+
+  // ========== TITRE DE LA VUE ==========
+  function getViewTitle(viewName) {
+    const map = {
+      ingredients: 'team.costIngredients',
+      supplierOffers: 'team.supplierOffers.title',
+      comparator: 'team.comparator.title',
+      receipts: 'team.receipts.title',
+    };
+    const key = map[viewName] || `team.${viewName}`;
+    return t(key);
+  }
+
   if (!dataset || !restaurant) {
     return (
       <div className="team-page">
@@ -920,9 +1286,7 @@ export default function TeamPage() {
       <header className="team-header">
         {view !== 'dashboard' && <BackButton onClick={handleBack} />}
         <h1 className="team-title">
-          {view === 'dashboard'
-            ? t('team.title')
-            : t(`team.${view === 'ingredients' ? 'costIngredients' : view}`)}
+          {view === 'dashboard' ? t('team.title') : getViewTitle(view)}
         </h1>
       </header>
 
@@ -996,6 +1360,34 @@ export default function TeamPage() {
                 title={t('team.suppliers')}
                 subtitle={`${dataset.suppliers.length} ${t('team.filters.items')}`}
                 onClick={() => setView('suppliers')}
+              />
+            </div>
+          </div>
+
+          {/* NOUVELLE SECTION FOURNISSEURS */}
+          <div className="hub-section">
+            <h2 className="hub-section-title">{t('team.suppliers')}</h2>
+            <div className="team-grid">
+              <HubCard
+                className="card-blue"
+                icon="🏷️"
+                title={t('team.supplierOffers.title')}
+                subtitle={`${(dataset.supplier_offers || []).length} ${t('team.filters.items')}`}
+                onClick={() => setView('supplierOffers')}
+              />
+              <HubCard
+                className="card-orange"
+                icon="⚖️"
+                title={t('team.comparator.title')}
+                subtitle={t('team.comparator.bestPrice')}
+                onClick={() => setView('comparator')}
+              />
+              <HubCard
+                className="card-green"
+                icon="📄"
+                title={t('team.receipts.title')}
+                subtitle={`${(dataset.purchase_receipts || []).length} ${t('team.filters.items')}`}
+                onClick={() => setView('receipts')}
               />
             </div>
           </div>
@@ -1663,6 +2055,176 @@ export default function TeamPage() {
         </div>
       )}
 
+      {/* ================= CHANTIER 25 : OFFRES FOURNISSEURS ================= */}
+      {view === 'supplierOffers' && (
+        <div className="section-container">
+          <button className="btn-primary full-width" onClick={openNewOffer}>
+            + {t('team.supplierOffers.add')}
+          </button>
+          {(dataset.supplier_offers || []).length === 0 ? (
+            <EmptyState emoji="🏷️" title={t('team.supplierOffers.empty')} />
+          ) : (
+            <div className="list">
+              {dataset.supplier_offers.map((offer) => {
+                const ing = dataset.ingredients.find((i) => i.id === offer.ingredient_id);
+                const sup = dataset.suppliers.find((s) => s.id === offer.supplier_id);
+                const opt = ing && getPurchaseOption(ing, offer.purchase_option_id);
+                return (
+                  <div key={offer.id} className="list-item">
+                    <div className="list-item-info">
+                      <h4>
+                        {ing ? ing.name : '?'} · {sup ? sup.name : '?'}
+                      </h4>
+                      <p>
+                        {opt ? opt.label : '?'} · {formatCurrency(offer.cost)} ·{' '}
+                        {offer.is_preferred && '⭐'} {offer.is_available ? '' : '❌'}
+                      </p>
+                    </div>
+                    <div className="list-item-actions">
+                      <button
+                        className="btn-edit"
+                        onClick={() => openEditOffer(offer)}
+                        aria-label={t('common.edit')}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDeleteOffer(offer)}
+                        aria-label={t('common.delete')}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================= CHANTIER 25 : COMPARATEUR ================= */}
+      {view === 'comparator' && (
+        <div className="section-container">
+          {(() => {
+            const offersByIngredient = {};
+            (dataset.supplier_offers || []).forEach((offer) => {
+              if (!offersByIngredient[offer.ingredient_id]) {
+                offersByIngredient[offer.ingredient_id] = [];
+              }
+              offersByIngredient[offer.ingredient_id].push(offer);
+            });
+
+            const ingredientIds = Object.keys(offersByIngredient);
+            if (ingredientIds.length === 0) {
+              return <EmptyState emoji="⚖️" title={t('team.comparator.noOffer')} />;
+            }
+
+            return ingredientIds.map((ingId) => {
+              const ing = dataset.ingredients.find((i) => i.id === ingId);
+              if (!ing) return null;
+              const baseUnitShort = t(`common.baseUnits.${ing.base_unit}.short`);
+
+              const offersWithPrice = offersByIngredient[ingId]
+                .map((offer) => {
+                  const opt = getPurchaseOption(ing, offer.purchase_option_id);
+                  const pricePerBase = opt && opt.quantity_in_base
+                    ? (Number(offer.cost) || 0) / opt.quantity_in_base
+                    : Infinity;
+                  return { offer, opt, pricePerBase };
+                })
+                .sort((a, b) => a.pricePerBase - b.pricePerBase);
+
+              const bestPrice = offersWithPrice[0]?.pricePerBase || 0;
+
+              return (
+                <div key={ingId} className="comparator-ingredient">
+                  <h4>{ing.name} ({baseUnitShort})</h4>
+                  <div className="comparator-offers">
+                    {offersWithPrice.map(({ offer, opt, pricePerBase }, idx) => {
+                      const sup = dataset.suppliers.find((s) => s.id === offer.supplier_id);
+                      const isBest = idx === 0;
+                      const isPreferred = offer.is_preferred;
+                      const diff = bestPrice > 0 ? ((pricePerBase - bestPrice) / bestPrice) * 100 : 0;
+
+                      return (
+                        <div
+                          key={offer.id}
+                          className={`comparator-offer-row ${isBest ? 'comparator-offer-row--best' : ''}`}
+                        >
+                          <span className="comparator-offer-supplier">{sup ? sup.name : '?'}</span>
+                          <span className="comparator-offer-pack">{opt ? opt.label : '?'}</span>
+                          <span className="comparator-offer-cost">{formatCurrency(offer.cost)}</span>
+                          <span className="comparator-offer-unit">
+                            {formatCurrency(pricePerBase)}/{baseUnitShort}
+                          </span>
+                          <span className="comparator-offer-diff">
+                            {isBest ? '' : `+${diff.toFixed(1)}%`}
+                          </span>
+                          <span className="comparator-badges">
+                            {isBest && <span title={t('team.comparator.bestPrice')}>🏆</span>}
+                            {isPreferred && <span title={t('team.comparator.preferred')}>⭐</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+      )}
+
+      {/* ================= CHANTIER 25 : BONS DE RÉCEPTION ================= */}
+      {view === 'receipts' && (
+        <div className="section-container">
+          <button className="btn-primary full-width" onClick={openNewReceipt}>
+            + {t('team.receipts.add')}
+          </button>
+          {(dataset.purchase_receipts || []).length === 0 ? (
+            <EmptyState emoji="📄" title={t('team.receipts.empty')} />
+          ) : (
+            <div className="list">
+              {dataset.purchase_receipts.map((receipt) => {
+                const sup = dataset.suppliers.find((s) => s.id === receipt.supplier_id);
+                return (
+                  <div key={receipt.id} className="list-item">
+                    <div className="list-item-info">
+                      <h4>
+                        {t(`team.receipts.types.${receipt.type}`)} · {receipt.date}
+                        {sup && ` · ${sup.name}`}
+                      </h4>
+                      <p>
+                        {receipt.lines.length} {t('team.receipts.fields.lines').toLowerCase()} ·{' '}
+                        {formatCurrency(receipt.total)}
+                      </p>
+                    </div>
+                    <div className="list-item-actions">
+                      <button
+                        className="btn-edit"
+                        onClick={() => openEditReceipt(receipt)}
+                        aria-label={t('common.edit')}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDeleteReceipt(receipt)}
+                        aria-label={t('common.delete')}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ================= BOTTOM SHEET AJOUT TÂCHE ================= */}
       <BottomSheet
         open={taskSheetOpen}
@@ -2009,6 +2571,246 @@ export default function TeamPage() {
             </form>
           );
         })()}
+      </BottomSheet>
+
+      {/* ================= CHANTIER 25 : BOTTOM SHEET OFFRE FOURNISSEUR ================= */}
+      <BottomSheet
+        open={offerSheetOpen}
+        onClose={() => setOfferSheetOpen(false)}
+        title={offerForm.id ? t('team.supplierOffers.edit') : t('team.supplierOffers.add')}
+      >
+        <form className="form-card" onSubmit={saveOffer}>
+          <select
+            className="form-select"
+            value={offerForm.ingredient_id}
+            onChange={(e) => handleOfferIngredientChange(e.target.value)}
+            required
+          >
+            <option value="">{t('team.ingredientV9.baseUnit')}</option>
+            {dataset.ingredients.map((ing) => (
+              <option key={ing.id} value={ing.id}>{ing.name}</option>
+            ))}
+          </select>
+
+          <select
+            className="form-select"
+            value={offerForm.supplier_id}
+            onChange={(e) => updateOfferField('supplier_id', e.target.value)}
+            required
+          >
+            <option value="">{t('team.supplierOffers.fields.supplier')}</option>
+            {dataset.suppliers.map((sup) => (
+              <option key={sup.id} value={sup.id}>{sup.name}</option>
+            ))}
+          </select>
+
+          <select
+            className="form-select"
+            value={offerForm.purchase_option_id}
+            onChange={(e) => updateOfferField('purchase_option_id', e.target.value)}
+            required
+          >
+            <option value="">{t('team.supplierOffers.fields.purchaseOption')}</option>
+            {(() => {
+              const ing = dataset.ingredients.find((i) => i.id === offerForm.ingredient_id);
+              return (ing?.purchase_options || []).map((opt) => (
+                <option key={opt.id} value={opt.id}>{opt.label}</option>
+              ));
+            })()}
+          </select>
+
+          <input
+            className="form-input"
+            type="number"
+            min="0"
+            step="any"
+            placeholder={t('team.supplierOffers.fields.cost')}
+            value={offerForm.cost}
+            onChange={(e) => updateOfferField('cost', e.target.value)}
+            required
+          />
+
+          <div className="checkbox-row">
+            <input
+              id="offer-available"
+              type="checkbox"
+              checked={offerForm.is_available}
+              onChange={(e) => updateOfferField('is_available', e.target.checked)}
+            />
+            <label htmlFor="offer-available">{t('team.supplierOffers.fields.isAvailable')}</label>
+          </div>
+
+          <div className="checkbox-row">
+            <input
+              id="offer-preferred"
+              type="checkbox"
+              checked={offerForm.is_preferred}
+              onChange={(e) => updateOfferField('is_preferred', e.target.checked)}
+            />
+            <label htmlFor="offer-preferred">{t('team.supplierOffers.fields.isPreferred')}</label>
+          </div>
+
+          <input
+            className="form-input"
+            type="number"
+            min="1"
+            step="1"
+            placeholder={t('team.supplierOffers.fields.minOrderQuantity')}
+            value={offerForm.min_order_quantity}
+            onChange={(e) => updateOfferField('min_order_quantity', e.target.value)}
+          />
+
+          <input
+            className="form-input"
+            type="number"
+            min="0"
+            step="1"
+            placeholder={t('team.supplierOffers.fields.leadTimeDays')}
+            value={offerForm.lead_time_days}
+            onChange={(e) => updateOfferField('lead_time_days', e.target.value)}
+          />
+
+          <input
+            className="form-input"
+            type="text"
+            placeholder={t('team.supplierOffers.fields.notes')}
+            value={offerForm.notes}
+            onChange={(e) => updateOfferField('notes', e.target.value)}
+          />
+
+          <button type="submit" className="btn-primary">
+            {t('common.save')}
+          </button>
+        </form>
+      </BottomSheet>
+
+      {/* ================= CHANTIER 25 : BOTTOM SHEET BON DE RÉCEPTION ================= */}
+      <BottomSheet
+        open={receiptSheetOpen}
+        onClose={() => setReceiptSheetOpen(false)}
+        title={receiptForm.id ? t('common.edit') : t('team.receipts.add')}
+      >
+        <form className="form-card" onSubmit={saveReceipt}>
+          <select
+            className="form-select"
+            value={receiptForm.type}
+            onChange={(e) => updateReceiptField('type', e.target.value)}
+          >
+            {RECEIPT_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {t(`team.receipts.types.${type}`)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="form-select"
+            value={receiptForm.supplier_id}
+            onChange={(e) => updateReceiptField('supplier_id', e.target.value)}
+          >
+            <option value="">{t('team.receipts.fields.supplier')}</option>
+            {dataset.suppliers.map((sup) => (
+              <option key={sup.id} value={sup.id}>{sup.name}</option>
+            ))}
+          </select>
+
+          <input
+            className="form-input"
+            type="date"
+            value={receiptForm.date}
+            onChange={(e) => updateReceiptField('date', e.target.value)}
+            required
+          />
+
+          <div className="receipt-lines">
+            <div className="receipt-lines-header">
+              <span>{t('team.receipts.fields.lines')}</span>
+              <button type="button" className="dynamic-add-btn" onClick={addReceiptLine}>
+                + {t('common.add')}
+              </button>
+            </div>
+            {receiptForm.lines.map((line, idx) => {
+              const ing = dataset.ingredients.find((i) => i.id === line.ingredient_id);
+              const stockDelta = computeReceiptLineStockDelta(line, receiptForm.type);
+              return (
+                <div key={idx} className="receipt-line-row">
+                  <select
+                    className="form-select"
+                    value={line.ingredient_id}
+                    onChange={(e) => handleReceiptLineIngredientChange(idx, e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {dataset.ingredients.map((i) => (
+                      <option key={i.id} value={i.id}>{i.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="form-select"
+                    value={line.purchase_option_id}
+                    onChange={(e) => updateReceiptLine(idx, 'purchase_option_id', e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {(ing?.purchase_options || []).map((opt) => (
+                      <option key={opt.id} value={opt.id}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder={t('team.receipts.fields.quantity')}
+                    value={line.quantity}
+                    onChange={(e) => updateReceiptLine(idx, 'quantity', e.target.value)}
+                  />
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder={t('team.receipts.fields.cost')}
+                    value={line.cost}
+                    onChange={(e) => updateReceiptLine(idx, 'cost', e.target.value)}
+                  />
+                  {receiptForm.type === 'correction' ? (
+                    <input
+                      className="form-input"
+                      type="number"
+                      step="any"
+                      placeholder={t('team.receipts.fields.stockDelta')}
+                      value={line.stock_delta_in_base}
+                      onChange={(e) => updateReceiptLine(idx, 'stock_delta_in_base', e.target.value)}
+                    />
+                  ) : (
+                    <span className="receipt-line-delta">
+                      {stockDelta > 0 ? '+' : ''}{stockDelta}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className="btn-delete"
+                    onClick={() => removeReceiptLine(idx)}
+                    aria-label={t('common.delete')}
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <input
+            className="form-input"
+            type="text"
+            placeholder={t('team.receipts.fields.notes')}
+            value={receiptForm.notes}
+            onChange={(e) => updateReceiptField('notes', e.target.value)}
+          />
+
+          <button type="submit" className="btn-primary">
+            {t('common.save')}
+          </button>
+        </form>
       </BottomSheet>
 
       {/* ================= TOAST ================= */}
