@@ -29,6 +29,7 @@ import SearchBar from '../components/SearchBar';
 import EmptyState from '../components/EmptyState';
 import Badge from '../components/Badge';
 import SkeletonLoader from '../components/SkeletonLoader';
+import Stepper from '../components/Stepper';
 import './TeamPage.css';
 
 // ── Emojis catégories MENU (pour le stock) ──────────────────────────
@@ -285,6 +286,12 @@ export default function TeamPage() {
   const [newTask, setNewTask] = useState('');
   const [newTaskType, setNewTaskType] = useState('day');
 
+  // --- STOCK / REAPPRO (Chantier 24) ---
+  const [reapproSheetOpen, setReapproSheetOpen] = useState(false);
+  const [reapproIngredient, setReapproIngredient] = useState(null);
+  const [reapproOptionId, setReapproOptionId] = useState('');
+  const [reapproQuantity, setReapproQuantity] = useState(1);
+
   const selectedDayOfWeek = useMemo(() => {
     const d = selectedDate.getDay();
     return (d + 6) % 7; // 0 = lundi, 6 = dimanche
@@ -361,6 +368,8 @@ export default function TeamPage() {
     setIsFormOpen(false);
     setIngredientSheetOpen(false);
     setTaskSheetOpen(false);
+    setReapproSheetOpen(false);
+    setReapproIngredient(null);
   }
 
   function openConfirm(title, message, onConfirm) {
@@ -627,6 +636,69 @@ export default function TeamPage() {
     commit({ ...dataset, ingredients: nextIngs });
   }
 
+  // --- RÉAPPROVISIONNEMENT (Chantier 24 — R4.6) ---
+  function openReappro(ing) {
+    if (!ing || ing.track_stock === false) return;
+    const stock = ing.stock_quantity || 0;
+    const min = ing.min_stock || 0;
+    const target = min * 2;
+    const toOrder = Math.max(0, target - stock);
+    const options = ing.purchase_options || [];
+
+    let qty = 1;
+    let optionId = '';
+
+    if (options.length > 0) {
+      const opt = options[0];
+      optionId = opt.id;
+      const qtyBase = Number(opt.quantity_in_base) || 1;
+      qty = Math.max(1, Math.ceil(toOrder / qtyBase));
+    } else {
+      qty = Math.max(1, toOrder);
+    }
+
+    setReapproIngredient(ing);
+    setReapproOptionId(optionId);
+    setReapproQuantity(qty);
+    setReapproSheetOpen(true);
+  }
+
+  function saveReappro(e) {
+    e.preventDefault();
+    if (!reapproIngredient) return;
+
+    const options = reapproIngredient.purchase_options || [];
+    let addBase = 0;
+
+    if (options.length > 0) {
+      const opt = options.find((o) => o.id === reapproOptionId) || options[0];
+      if (!opt) {
+        showToast(t('common.error'), 'error');
+        return;
+      }
+      addBase = reapproQuantity * (Number(opt.quantity_in_base) || 1);
+    } else {
+      addBase = reapproQuantity;
+    }
+
+    if (!Number.isFinite(addBase) || addBase <= 0) return;
+
+    const nextIngs = dataset.ingredients.map((i) =>
+      i.id === reapproIngredient.id
+        ? { ...i, stock_quantity: (i.stock_quantity || 0) + addBase }
+        : i
+    );
+
+    const ok = commit({ ...dataset, ingredients: nextIngs }, {
+      success: t('common.success'),
+    });
+
+    if (ok) {
+      setReapproSheetOpen(false);
+      setReapproIngredient(null);
+    }
+  }
+
   // --- PLANNING ---
   function nextTaskSortOrder(type, dayOfWeek) {
     const allTasks = dataset.tasks || [];
@@ -820,7 +892,7 @@ export default function TeamPage() {
   // --- CALCULS HUB ---
   const activeEmployees = dataset.employees.filter((e) => e.active !== false);
   const lowStockCount = dataset.ingredients.filter(
-    (i) => (i.stock_quantity || 0) <= (i.min_stock || 0)
+    (i) => i.track_stock !== false && (i.stock_quantity || 0) <= (i.min_stock || 0)
   ).length;
   const totalMonthlyCharges = dataset.fixed_costs.reduce((sum, c) => {
     const amount = Number(c.amount) || 0;
@@ -1385,7 +1457,7 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= STOCK ================= */}
+      {/* ================= STOCK (v9 + Réappro — Chantier 24) ================= */}
       {view === 'stock' && (
         <div className="section-container">
           {renderCategoryFilterPills(
@@ -1403,6 +1475,7 @@ export default function TeamPage() {
               {filteredStock.map((ing) => {
                 const stock = ing.stock_quantity || 0;
                 const min = ing.min_stock || 0;
+                const trackStock = ing.track_stock !== false;
                 const pct =
                   min > 0
                     ? Math.min(100, (stock / (min * 2)) * 100)
@@ -1411,45 +1484,77 @@ export default function TeamPage() {
                     : 0;
                 const color =
                   stock <= min ? '#E53935' : stock <= min * 1.5 ? '#FF9800' : '#43A047';
-                const unit = ing.base_unit
+                const baseUnitShort = ing.base_unit
                   ? t(`common.baseUnits.${ing.base_unit}.short`)
                   : unitLabel(t, ing.unit);
+                const categoryEmoji =
+                  MENU_CATEGORY_EMOJI[ing.category]
+                  || INGREDIENT_CATEGORY_EMOJI[ing.category]
+                  || '🍽️';
+
                 return (
-                  <div key={ing.id} className="list-item stock-item">
+                  <div
+                    key={ing.id}
+                    className={`list-item stock-item ${!trackStock ? 'stock-item--non-tracked' : ''}`}
+                  >
                     <div className="list-item-info stock-info">
                       <div className="stock-header">
                         <h4>
                           <span className="category-badge" aria-hidden="true">
-                            {MENU_CATEGORY_EMOJI[ing.category] || INGREDIENT_CATEGORY_EMOJI[ing.category] || '🍽️'}
+                            {categoryEmoji}
                           </span>
                           {ing.name}
                         </h4>
-                        <span className="stock-qty">
-                          {stock} {unit}
-                        </span>
+                        {trackStock ? (
+                          <span className="stock-qty">
+                            {stock} {baseUnitShort}
+                          </span>
+                        ) : (
+                          <Badge variant="default">
+                            {t('team.stockManagement.nonTracked')}
+                          </Badge>
+                        )}
                       </div>
-                      <div className="stock-bar">
-                        <div
-                          className="stock-bar__fill"
-                          style={{ width: `${pct}%`, background: color }}
-                        />
-                      </div>
+                      {trackStock && (
+                        <div className="stock-bar">
+                          <div
+                            className="stock-bar__fill"
+                            style={{ width: `${pct}%`, background: color }}
+                          />
+                        </div>
+                      )}
                     </div>
-                    <div className="list-item-actions">
-                      <button
-                        className="btn-icon"
-                        onClick={() => adjustStock(ing, -1)}
-                        aria-label="−"
-                      >
-                        −
-                      </button>
-                      <button
-                        className="btn-icon"
-                        onClick={() => adjustStock(ing, 1)}
-                        aria-label="+"
-                      >
-                        +
-                      </button>
+                    <div className="stock-actions">
+                      {trackStock && (
+                        <button
+                          type="button"
+                          className="btn-reappro"
+                          onClick={() => openReappro(ing)}
+                        >
+                          <span aria-hidden="true">📦</span>
+                          <span className="btn-reappro__label">
+                            {t('team.stockManagement.title')}
+                          </span>
+                        </button>
+                      )}
+                      <div className="stock-qty-actions">
+                        <button
+                          type="button"
+                          className="btn-icon"
+                          onClick={() => adjustStock(ing, -1)}
+                          aria-label="−"
+                        >
+                          −
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-icon"
+                          onClick={() => adjustStock(ing, 1)}
+                          aria-label="+"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1593,7 +1698,6 @@ export default function TeamPage() {
         title={ingForm.id ? t('common.edit') : t('menu.ingredients.add')}
       >
         <form className="form-card" onSubmit={saveIngredient}>
-          {/* Nom */}
           <input
             className="form-input"
             type="text"
@@ -1603,7 +1707,6 @@ export default function TeamPage() {
             required
           />
 
-          {/* Catégorie + bouton presets */}
           <div className="ingredient-form-row">
             <select
               className="form-select"
@@ -1626,7 +1729,6 @@ export default function TeamPage() {
             </button>
           </div>
 
-          {/* Unité de base + Coût de référence */}
           <div className="ingredient-form-row">
             <select
               className="form-select"
@@ -1651,7 +1753,6 @@ export default function TeamPage() {
             />
           </div>
 
-          {/* Fournisseur préféré */}
           <select
             className="form-select"
             value={ingForm.preferred_supplier_id}
@@ -1663,7 +1764,6 @@ export default function TeamPage() {
             ))}
           </select>
 
-          {/* Type de stockage + Conservation */}
           <div className="ingredient-form-row">
             <select
               className="form-select"
@@ -1684,7 +1784,6 @@ export default function TeamPage() {
             />
           </div>
 
-          {/* Stock + Stock minimum */}
           <div className="ingredient-form-row">
             <input
               className="form-input"
@@ -1704,7 +1803,6 @@ export default function TeamPage() {
             />
           </div>
 
-          {/* Suivi du stock */}
           <div className="checkbox-row">
             <input
               id="track-stock"
@@ -1715,7 +1813,6 @@ export default function TeamPage() {
             <label htmlFor="track-stock">{t('team.ingredientV9.trackStock')}</label>
           </div>
 
-          {/* Rendement */}
           <div className="ingredient-form-row">
             <input
               className="form-input"
@@ -1731,7 +1828,6 @@ export default function TeamPage() {
             </span>
           </div>
 
-          {/* Conditionnements d'achat */}
           <div className="ingredient-form-section">
             <span className="ingredient-form-section-title">
               {t('team.ingredientV9.purchaseOptions')}
@@ -1775,7 +1871,6 @@ export default function TeamPage() {
             </button>
           </div>
 
-          {/* Unités de recette */}
           <div className="ingredient-form-section">
             <span className="ingredient-form-section-title">
               {t('team.ingredientV9.recipeUnits')}
@@ -1831,6 +1926,89 @@ export default function TeamPage() {
             {t('common.save')}
           </button>
         </form>
+      </BottomSheet>
+
+      {/* ================= BOTTOM SHEET RÉAPPROVISIONNEMENT (Chantier 24) ================= */}
+      <BottomSheet
+        open={reapproSheetOpen}
+        onClose={() => { setReapproSheetOpen(false); setReapproIngredient(null); }}
+        title={
+          reapproIngredient
+            ? `${t('team.stockManagement.title')} — ${reapproIngredient.name}`
+            : t('team.stockManagement.title')
+        }
+      >
+        {reapproIngredient && (() => {
+          const stock = reapproIngredient.stock_quantity || 0;
+          const min = reapproIngredient.min_stock || 0;
+          const target = min * 2;
+          const toOrder = Math.max(0, target - stock);
+          const options = reapproIngredient.purchase_options || [];
+          const selectedOption =
+            options.find((o) => o.id === reapproOptionId) || options[0];
+          const addBase =
+            options.length > 0
+              ? reapproQuantity * (Number(selectedOption?.quantity_in_base) || 1)
+              : reapproQuantity;
+          const baseUnitShort = reapproIngredient.base_unit
+            ? t(`common.baseUnits.${reapproIngredient.base_unit}.short`)
+            : '';
+
+          return (
+            <form className="form-card" onSubmit={saveReappro}>
+              <div className="reappro-summary">
+                <div className="reappro-summary-row">
+                  <span>{t('team.stockManagement.targetStock')}</span>
+                  <strong>{target} {baseUnitShort}</strong>
+                </div>
+                <div className="reappro-summary-row">
+                  <span>{t('team.stockManagement.toOrder')}</span>
+                  <strong>{toOrder} {baseUnitShort}</strong>
+                </div>
+              </div>
+
+              {options.length > 0 && (
+                <select
+                  className="form-select"
+                  value={reapproOptionId}
+                  onChange={(e) => setReapproOptionId(e.target.value)}
+                  aria-label={t('team.ingredientV9.purchaseOptions')}
+                >
+                  {options.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.label} ({o.quantity_in_base} {baseUnitShort})
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <div className="reappro-stepper-row">
+                <span className="reappro-label">
+                  {options.length > 0
+                    ? t('team.stockManagement.packCount')
+                    : baseUnitShort}
+                </span>
+                <Stepper
+                  value={reapproQuantity}
+                  min={1}
+                  max={9999}
+                  onChange={setReapproQuantity}
+                />
+              </div>
+
+              <div className="reappro-preview">
+                <span>{t('team.ingredientV9.stockQuantity')}</span>
+                <strong>
+                  + {addBase} {baseUnitShort}
+                </strong>
+              </div>
+
+              <button type="submit" className="btn-primary">
+                {t('common.save')}
+              </button>
+            </form>
+          );
+        })()}
       </BottomSheet>
 
       {/* ================= TOAST ================= */}

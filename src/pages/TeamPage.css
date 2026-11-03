@@ -1,6 +1,6 @@
 /* src/pages/TeamPage.css */
 /* =========================================================
-   Burihagio — Onglet Gestion (Chantier 22)
+   Burihagio — Onglet Gestion (Chantier 22 → 24)
    Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
    ========================================================= */
 
@@ -279,13 +279,17 @@
   font-size: 0.85rem;
 }
 
-/* --- STOCK --- */
+/* =========================================================
+   STOCK (v9 + Réappro — Chantier 24)
+   ========================================================= */
+
 .stock-item {
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
 }
 .stock-info { width: 100%; }
+
 .stock-header {
   display: flex;
   justify-content: space-between;
@@ -302,12 +306,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .stock-qty {
   font-size: 0.85rem;
   font-weight: 700;
   color: #2C2C2C;
   flex-shrink: 0;
 }
+
 .stock-bar {
   width: 100%;
   height: 8px;
@@ -320,10 +326,109 @@
   border-radius: 4px;
   transition: width 0.3s ease;
 }
-.stock-item .list-item-actions {
-  grid-template-columns: repeat(2, 44px);
-  justify-content: flex-end;
+
+/* Carte grisée pour ingrédient non suivi (R4.5) */
+.stock-item--non-tracked {
+  opacity: 0.65;
+  background: #FAFAFA;
+  border-left: 4px solid #BDBDBD;
 }
+
+/* Actions (réappro + ajustement rapide) */
+.stock-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-reappro {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #FF9800;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.25);
+  transition: background 0.15s, transform 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.btn-reappro:active { transform: scale(0.96); }
+.btn-reappro:hover { background: #F08C00; }
+.btn-reappro:focus-visible {
+  outline: 2px solid #3C91A6;
+  outline-offset: 2px;
+}
+.btn-reappro__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-qty-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* --- BottomSheet Réapprovisionnement --- */
+.reappro-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #EAF4F6;
+  border: 1px solid #D5E8EC;
+}
+.reappro-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+.reappro-summary-row span { color: #7A7A7A; font-weight: 600; }
+.reappro-summary-row strong { color: #3C91A6; font-weight: 800; }
+
+.reappro-stepper-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.reappro-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #2C2C2C;
+}
+
+.reappro-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #FFF3E0;
+  border: 1px solid #FFE0B2;
+  font-size: 0.9rem;
+}
+.reappro-preview span { color: #7A7A7A; font-weight: 600; }
+.reappro-preview strong { color: #FF9800; font-weight: 800; }
 
 /* --- PLANNING --- */
 .card {
@@ -457,16 +562,19 @@
   .btn-edit,
   .btn-delete,
   .filter-pill,
+  .btn-reappro,
   .stock-bar__fill {
     animation: none;
     transition: none;
   }
   .team-card:active,
-  .btn-primary:active {
+  .btn-primary:active,
+  .btn-reappro:active {
     transform: none;
     box-shadow: none;
   }
 }
+
 /* =========================================================
    Chantier 23 — Formulaire ingrédient v9
    ========================================================= */
