@@ -50,21 +50,12 @@ export default function App() {
   // ====================================================================
   // Fix Chantier 12 — Partie 2 : scroll au changement d'onglet
   // ====================================================================
-  // Sans ce fix, l'utilisateur reste à la position de scroll de l'ancienne
-  // page quand il change d'onglet via BottomNav (le `key={activeTab}` du
-  // wrapper force bien le remontage, mais pas la remise à zéro du scroll).
-  //
-  // On force un scroll instantané (`behavior: 'instant'`) pour éviter
-  // qu'une éventuelle règle CSS `scroll-behavior: smooth` globale ne rende
-  // la transition désagréable sur mobile.
   useEffect(() => {
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     } catch (e) {
-      // Fallback navigateurs anciens (behavior: 'instant' non supporté)
       window.scrollTo(0, 0);
     }
-    // iOS PWA : le scroll peut être porté par documentElement ou body
     if (document.documentElement) document.documentElement.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
   }, [activeTab]);
@@ -84,7 +75,7 @@ export default function App() {
       <main style={{ padding: '16px', paddingBottom: '100px' }}>
         {/* Chantier 11-C — NE PAS RETIRER : key force le remontage et relance pageFade */}
         <div className="page-transition" key={activeTab}>
-          {activeTab === 'home' && <HomePage />}
+          {activeTab === 'home' && <HomePage onChangeTab={setActiveTab} />}
           {activeTab === 'stats' && <StatsPage />}
           {activeTab === 'team' && <TeamPage />}
           {activeTab === 'menu' && <MenuPage />}

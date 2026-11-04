@@ -1454,3 +1454,90 @@ export function getGroupedBarData(dataset, period = 'week', context = 'revenue')
     empty: true,
   };
 }
+// =====================================================================
+// 🆕 CHANTIER 30 — Helpers résumé pour HomePage
+// =====================================================================
+
+/**
+ * Retourne les N dernières clôtures triées par date DESC.
+ * Chaque item : { date, weather, revenue, itemsSold }
+ * - revenue inclut les promos (via getDishSellingPrice).
+ * - itemsSold = somme des quantity_sold.
+ * @param {Object} dataset
+ * @param {number} limit
+ * @returns {Array<{date: string, weather: string, revenue: number, itemsSold: number}>}
+ */
+export function getLastClosings(dataset, limit = 3) {
+  const { closings, dishes } = filterByRestaurant(dataset);
+  const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 3;
+
+  return (closings || [])
+    .filter((c) => c && typeof c.date === 'string')
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+    .slice(0, safeLimit)
+    .map((c) => ({
+      date: c.date,
+      weather: c.weather || '',
+      revenue: closingRevenue(c, dishesById, null, dataset),
+      itemsSold: closingItemsCount(c, dishesById),
+    }));
+}
+
+/**
+ * KPIs du jour pour une date donnée.
+ * Retourne { revenue, margin, itemsSold, hasClosing }.
+ * - margin = revenue - foodCost (via getDishFoodCost v9, yield + track_stock gérés).
+ * - revenue inclut les promos actives (via getDishSellingPrice).
+ * @param {Object} dataset
+ * @param {string} dateStr — 'YYYY-MM-DD'
+ * @returns {{revenue: number, margin: number, itemsSold: number, hasClosing: boolean}}
+ */
+export function getTodayKPIs(dataset, dateStr) {
+  const empty = { revenue: 0, margin: 0, itemsSold: 0, hasClosing: false };
+  if (!dataset || !dateStr) return empty;
+
+  const { closings, dishes, ingredients } = filterByRestaurant(dataset);
+  const closing = (closings || []).find((c) => c && c.date === dateStr);
+  if (!closing || !Array.isArray(closing.sales)) return empty;
+
+  const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
+  let revenue = 0;
+  let foodCost = 0;
+  let itemsSold = 0;
+
+  for (const s of closing.sales) {
+    if (!s) continue;
+    const dish = dishesById[s.dish_id];
+    if (!dish) continue;
+    const qty = Number(s.quantity_sold) || 0;
+    if (qty <= 0) continue;
+    itemsSold += qty;
+    const price = getDishSellingPrice(dataset, dish, closing.date);
+    revenue += qty * price;
+    foodCost += qty * getDishFoodCost(dish, ingredients);
+  }
+
+  return {
+    revenue,
+    margin: revenue - foodCost,
+    itemsSold,
+    hasClosing: true,
+  };
+}
+
+/**
+ * Ingrédients en alerte stock :
+ *   - track_stock !== false (R4.5)
+ *   - ET (stock_quantity < 0 OU stock_alert === true)
+ * Triés par stock_quantity ASC (les plus critiques d'abord).
+ * @param {Object} dataset
+ * @returns {Array}
+ */
+export function getLowStockIngredients(dataset) {
+  const { ingredients } = filterByRestaurant(dataset);
+  return (ingredients || [])
+    .filter((i) => i && i.track_stock !== false)
+    .filter((i) => Number(i.stock_quantity) < 0 || i.stock_alert === true)
+    .sort((a, b) => (Number(a.stock_quantity) || 0) - (Number(b.stock_quantity) || 0));
+}
