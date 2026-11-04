@@ -1,10 +1,7 @@
 // src/i18n/vi.js
-// Chantier 31 — ajout des clés refonte StatsPage (weekdaySales,
-// top3Sales/flop3Sales, generalRanking, stockAlerts, stockValue,
-// promoImpact, topConsumed, yieldImpact, supplierComparison,
-// weekdays.*, metrics.* (stockValue, discount*, bestDay, worstDay,
-// realCost, theoreticalCost, savingPct, yield_pct),
-// insights.weekday, stats.team.minStock).
+// Chantier 31 — ajout des clés refonte StatsPage.
+// Chantier 32-A — ajout de settings.sections.appearance.{title,system,light,dark}
+//               pour le sélecteur de thème (mode sombre).
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Trang chủ', closing: 'Chốt ngày', menu: 'Thực đơn', team: 'Quản lý', settings: 'Cài đặt', stats: 'Thống kê' },
@@ -321,6 +318,12 @@ export default {
   settings: {
     title: 'Cài đặt',
     sections: {
+      appearance: {
+        title: 'Giao diện',
+        system: 'Hệ thống',
+        light: 'Sáng',
+        dark: 'Tối',
+      },
       restaurant: {
         title: 'Nhà hàng',
         name: 'Tên',
@@ -383,7 +386,7 @@ export default {
     tabs: {
       overview: 'Tổng quan',
       sales: 'Bán hàng',
-      weekdaySales: 'Theo thứ',       // ← Chantier 31
+      weekdaySales: 'Theo thứ',
       costs: 'Chi phí',
       staff: 'Nhân sự',
       weather: 'Thời tiết',
@@ -418,16 +421,16 @@ export default {
       byCategory: 'Theo danh mục',
       top3: 'Top 3',
       flop3: 'Kém nhất 3',
-      top3Sales: 'Top 3 BÁN CHẠY',            // ← Chantier 31
-      flop3Sales: 'Top 3 BÁN CHẬM',           // ← Chantier 31
-      generalRanking: 'Bảng xếp hạng đầy đủ', // ← Chantier 31
-      weekdaySales: 'Doanh thu theo thứ',     // ← Chantier 31
-      stockAlerts: 'Cảnh báo kho',            // ← Chantier 31
-      stockValue: 'Giá trị kho',              // ← Chantier 31
-      promoImpact: 'Tác động khuyến mãi',     // ← Chantier 31
-      topConsumed: 'Nguyên liệu dùng nhiều nhất', // ← Chantier 31
-      yieldImpact: 'Tác động hao hụt',        // ← Chantier 31
-      supplierComparison: 'So sánh giá nhà cung cấp', // ← Chantier 31
+      top3Sales: 'Top 3 BÁN CHẠY',
+      flop3Sales: 'Top 3 BÁN CHẬM',
+      generalRanking: 'Bảng xếp hạng đầy đủ',
+      weekdaySales: 'Doanh thu theo thứ',
+      stockAlerts: 'Cảnh báo kho',
+      stockValue: 'Giá trị kho',
+      promoImpact: 'Tác động khuyến mãi',
+      topConsumed: 'Nguyên liệu dùng nhiều nhất',
+      yieldImpact: 'Tác động hao hụt',
+      supplierComparison: 'So sánh giá nhà cung cấp',
       expensesRepartition: 'Phân bổ chi phí',
       staff: 'Giờ & chi phí theo nhân viên',
       weather: 'Tác động thời tiết',
@@ -440,7 +443,7 @@ export default {
     heatmap: {
       title: '7 ngày gần đây',
     },
-    weekdays: {                 // ← Chantier 31
+    weekdays: {
       mon: 'Thứ 2',
       tue: 'Thứ 3',
       wed: 'Thứ 4',
@@ -489,7 +492,6 @@ export default {
       bestWeather: 'Thời tiết tốt',
       worstWeather: 'Thời tiết xấu',
       weatherImpact: 'Tác động thời tiết',
-      // ── Chantier 31 ─────────────────────────────────────
       stockValue: 'Giá trị kho',
       discountPerUnit: 'Giảm giá/đơn vị',
       daysDiscounted: 'Số ngày giảm giá',
@@ -559,9 +561,9 @@ export default {
       staff: '⏱️ {topName} làm {topPct}% tổng số giờ.',
       weather: '☀️ {best} tạo +{impact}% DT/ngày so với {worst}.',
       comparison: '📈 Doanh thu {revDelta}% · Lợi nhuận {margDelta}% so với kỳ trước.',
-      weekday: '📅 {best} tạo nhiều doanh thu nhất, +{impact}% so với {worst}.', // ← Chantier 31
+      weekday: '📅 {best} tạo nhiều doanh thu nhất, +{impact}% so với {worst}.',
     },
-    team: {                       // ← Chantier 31 : label réutilisé dans les alertes stock
+    team: {
       minStock: 'Tồn tối thiểu',
     },
   },

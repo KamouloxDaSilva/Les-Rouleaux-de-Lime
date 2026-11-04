@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import HomePage from './pages/HomePage';
@@ -10,15 +10,13 @@ import ClosingPage from './pages/ClosingPage';
 import SettingsPage from './pages/SettingsPage';
 import SplashScreen from './components/SplashScreen';
 import FirstLaunchScreen from './components/FirstLaunchScreen';
+import ThemeToggle from './components/ThemeToggle';
 import { loadDataset } from './data/storage.js';
 import { getActiveRestaurant } from './data/model.js';
 import { useI18n } from './i18n';
+import { applyThemeClass, readTheme } from './utils/theme';
 import './styles/global.css';
 
-/**
- * Dataset vide = pas de restaurant actif OU aucun plat pour ce restaurant.
- * try/catch : si loadDataset() lance, on considère le dataset vide.
- */
 function isDatasetEmpty() {
   try {
     const ds = loadDataset();
@@ -37,7 +35,15 @@ export default function App() {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('home');
   const [showSettings, setShowSettings] = useState(false);
-  const [phase, setPhase] = useState('splash'); // 'splash' | 'firstLaunch' | 'ready'
+  const [phase, setPhase] = useState('splash');
+
+  // ==========================================================
+  // Chantier 32-A — Bootstrap du thème AVANT le premier paint.
+  // useLayoutEffect pour éviter tout flash (FOUC) si splash rapide.
+  // ==========================================================
+  useLayoutEffect(() => {
+    applyThemeClass(readTheme());
+  }, []);
 
   const handleSplashFinish = useCallback(() => {
     setPhase(isDatasetEmpty() ? 'firstLaunch' : 'ready');
@@ -47,9 +53,7 @@ export default function App() {
     setPhase('ready');
   }, []);
 
-  // ====================================================================
-  // Fix Chantier 12 — Partie 2 : scroll au changement d'onglet
-  // ====================================================================
+  // Scroll reset au changement d'onglet (Chantier 12)
   useEffect(() => {
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -73,7 +77,6 @@ export default function App() {
       <Header onSettingsClick={() => setShowSettings(true)} />
 
       <main style={{ padding: '16px', paddingBottom: '100px' }}>
-        {/* Chantier 11-C — NE PAS RETIRER : key force le remontage et relance pageFade */}
         <div className="page-transition" key={activeTab}>
           {activeTab === 'home' && <HomePage onChangeTab={setActiveTab} />}
           {activeTab === 'stats' && <StatsPage />}
@@ -94,7 +97,7 @@ export default function App() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: '#FAEBD5',
+            background: 'var(--color-cream)',
             zIndex: 500,
             overflowY: 'auto',
             padding: '16px',
@@ -115,7 +118,7 @@ export default function App() {
               height: '44px',
               borderRadius: '50%',
               border: 'none',
-              background: '#3C91A6',
+              background: 'var(--color-blue)',
               color: '#FFFFFF',
               fontSize: '1.6rem',
               fontWeight: 700,
@@ -125,11 +128,12 @@ export default function App() {
               alignItems: 'center',
               justifyContent: 'center',
               lineHeight: 1,
-              boxShadow: '0 4px 12px rgba(60,145,166,0.35)',
+              boxShadow: 'var(--shadow-blue)',
             }}
           >
             ×
           </button>
+          <ThemeToggle />
           <SettingsPage />
         </div>
       )}

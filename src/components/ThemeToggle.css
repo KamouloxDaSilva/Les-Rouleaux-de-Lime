@@ -1,0 +1,85 @@
+/* src/components/ThemeToggle.css */
+/* Chantier 32-A — Sélecteur de thème 3 états */
+
+.theme-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.theme-toggle__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.theme-toggle__group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.theme-toggle__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 64px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
+  border: 2px solid transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast) ease,
+    border-color var(--transition-fast) ease,
+    color var(--transition-fast) ease,
+    transform var(--transition-fast) ease;
+}
+
+.theme-toggle__btn:active {
+  transform: scale(0.97);
+}
+
+.theme-toggle__btn:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+.theme-toggle__btn--active {
+  background: var(--color-blue);
+  color: #FFFFFF;
+  border-color: var(--color-blue);
+  box-shadow: var(--shadow-blue);
+}
+
+.theme-toggle__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.theme-toggle__text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle { animation: none; }
+  .theme-toggle__btn { transition: none; }
+  .theme-toggle__btn:active { transform: none; }
+}

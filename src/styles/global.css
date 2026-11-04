@@ -12,6 +12,9 @@ body {
   line-height: 1.5;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  /* Chantier 32-A — transition douce au changement de thème */
+  transition: background-color var(--transition-base) ease,
+              color var(--transition-base) ease;
 }
 
 /* Application du titre avec la police script */
@@ -22,11 +25,11 @@ h1, h2, h3, h4 {
 }
 
 .app-title-script {
-  font-family: 'Dancing Script', cursive; /* Police pour le logo */
+  font-family: 'Dancing Script', cursive;
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--color-blue);
-  text-shadow: 2px 2px 0px var(--color-orange); /* Effet de contour simple */
+  text-shadow: 2px 2px 0px var(--color-orange);
   margin: 0;
 }
 
@@ -56,7 +59,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   background: var(--color-surface);
   border-radius: var(--radius-md);
   padding: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 16px;
 }
 .btn-primary {
@@ -72,17 +75,12 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 
 /* =========================================================
    Chantier 11-A — Feedback tactile global
-   Effet uniforme : scale(0.95) + ombre réduite
-   Couvre : button:active global + .tap-feedback pour div cliquables
-   (team-card, planning-day-card, kpi-card, etc.)
    ========================================================= */
 button:active:not(:disabled),
 .tap-feedback:active {
   transform: scale(0.95);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
-/* Respect de la préférence système (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
   button:active:not(:disabled),
   .tap-feedback:active {
@@ -94,29 +92,73 @@ button:active:not(:disabled),
 /* =========================================================
    Chantier 11-C — Animations globales partagées
    ========================================================= */
-
-/* Keyframe partagé : fadeInUp
-   (déplacé depuis MenuPage.css — le keyframes est désormais GLOBAL) */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Keyframe partagé : pageFade
-   Utilisé par .page-transition pour le fade 150ms entre onglets */
 @keyframes pageFade {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* Wrapper de transition de page (déclenché via key={activeTab} dans App.jsx) */
 .page-transition {
   animation: pageFade 150ms ease-out both;
 }
 
 /* =========================================================
+   Chantier 32-A — Ripple effect (keyframes)
+   Utilisé par les boutons principaux + micro-interactions.
+   Le composant <Ripple/> et l'utilitaire seront livrés en 32-B.
+   ========================================================= */
+@keyframes ripple {
+  from { transform: scale(0);   opacity: 0.55; }
+  to   { transform: scale(2.4); opacity: 0; }
+}
+.ripple-host {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-dot {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  transform: scale(0);
+  animation: ripple 550ms ease-out forwards;
+}
+
+/* =========================================================
+   Chantier 32-A — Overrides MODE SOMBRE
+   Surfaces communes : body, .card, form controls.
+   NOTE : certains composants (StatsPage.css, MenuPage.css,
+   TeamPage.css) utilisent encore #FFFFFF codé en dur ; leur
+   migration vers var(--color-surface) est planifiée en 32-C.
+   ========================================================= */
+body.theme-dark input,
+body.theme-dark select,
+body.theme-dark textarea {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+body.theme-dark input::placeholder,
+body.theme-dark textarea::placeholder {
+  color: var(--color-text-muted);
+}
+body.theme-dark .card {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+body.theme-dark .app-header {
+  background-color: var(--color-cream);
+}
+
+/* =========================================================
    Chantier 11-C — Filet de sécurité prefers-reduced-motion
-   Vient en COMPLÉMENT des règles déjà présentes (ne pas les retirer).
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

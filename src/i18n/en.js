@@ -1,5 +1,7 @@
 // src/i18n/en.js
-// Chantier 31 — ajout des clés refonte StatsPage (aligné à vi.js et fr.js)
+// Chantier 31 — ajout des clés refonte StatsPage.
+// Chantier 32-A — ajout de settings.sections.appearance.{title,system,light,dark}
+//               pour le sélecteur de thème (mode sombre).
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Home', closing: 'Closing', menu: 'Menu', team: 'Management', settings: 'Settings', stats: 'Stats' },
@@ -316,6 +318,12 @@ export default {
   settings: {
     title: 'Settings',
     sections: {
+      appearance: {
+        title: 'Appearance',
+        system: 'System',
+        light: 'Light',
+        dark: 'Dark',
+      },
       restaurant: {
         title: 'Restaurant',
         name: 'Name',
@@ -373,7 +381,7 @@ export default {
     tabs: {
       overview: 'Overview',
       sales: 'Sales',
-      weekdaySales: 'By weekday',         // ← Chantier 31
+      weekdaySales: 'By weekday',
       costs: 'Costs',
       staff: 'Staff',
       weather: 'Weather',
@@ -408,16 +416,16 @@ export default {
       byCategory: 'By category',
       top3: 'Top 3',
       flop3: 'Flop 3',
-      top3Sales: 'Top 3 SALES',                         // ← Chantier 31
-      flop3Sales: 'Top 3 WORST SALES',                  // ← Chantier 31
-      generalRanking: 'Full ranking',                    // ← Chantier 31
-      weekdaySales: 'Sales by weekday',                  // ← Chantier 31
-      stockAlerts: 'Stock alerts',                       // ← Chantier 31
-      stockValue: 'Stock value',                         // ← Chantier 31
-      promoImpact: 'Promotion impact',                   // ← Chantier 31
-      topConsumed: 'Most consumed ingredients',          // ← Chantier 31
-      yieldImpact: 'Yield impact',                       // ← Chantier 31
-      supplierComparison: 'Supplier price comparison',   // ← Chantier 31
+      top3Sales: 'Top 3 SALES',
+      flop3Sales: 'Top 3 WORST SALES',
+      generalRanking: 'Full ranking',
+      weekdaySales: 'Sales by weekday',
+      stockAlerts: 'Stock alerts',
+      stockValue: 'Stock value',
+      promoImpact: 'Promotion impact',
+      topConsumed: 'Most consumed ingredients',
+      yieldImpact: 'Yield impact',
+      supplierComparison: 'Supplier price comparison',
       expensesRepartition: 'Expense breakdown',
       staff: 'Hours & costs per employee',
       weather: 'Weather impact',
@@ -430,7 +438,7 @@ export default {
     heatmap: {
       title: 'Last 7 days',
     },
-    weekdays: {                 // ← Chantier 31
+    weekdays: {
       mon: 'Monday',
       tue: 'Tuesday',
       wed: 'Wednesday',
@@ -479,7 +487,6 @@ export default {
       bestWeather: 'Best weather',
       worstWeather: 'Worst weather',
       weatherImpact: 'Weather impact',
-      // ── Chantier 31 ─────────────────────────────────────
       stockValue: 'Stock value',
       discountPerUnit: 'Discount / unit',
       daysDiscounted: 'Days discounted',
@@ -549,9 +556,9 @@ export default {
       staff: '⏱️ {topName} works {topPct}% of total hours.',
       weather: '☀️ {best} generates +{impact}% revenue/day vs {worst}.',
       comparison: '📈 Revenue {revDelta}% · Margin {margDelta}% vs previous period.',
-      weekday: '📅 {best} generates the most revenue, +{impact}% vs {worst}.', // ← Chantier 31
+      weekday: '📅 {best} generates the most revenue, +{impact}% vs {worst}.',
     },
-    team: {                       // ← Chantier 31 : label réutilisé dans les alertes stock
+    team: {
       minStock: 'Minimum stock',
     },
   },
