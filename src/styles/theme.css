@@ -21,4 +21,22 @@
   --radius-sm: 10px;
   --radius-md: 20px;
   --radius-lg: 30px;
+
+  /* ── Chantier 29 — Design tokens enrichis ─────────────── */
+  /* Espacements (échelle 4px) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Ombres douces (charte mobile-first) */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+
+  /* Transitions (durées standardisées) */
+  --transition-fast: 150ms;
+  --transition-base: 250ms;
+  --transition-slow: 400ms;
 }

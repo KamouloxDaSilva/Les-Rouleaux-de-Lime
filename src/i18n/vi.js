@@ -328,6 +328,7 @@ export default {
         export: 'Xuất JSON',
         import: 'Nhập JSON',
         reset: 'Đặt lại',
+        exportCsv: 'Xuất CSV',
         exportHint: 'Tải xuống',
         importHint: 'Khôi phục',
         resetHint: 'Xóa toàn bộ',
@@ -488,6 +489,7 @@ export default {
       employees: 'Nhân viên',
       total: 'Tổng',
       oneOff: 'Chi phí phát sinh',
+      expenses: 'Chi phí',
     },
     weather: {
       sunny: 'Nắng',
@@ -540,7 +542,7 @@ export default {
       piece: { label: 'Cái', short: 'cái' },
     },
   },
-  splash: { tagline: 'Les Rouleaux de Lime' },
+  splash: { tagline: 'Bánh tráng cuốn Sài Gòn' },
   firstLaunch: {
     title: 'Chào mừng đến Burihagio',
     subtitle: 'Chọn cách bắt đầu',

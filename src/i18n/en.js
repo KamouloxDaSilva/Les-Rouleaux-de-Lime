@@ -328,6 +328,7 @@ export default {
         export: 'Export',
         import: 'Import',
         reset: 'Reset',
+        exportCsv: 'Export CSV',
         exportHint: 'Download',
         importHint: 'Restore',
         resetHint: 'Erase all',
@@ -483,6 +484,7 @@ export default {
       employees: 'Employees',
       total: 'Total',
       oneOff: 'One-off expenses',
+      expenses: 'Expenses',
     },
     weather: {
       sunny: 'Sunny',
@@ -535,7 +537,7 @@ export default {
       piece: { label: 'Piece', short: 'pc' },
     },
   },
-  splash: { tagline: 'Les Rouleaux de Lime' },
+  splash: { tagline: 'Fresh Spring Rolls' },
   firstLaunch: {
     title: 'Welcome to Burihagio',
     subtitle: 'Choose how to start',

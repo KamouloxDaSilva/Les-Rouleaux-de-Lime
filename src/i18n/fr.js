@@ -328,6 +328,7 @@ export default {
         export: 'Export',
         import: 'Import',
         reset: 'Reset',
+        exportCsv: 'Exporter CSV',
         exportHint: 'Sauvegarder',
         importHint: 'Restaurer',
         resetHint: 'Effacer',
@@ -488,6 +489,7 @@ export default {
       employees: 'Employés',
       total: 'Total',
       oneOff: 'Dépenses ponctuelles',
+      expenses: 'Dépenses',
     },
     weather: {
       sunny: 'Soleil',

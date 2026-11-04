@@ -1,4 +1,8 @@
 // src/components/BottomSheet.jsx
+// Chantier 29 — F1 : correction du bug de focus (bouton × volait le focus)
+// Le focus n'est plus relancé à chaque re-render du parent : on utilise
+// un ref pour onClose et on ne dépend que de [open]. Le focus ne s'exécute
+// qu'à la PREMIÈRE ouverture de chaque cycle open → close → open.
 import { useEffect, useRef } from 'react';
 import { useI18n } from '../i18n';
 import './BottomSheet.css';
@@ -15,17 +19,27 @@ export default function BottomSheet({
 }) {
   const { t } = useI18n();
   const sheetRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const hasFocusedRef = useRef(false);
   const titleId = 'bottomsheet-title';
 
+  // Garde onClose à jour sans relancer l'effet principal
   useEffect(() => {
-    if (!open) return undefined;
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      hasFocusedRef.current = false;
+      return undefined;
+    }
 
     const previouslyFocused = document.activeElement;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose && onClose();
+        if (onCloseRef.current) onCloseRef.current();
         return;
       }
       if (e.key === 'Tab') {
@@ -47,19 +61,24 @@ export default function BottomSheet({
 
     document.addEventListener('keydown', handleKeyDown);
 
-    const focusTimer = setTimeout(() => {
-      const first = sheetRef.current?.querySelector(FOCUSABLE_SELECTOR);
-      if (first) first.focus();
-    }, 60);
+    // Focus UNIQUEMENT à la première ouverture du cycle
+    let focusTimer;
+    if (!hasFocusedRef.current) {
+      focusTimer = setTimeout(() => {
+        const first = sheetRef.current?.querySelector(FOCUSABLE_SELECTOR);
+        if (first) first.focus();
+        hasFocusedRef.current = true;
+      }, 60);
+    }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(focusTimer);
+      if (focusTimer) clearTimeout(focusTimer);
       if (previouslyFocused && previouslyFocused.focus) {
         previouslyFocused.focus();
       }
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
