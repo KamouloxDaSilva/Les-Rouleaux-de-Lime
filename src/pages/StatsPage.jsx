@@ -1,10 +1,20 @@
 // src/pages/StatsPage.jsx
 // =====================================================================
-// Burihagio — Statistiques approfondies v5 (Chantier 11-F4)
-// 6 onglets · 4 graphiques (Courbe / Donut / Barre / Barres Groupées) · KPI partout
-// Période dans chaque sous-bloc · Drill-down systématique
-// + Chantier 12 — Partie 2 : Affichage de la catégorie "Dépenses ponctuelles"
-// + Chantier 28 — F2 : label des dépenses ponctuelles basé sur exp.note
+// Burihagio — Statistiques approfondies
+// Chantier 11-F4 · 12 · 28 · 31 (refonte StatsPage)
+//
+// Chantier 31 — Refonte ciblée :
+//   • Suppression du PeriodSelector dans les drill-downs.
+//   • Dates au format 30/10/2026 (formatDate).
+//   • Grille + repère temporel en bas des courbes.
+//   • Pills CA / Marge / Charges / Articles (Overview > Évolution).
+//   • Sous-métriques repliables (<details>).
+//   • Nouvel onglet "Ventes par jour de la semaine".
+//   • Renommage "Top 3 VENTES" / "Top 3 PIRES VENTES" + bouton
+//     "Classement général" + fiche plat détaillée.
+//   • Formules = ventes de plats (Option B) — propagé par stats.js.
+//   • Nouvelles stats v9 : alertes stock, valeur du stock, impact
+//     promos, rendement (yield), top consommés, comparateur prix.
 // =====================================================================
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
@@ -17,19 +27,23 @@ import {
   getIngredientCosts, getFixedCostsBreakdown, getBarMetrics,
   getComparison, getDailyAverages, getPreviousPeriodRange,
   getDonutData, getGroupedBarData,
+  getWeekdaySales, getStockValue, getTopConsumedIngredients,
+  getSupplierPriceComparison, getPromoImpact,
+  getStockAlertsByPeriod, getYieldImpact,
   PERIODS, CHART_TYPES, DEFAULT_PERIODS, CYCLE_COLORS,
+  WEEKDAY_COLORS,
 } from '../data/stats.js';
 import './StatsPage.css';
 
 // =====================================================================
 // CONSTANTES UI
 // =====================================================================
-const TABS = ['overview', 'sales', 'costs', 'staff', 'weather', 'comparison'];
+const TABS = ['overview', 'sales', 'weekdaySales', 'costs', 'staff', 'weather', 'comparison'];
 
 const SERIES_COLORS = { revenue: '#FF9800', margin: '#3C91A6', expenses: '#E91E63', items: '#9C27B0' };
 
 // =====================================================================
-// HELPERS — i18n safe
+// HELPERS
 // =====================================================================
 function safeT(t, key) {
   if (key == null) return '';
@@ -39,9 +53,19 @@ function safeT(t, key) {
   return translated === s ? s : translated;
 }
 
-// =====================================================================
-// HELPER — filtre local des dépenses ponctuelles par période
-// =====================================================================
+function formatDate(iso, locale = 'fr-FR') {
+  if (!iso) return '—';
+  const [y, m, d] = String(iso).split('-');
+  if (!y || !m || !d) return iso;
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+    }).format(new Date(Number(y), Number(m) - 1, Number(d)));
+  } catch (e) {
+    return `${d}/${m}/${y}`;
+  }
+}
+
 function filterExpensesByPeriod(expenses, period) {
   if (!Array.isArray(expenses)) return [];
   if (!period || period === 'all') return expenses;
@@ -49,8 +73,7 @@ function filterExpensesByPeriod(expenses, period) {
     period === 'day' ? 1 :
     period === 'week' ? 7 :
     period === 'month' ? 30 :
-    period === 'year' ? 365 :
-    null;
+    period === 'year' ? 365 : null;
   if (!daysBack) return expenses;
   const now = new Date();
   now.setHours(23, 59, 59, 999);
@@ -80,7 +103,7 @@ function usePersistentState(key, defaultValue) {
 }
 
 function useFormatters() {
-  const { formatCurrency } = useI18n();
+  const { formatCurrency, locale } = useI18n();
   return useMemo(() => ({
     currency: (v) => formatCurrency(Number(v) || 0),
     number: (v) => String(Math.round(Number(v) || 0)),
@@ -98,7 +121,8 @@ function useFormatters() {
       if (type === 'percent') return `${Math.round(Number(v) || 0)}%`;
       return String(Math.round(Number(v) || 0));
     },
-  }), [formatCurrency]);
+    date: (iso) => formatDate(iso, locale || 'fr-FR'),
+  }), [formatCurrency, locale]);
 }
 
 // =====================================================================
@@ -197,9 +221,9 @@ function KpiCard({ icon, label, value, delta, sparkline, badge, color, onClick }
 }
 
 // =====================================================================
-// LINE CHART
+// LINE CHART (Chantier 31 : grille + axe temporel en bas)
 // =====================================================================
-function LineChart({ series, formatValue, t, emptyMessage }) {
+function LineChart({ series, formatValue, formatDateFn, t, emptyMessage }) {
   const [mode, setMode] = useState('multi');
   const [activeKey, setActiveKey] = useState(series[0]?.key || null);
   const [cumulative, setCumulative] = useState(false);
@@ -230,7 +254,7 @@ function LineChart({ series, formatValue, t, emptyMessage }) {
     return arr;
   }, [visibleSeries, cumulative]);
 
-  const dims = { w: 340, h: 180, pl: 32, pr: 8, pt: 10, pb: 24 };
+  const dims = { w: 340, h: 200, pl: 34, pr: 8, pt: 10, pb: 44 };
   const chartW = dims.w - dims.pl - dims.pr;
   const chartH = dims.h - dims.pt - dims.pb;
 
@@ -258,6 +282,8 @@ function LineChart({ series, formatValue, t, emptyMessage }) {
   };
 
   const yTicks = [0, maxV / 2, maxV];
+  const xTickStep = Math.max(1, Math.ceil(points.length / 6));
+  const xTicks = points.filter((_, i) => i % xTickStep === 0 || i === points.length - 1);
 
   return (
     <div className="stats-line-chart">
@@ -306,6 +332,20 @@ function LineChart({ series, formatValue, t, emptyMessage }) {
               </g>
             );
           })}
+
+          {xTicks.map((p) => {
+            const i = points.findIndex((pp) => pp.key === p.key);
+            const xx = x(i);
+            return (
+              <g key={p.key}>
+                <line x1={xx} y1={dims.pt} x2={xx} y2={dims.pt + chartH} stroke="#F5F5F5" strokeDasharray="2 4" strokeWidth="1" />
+                <text x={xx} y={dims.h - 8} textAnchor="middle" fontSize="7" fill="#999">
+                  {typeof p.key === 'string' && p.key.length === 10 ? formatDateFn(p.key) : p.key}
+                </text>
+              </g>
+            );
+          })}
+
           {visibleSeries.map((s) => (
             <path key={s.key} d={buildPath(s.key)} fill="none" stroke={s.color} strokeWidth="2" strokeLinecap="round" />
           ))}
@@ -331,7 +371,11 @@ function LineChart({ series, formatValue, t, emptyMessage }) {
 
       {activeIdx !== null && points[activeIdx] && (
         <div className="stats-line-tooltip">
-          <div className="stats-line-tooltip-date">{String(points[activeIdx].key)}</div>
+          <div className="stats-line-tooltip-date">
+            {typeof points[activeIdx].key === 'string' && points[activeIdx].key.length === 10
+              ? formatDateFn(points[activeIdx].key)
+              : String(points[activeIdx].key)}
+          </div>
           {visibleSeries.map((s) => (
             <div key={s.key} className="stats-line-tooltip-row">
               <span className="stats-line-legend-dot" style={{ background: s.color }} />
@@ -346,7 +390,7 @@ function LineChart({ series, formatValue, t, emptyMessage }) {
 }
 
 // =====================================================================
-// DONUT CHART (v5 — remplace la bulle)
+// DONUT CHART
 // =====================================================================
 function DonutChart({ data, formatValue, t, onClick }) {
   if (!data || data.empty || !data.segments || data.segments.length === 0) {
@@ -428,9 +472,9 @@ function DonutChart({ data, formatValue, t, onClick }) {
 }
 
 // =====================================================================
-// GROUPED BAR CHART (v5 — Actuel vs Précédent)
+// GROUPED BAR CHART
 // =====================================================================
-function GroupedBarChart({ data, formatValue, t }) {
+function GroupedBarChart({ data, formatValue, formatDateFn, t }) {
   if (!data || data.empty || !data.buckets || data.buckets.length === 0) {
     return <EmptyState message={t('stats.noData')} />;
   }
@@ -485,37 +529,13 @@ function GroupedBarChart({ data, formatValue, t }) {
           const label = labelRaw.length > 8 ? labelRaw.slice(0, 8) + '…' : labelRaw;
           return (
             <g key={b.key}>
-              <rect
-                x={curX}
-                y={curY}
-                width={barW}
-                height={Math.max(curH, 0)}
-                rx={3}
-                ry={3}
-                fill="#3C91A6"
-              >
+              <rect x={curX} y={curY} width={barW} height={Math.max(curH, 0)} rx={3} ry={3} fill="#3C91A6">
                 <title>{`${labelRaw} — ${t('stats.groupedBar.current')}: ${formatValue(b.current, b.format || data.format)}`}</title>
               </rect>
-              <rect
-                x={prevX}
-                y={prevY}
-                width={barW}
-                height={Math.max(prevH, 0)}
-                rx={3}
-                ry={3}
-                fill="#E0E0E0"
-              >
+              <rect x={prevX} y={prevY} width={barW} height={Math.max(prevH, 0)} rx={3} ry={3} fill="#E0E0E0">
                 <title>{`${labelRaw} — ${t('stats.groupedBar.previous')}: ${formatValue(b.previous, b.format || data.format)}`}</title>
               </rect>
-              <text
-                x={gx}
-                y={dims.pt + chartH + 14}
-                textAnchor="middle"
-                fontSize="7"
-                fill="#7A7A7A"
-              >
-                {label}
-              </text>
+              <text x={gx} y={dims.pt + chartH + 14} textAnchor="middle" fontSize="7" fill="#7A7A7A">{label}</text>
             </g>
           );
         })}
@@ -537,7 +557,7 @@ function GroupedBarChart({ data, formatValue, t }) {
 // =====================================================================
 // BAR CHART
 // =====================================================================
-function BarChart({ bars, formatValue, t, emptyMessage, onBarClick }) {
+function BarChart({ bars, formatValue, formatDateFn, t, emptyMessage, onBarClick }) {
   const [sortMode, setSortMode] = useState('value-desc');
 
   const sorted = useMemo(() => {
@@ -570,6 +590,10 @@ function BarChart({ bars, formatValue, t, emptyMessage, onBarClick }) {
         {sorted.map((b) => {
           const pct = maxV > 0 ? (b.value / maxV) * 100 : 0;
           const visibleMetrics = (b.subMetrics || []).slice(0, 3);
+          const rawLabel = safeT(t, b.label);
+          const displayLabel = typeof b.label === 'string' && b.label.length === 10
+            ? formatDateFn(b.label)
+            : rawLabel;
           return (
             <button
               key={b.key}
@@ -577,7 +601,7 @@ function BarChart({ bars, formatValue, t, emptyMessage, onBarClick }) {
               className="stats-bar-row"
               onClick={() => onBarClick && onBarClick(b)}
             >
-              <div className="stats-bar-label">{safeT(t, b.label)}</div>
+              <div className="stats-bar-label">{displayLabel}</div>
               <div className="stats-bar-body">
                 <div className="stats-bar-track">
                   <div className="stats-bar-fill" style={{ width: `${pct}%`, background: b.color || '#3C91A6' }} />
@@ -604,13 +628,15 @@ function BarChart({ bars, formatValue, t, emptyMessage, onBarClick }) {
 }
 
 // =====================================================================
-// SUB-METRICS TABLE
+// SUB-METRICS (Chantier 31 : repliable via <details>)
 // =====================================================================
 function SubMetricsTable({ metrics, formatValue, t }) {
   if (!metrics || !metrics.length) return null;
   return (
-    <div className="stats-submetrics">
-      <h4 className="stats-submetrics-title">{t('stats.submetrics.title')}</h4>
+    <details className="stats-submetrics">
+      <summary className="stats-submetrics-title">
+        {t('stats.submetrics.title')} <span className="stats-submetrics-count">({metrics.length})</span>
+      </summary>
       <div className="stats-submetrics-list">
         {metrics.map((m, i) => (
           <div key={i} className="stats-submetrics-row">
@@ -619,7 +645,7 @@ function SubMetricsTable({ metrics, formatValue, t }) {
           </div>
         ))}
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -685,9 +711,7 @@ function TodayBanner({ dataset, formatValue, t, onOpen }) {
           <span>{t('stats.metrics.items')} : <strong>{summary.totalItems}</strong></span>
         </div>
       ) : (
-        <div className="stats-today-body">
-          <span>{t('stats.today.noClosing')}</span>
-        </div>
+        <div className="stats-today-body"><span>{t('stats.today.noClosing')}</span></div>
       )}
     </button>
   );
@@ -700,9 +724,7 @@ function HeatmapWeek({ dataset, formatValue, t }) {
   const cells = useMemo(() => {
     if (!dataset || !Array.isArray(dataset.daily_closings)) return [];
     const closingsByDate = {};
-    for (const c of dataset.daily_closings) {
-      if (c && c.date) closingsByDate[c.date] = c;
-    }
+    for (const c of dataset.daily_closings) if (c && c.date) closingsByDate[c.date] = c;
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const arr = [];
@@ -753,55 +775,47 @@ function HeatmapWeek({ dataset, formatValue, t }) {
 }
 
 // =====================================================================
-// CHART RENDERER (dispatcher commun)
+// CHART RENDERER
 // =====================================================================
 function ChartRenderer({
-  type,
-  lineSeries,
-  donutData,
-  barData,
-  groupedData,
-  formatValue,
-  t,
-  onBarClick,
-  onDonutClick,
+  type, lineSeries, donutData, barData, groupedData,
+  formatValue, formatDateFn, t, onBarClick, onDonutClick,
 }) {
   if (type === 'line' && lineSeries) {
-    return <LineChart series={lineSeries} formatValue={formatValue} t={t} />;
+    return <LineChart series={lineSeries} formatValue={formatValue} formatDateFn={formatDateFn} t={t} />;
   }
   if (type === 'donut' && donutData && !donutData.empty) {
     return <DonutChart data={donutData} formatValue={formatValue} t={t} onClick={onDonutClick} />;
   }
   if (type === 'groupedBar' && groupedData && !groupedData.empty) {
-    return <GroupedBarChart data={groupedData} formatValue={formatValue} t={t} />;
+    return <GroupedBarChart data={groupedData} formatValue={formatValue} formatDateFn={formatDateFn} t={t} />;
   }
   if (type === 'bar' && barData) {
-    return <BarChart bars={barData} formatValue={formatValue} t={t} onBarClick={onBarClick} />;
+    return <BarChart bars={barData} formatValue={formatValue} formatDateFn={formatDateFn} t={t} onBarClick={onBarClick} />;
   }
   if (barData) {
     return (
       <>
         <div className="stats-fallback-note">{t('stats.fallback.chartUnavailable')}</div>
-        <BarChart bars={barData} formatValue={formatValue} t={t} onBarClick={onBarClick} />
+        <BarChart bars={barData} formatValue={formatValue} formatDateFn={formatDateFn} t={t} onBarClick={onBarClick} />
       </>
     );
   }
   if (lineSeries) {
-    return <LineChart series={lineSeries} formatValue={formatValue} t={t} />;
+    return <LineChart series={lineSeries} formatValue={formatValue} formatDateFn={formatDateFn} t={t} />;
   }
   return <EmptyState message={t('stats.noData')} />;
 }
 
 // =====================================================================
-// DRILLDOWN MODAL
+// DRILLDOWN MODAL (Chantier 31 : SANS PeriodSelector)
 // =====================================================================
 function DrillDownModal({ drilldown, onClose, t, formatters }) {
-  const [period, setPeriod] = useState(drilldown.initialPeriod || 'month');
   const [chartType, setChartType] = useState(drilldown.initialChartType || 'bar');
 
   const content = useMemo(
-    () => drilldown.render(period, chartType),
-    [drilldown, period, chartType]
+    () => drilldown.render(drilldown.initialPeriod || 'month', chartType),
+    [drilldown, chartType]
   );
 
   return (
@@ -812,7 +826,6 @@ function DrillDownModal({ drilldown, onClose, t, formatters }) {
           <button type="button" className="stats-drilldown-close" onClick={onClose} aria-label={t('common.close')}>×</button>
         </div>
         <div className="stats-drilldown-selectors">
-          <PeriodSelector period={period} onChange={setPeriod} t={t} />
           <ChartTypeToggle chartType={chartType} onChange={setChartType} t={t} />
         </div>
         <div className="stats-drilldown-chart">{content.chart}</div>
@@ -824,7 +837,7 @@ function DrillDownModal({ drilldown, onClose, t, formatters }) {
 }
 
 // =====================================================================
-// FACTORY : drilldown fiche plat (7 métriques)
+// FACTORY : fiche plat détaillée
 // =====================================================================
 function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
   return {
@@ -842,11 +855,7 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
       lineSeries = [{ key: dishId, color: '#3C91A6', unit: 'number', labelKey: 'stats.metrics.qty', points }];
 
       barData = points.map((pt) => ({
-        key: pt.key,
-        label: pt.key,
-        value: pt.value,
-        color: '#3C91A6',
-        format: 'number',
+        key: pt.key, label: pt.key, value: pt.value, color: '#3C91A6', format: 'number',
       }));
 
       const last5 = points.slice(-5).filter((pt) => pt.value > 0);
@@ -854,18 +863,13 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
         const sum5 = last5.reduce((s, pt) => s + pt.value, 0);
         donutData = {
           segments: last5.map((pt, i) => ({
-            key: pt.key,
-            label: pt.key,
-            value: pt.value,
+            key: pt.key, label: pt.key, value: pt.value,
             pct: sum5 > 0 ? (pt.value / sum5) * 100 : 0,
             color: CYCLE_COLORS[i % CYCLE_COLORS.length],
           })),
-          total: sum5,
-          topSegment: null,
-          format: 'number',
-          empty: false,
+          total: sum5, topSegment: null, format: 'number', empty: false,
         };
-        donutData.topSegment = donutData.segments.reduce((m, s) => s.value > (m?.value || 0) ? s : m, null);
+        donutData.topSegment = donutData.segments.reduce((m, s) => (s.value > (m?.value || 0) ? s : m), null);
       } else {
         donutData = { segments: [], total: 0, topSegment: null, format: 'number', empty: true };
       }
@@ -884,8 +888,7 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
         trendPct: prevQty > 0 ? ((totalQty - prevQty) / prevQty) * 100 : 0,
         currentLabel: 'stats.groupedBar.current',
         previousLabel: 'stats.groupedBar.previous',
-        format: 'number',
-        empty: false,
+        format: 'number', empty: false,
       };
 
       return {
@@ -897,6 +900,7 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
             barData={barData}
             groupedData={groupedData}
             formatValue={formatters.format}
+            formatDateFn={formatters.date}
             t={t}
           />
         ),
@@ -915,11 +919,74 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
 }
 
 // =====================================================================
+// FACTORY : classement général
+// =====================================================================
+function buildRankingDrilldown(dataset, period, formatters, t) {
+  return {
+    title: t('stats.blocks.generalRanking'),
+    initialPeriod: period,
+    initialChartType: 'bar',
+    render: (p, ct) => {
+      const ranking = getFullRanking(dataset, p);
+      const bars = ranking.map((it) => ({
+        key: it.dish.id,
+        label: it.dish.name,
+        value: it.revenue,
+        color: '#3C91A6',
+        subMetrics: [
+          { label: 'stats.metrics.qty', value: it.qty, format: 'number' },
+          { label: 'stats.metrics.margin', value: it.margin, format: 'currency' },
+          { label: 'stats.metrics.marginPct', value: it.marginPct, format: 'percent' },
+        ],
+      }));
+      const donut = {
+        segments: ranking.slice(0, 10).filter((it) => it.revenue > 0).map((it, i) => ({
+          key: it.dish.id, label: it.dish.name, value: it.revenue,
+          pct: ranking.reduce((s, x) => s + x.revenue, 0) > 0
+            ? (it.revenue / ranking.reduce((s, x) => s + x.revenue, 0)) * 100 : 0,
+          color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+        })),
+        total: ranking.reduce((s, x) => s + x.revenue, 0),
+        topSegment: null, format: 'currency', empty: ranking.length === 0,
+      };
+      donut.topSegment = donut.segments[0] || null;
+      const lineSeries = ranking.slice(0, 5).map((it, i) => {
+        const s = getDishIndividualSeries(dataset, p, it.dish.id);
+        return {
+          key: it.dish.id, color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+          unit: 'number', labelKey: 'stats.metrics.qty',
+          points: s.series[0]?.points || [],
+        };
+      });
+      const grouped = getGroupedBarData(dataset, p, 'category');
+      return {
+        chart: (
+          <ChartRenderer
+            type={ct}
+            lineSeries={lineSeries}
+            donutData={donut}
+            barData={bars}
+            groupedData={grouped}
+            formatValue={formatters.format}
+            formatDateFn={formatters.date}
+            t={t}
+          />
+        ),
+        subMetrics: ranking.slice(0, 15).map((it) => ({
+          label: it.dish.name, value: it.revenue, format: 'currency',
+        })),
+      };
+    },
+  };
+}
+
+// =====================================================================
 // ONGLET : VUE D'ENSEMBLE
 // =====================================================================
 function OverviewTab({ dataset, onNavigate, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_overview_period', DEFAULT_PERIODS.overview);
   const [chartType, setChartType] = usePersistentState('stats_overview_chart', 'line');
+  const [metricFilter, setMetricFilter] = usePersistentState('stats_overview_metric', 'all');
   const [drilldown, setDrilldown] = useState(null);
 
   const summary = useMemo(() => getGlobalSummary(dataset, period), [dataset, period]);
@@ -928,6 +995,14 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
   const top3 = useMemo(() => getDishesRanking(dataset, 3, period), [dataset, period]);
   const donutData = useMemo(() => getDonutData(dataset, period, 'category'), [dataset, period]);
   const groupedData = useMemo(() => getGroupedBarData(dataset, period, 'revenue'), [dataset, period]);
+  const stockValue = useMemo(() => getStockValue(dataset), [dataset]);
+  const stockAlerts = useMemo(() => getStockAlertsByPeriod(dataset, period), [dataset, period]);
+
+  const filteredLineSeries = useMemo(() => {
+    const all = multi.series.map((s) => ({ key: s.key, color: s.color, unit: s.unit, labelKey: s.labelKey, points: s.points }));
+    if (metricFilter === 'all') return all;
+    return all.filter((s) => s.key === metricFilter);
+  }, [multi, metricFilter]);
 
   const barData = useMemo(() => [
     { key: 'revenue', label: 'stats.metrics.revenue', value: summary.totalRevenue, color: SERIES_COLORS.revenue, subMetrics: [
@@ -976,15 +1051,10 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
         }));
         const donut = {
           segments: breakdown.categories.filter((c) => c.value > 0).map((c, i) => ({
-            key: c.key,
-            label: `menu.sections.${c.key}`,
-            value: c.value,
-            pct: c.percentage,
+            key: c.key, label: `menu.sections.${c.key}`, value: c.value, pct: c.percentage,
             color: CYCLE_COLORS[i % CYCLE_COLORS.length],
           })),
-          total: breakdown.total,
-          topSegment: null,
-          format: isCur ? 'currency' : 'number',
+          total: breakdown.total, topSegment: null, format: isCur ? 'currency' : 'number',
           empty: breakdown.total === 0,
         };
         donut.topSegment = donut.segments[0] || null;
@@ -999,23 +1069,29 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
               barData={bars}
               groupedData={grouped}
               formatValue={formatters.format}
+              formatDateFn={formatters.date}
               t={t}
             />
           ),
           subMetrics: breakdown.categories.map((c) => ({
-            label: `menu.sections.${c.key}`,
-            value: c.value,
-            format: isCur ? 'currency' : 'number',
+            label: `menu.sections.${c.key}`, value: c.value, format: isCur ? 'currency' : 'number',
           })),
         };
       },
     });
   };
 
+  const metricPills = [
+    { key: 'all', labelKey: 'stats.filters.all', color: '#7A7A7A' },
+    { key: 'revenue', labelKey: 'stats.metrics.revenue', color: SERIES_COLORS.revenue },
+    { key: 'margin', labelKey: 'stats.metrics.margin', color: SERIES_COLORS.margin },
+    { key: 'expenses', labelKey: 'stats.metrics.expenses', color: SERIES_COLORS.expenses },
+    { key: 'items', labelKey: 'stats.metrics.items', color: SERIES_COLORS.items },
+  ];
+
   return (
     <div className="stats-content">
       <TodayBanner dataset={dataset} formatValue={formatters.format} t={t} onOpen={() => onNavigate && onNavigate('closing')} />
-
       <PeriodSelector period={period} onChange={setPeriod} t={t} />
 
       <div className="stats-kpi-grid">
@@ -1025,20 +1101,61 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
         <KpiCard icon="📉" label={t('stats.metrics.expenses')} value={formatters.currency(summary.totalExpenses)} color="#E91E63" sparkline={sparklineData('expenses')} onClick={() => openKpiDrill('expenses')} />
       </div>
 
+      {stockAlerts.count > 0 && (
+        <section className="stats-block stats-block--alert">
+          <div className="stats-block-header">
+            <h3 className="stats-block-title">⚠️ {t('stats.blocks.stockAlerts')}</h3>
+            <span className="stats-kpi-badge stats-kpi-badge--warn">{stockAlerts.count}</span>
+          </div>
+          <BarChart
+            bars={stockAlerts.ingredients.map((i) => ({
+              key: i.id,
+              label: i.name,
+              value: i.stock_quantity,
+              color: i.negative ? '#C62828' : '#E65100',
+              format: 'number',
+              subMetrics: [
+                { label: 'stats.metrics.qty', value: i.stock_quantity, format: 'number', unit: i.base_unit },
+                { label: 'stats.team.minStock', value: i.min_stock, format: 'number', unit: i.base_unit },
+              ],
+            }))}
+            formatValue={formatters.format}
+            formatDateFn={formatters.date}
+            t={t}
+          />
+        </section>
+      )}
+
       <section className="stats-block">
         <div className="stats-block-header">
           <h3 className="stats-block-title">{t('stats.blocks.overviewEvolution')}</h3>
           <ChartTypeToggle chartType={chartType} onChange={setChartType} t={t} />
         </div>
+        <div className="stats-metric-pills" role="tablist">
+          {metricPills.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              role="tab"
+              aria-selected={metricFilter === p.key}
+              className={`stats-metric-pill ${metricFilter === p.key ? 'stats-metric-pill--active' : ''}`}
+              style={metricFilter === p.key ? { background: p.color, color: '#FFF', borderColor: p.color } : { color: p.color, borderColor: p.color }}
+              onClick={() => setMetricFilter(p.key)}
+            >
+              {t(p.labelKey)}
+            </button>
+          ))}
+        </div>
         <ChartRenderer
           type={chartType}
-          lineSeries={multi.series.map((s) => ({ key: s.key, color: s.color, unit: s.unit, labelKey: s.labelKey, points: s.points }))}
+          lineSeries={filteredLineSeries}
           donutData={donutData}
           barData={barData}
           groupedData={groupedData}
           formatValue={formatters.format}
+          formatDateFn={formatters.date}
           t={t}
-          onDonutClick={(seg) => openKpiDrill('revenue')}
+          onDonutClick={() => openKpiDrill('revenue')}
         />
         {summary.closingsCount > 0 && (
           <InsightBanner text={t('stats.insights.overview')
@@ -1048,11 +1165,35 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
         )}
       </section>
 
+      <section className="stats-block">
+        <div className="stats-block-header">
+          <h3 className="stats-block-title">📦 {t('stats.blocks.stockValue')}</h3>
+        </div>
+        <div className="stats-stock-value-total">
+          <span>{t('stats.metrics.stockValue')}</span>
+          <strong>{formatters.currency(stockValue.totalValue)}</strong>
+        </div>
+        <div className="stats-stock-value-list">
+          {stockValue.ingredients.slice(0, 8).map((ing) => (
+            <div key={ing.id} className="stats-stock-value-row">
+              <span className="stats-stock-value-name">{ing.name}</span>
+              <span className="stats-stock-value-qty">
+                {formatters.number(ing.stock_quantity)} {ing.base_unit}
+              </span>
+              <strong className="stats-stock-value-amount">{formatters.currency(ing.value)}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <HeatmapWeek dataset={dataset} formatValue={formatters.format} t={t} />
 
       <section className="stats-block">
         <div className="stats-block-header">
-          <h3 className="stats-block-title">{t('stats.blocks.top3')}</h3>
+          <h3 className="stats-block-title">{t('stats.blocks.top3Sales')}</h3>
+          <button type="button" className="stats-drilldown-footer-btn stats-drilldown-footer-btn--inline" onClick={() => setDrilldown(buildRankingDrilldown(dataset, period, formatters, t))}>
+            {t('stats.blocks.generalRanking')} →
+          </button>
         </div>
         <Top3Cards
           items={top3.top}
@@ -1080,6 +1221,7 @@ function SalesTab({ dataset, t, formatters }) {
   const donutData = useMemo(() => getDonutData(dataset, period, 'category'), [dataset, period]);
   const groupedData = useMemo(() => getGroupedBarData(dataset, period, 'category'), [dataset, period]);
   const ranking = useMemo(() => getDishesRanking(dataset, 3, period), [dataset, period]);
+  const promoImpact = useMemo(() => getPromoImpact(dataset, period), [dataset, period]);
   const avgOrder = summary.totalItems > 0 ? summary.totalRevenue / summary.totalItems : 0;
   const marginPct = summary.totalRevenue > 0 ? (summary.grossMargin / summary.totalRevenue) * 100 : 0;
 
@@ -1107,26 +1249,20 @@ function SalesTab({ dataset, t, formatters }) {
         }));
         const donut = {
           segments: r.slice(0, 8).filter((it) => it.revenue > 0).map((it, i) => ({
-            key: it.dish.id,
-            label: it.dish.name,
-            value: it.revenue,
+            key: it.dish.id, label: it.dish.name, value: it.revenue,
             pct: r.reduce((s, x) => s + x.revenue, 0) > 0 ? (it.revenue / r.reduce((s, x) => s + x.revenue, 0)) * 100 : 0,
             color: CYCLE_COLORS[i % CYCLE_COLORS.length],
           })),
           total: r.reduce((s, x) => s + x.revenue, 0),
-          topSegment: null,
-          format: 'currency',
-          empty: r.length === 0,
+          topSegment: null, format: 'currency', empty: r.length === 0,
         };
         donut.topSegment = donut.segments[0] || null;
         const topSer = r.slice(0, 5);
         const lineSeriesR = topSer.map((it, i) => {
           const s = getDishIndividualSeries(dataset, p, it.dish.id);
           return {
-            key: it.dish.id,
-            color: CYCLE_COLORS[i % CYCLE_COLORS.length],
-            unit: 'number',
-            labelKey: 'stats.metrics.qty',
+            key: it.dish.id, color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+            unit: 'number', labelKey: 'stats.metrics.qty',
             points: s.series[0]?.points || [],
           };
         });
@@ -1140,14 +1276,11 @@ function SalesTab({ dataset, t, formatters }) {
               barData={bars}
               groupedData={grouped}
               formatValue={formatters.format}
+              formatDateFn={formatters.date}
               t={t}
             />
           ),
-          subMetrics: r.slice(0, 10).map((it) => ({
-            label: it.dish.name,
-            value: it.revenue,
-            format: 'currency',
-          })),
+          subMetrics: r.slice(0, 10).map((it) => ({ label: it.dish.name, value: it.revenue, format: 'currency' })),
         };
       },
     });
@@ -1176,6 +1309,7 @@ function SalesTab({ dataset, t, formatters }) {
           barData={barData}
           groupedData={groupedData}
           formatValue={formatters.format}
+          formatDateFn={formatters.date}
           t={t}
           onBarClick={(b) => openCategoryDrill(b.key)}
           onDonutClick={(seg) => openCategoryDrill(seg.key)}
@@ -1184,27 +1318,54 @@ function SalesTab({ dataset, t, formatters }) {
 
       <section className="stats-block">
         <div className="stats-block-header">
-          <h3 className="stats-block-title">{t('stats.blocks.top3')}</h3>
+          <h3 className="stats-block-title">{t('stats.blocks.top3Sales')}</h3>
+          <button type="button" className="stats-drilldown-footer-btn stats-drilldown-footer-btn--inline" onClick={() => setDrilldown(buildRankingDrilldown(dataset, period, formatters, t))}>
+            {t('stats.blocks.generalRanking')} →
+          </button>
         </div>
-        <Top3Cards
-          items={ranking.top}
-          formatValue={formatters.format}
-          t={t}
-          onItemClick={(it) => setDrilldown(buildDishDrilldown(dataset, period, it.dish.id, it.dish.name, formatters, t))}
-        />
+        <Top3Cards items={ranking.top} formatValue={formatters.format} t={t}
+          onItemClick={(it) => setDrilldown(buildDishDrilldown(dataset, period, it.dish.id, it.dish.name, formatters, t))} />
       </section>
 
       <section className="stats-block">
         <div className="stats-block-header">
-          <h3 className="stats-block-title">{t('stats.blocks.flop3')}</h3>
+          <h3 className="stats-block-title">{t('stats.blocks.flop3Sales')}</h3>
         </div>
-        <Top3Cards
-          items={ranking.flop}
-          formatValue={formatters.format}
-          t={t}
-          onItemClick={(it) => setDrilldown(buildDishDrilldown(dataset, period, it.dish.id, it.dish.name, formatters, t))}
-        />
+        <Top3Cards items={ranking.flop} formatValue={formatters.format} t={t}
+          onItemClick={(it) => setDrilldown(buildDishDrilldown(dataset, period, it.dish.id, it.dish.name, formatters, t))} />
       </section>
+
+      {promoImpact.dishes.length > 0 && (
+        <section className="stats-block">
+          <div className="stats-block-header">
+            <h3 className="stats-block-title">🏷️ {t('stats.blocks.promoImpact')}</h3>
+            <span className="stats-kpi-badge stats-kpi-badge--warn">
+              {formatters.currency(promoImpact.totalDiscount)}
+            </span>
+          </div>
+          <BarChart
+            bars={promoImpact.dishes.map((d) => ({
+              key: d.dish.id,
+              label: d.dish.name,
+              value: d.discountTotal,
+              color: '#FF9800',
+              format: 'currency',
+              subMetrics: [
+                { label: 'stats.metrics.qty', value: d.qtySold, format: 'number' },
+                { label: 'stats.metrics.discountPerUnit', value: d.discountPerUnit, format: 'currency' },
+                { label: 'stats.metrics.daysDiscounted', value: d.daysDiscounted, format: 'number' },
+              ],
+            }))}
+            formatValue={formatters.format}
+            formatDateFn={formatters.date}
+            t={t}
+            onBarClick={(b) => {
+              const found = promoImpact.dishes.find((d) => d.dish.id === b.key);
+              if (found) setDrilldown(buildDishDrilldown(dataset, period, found.dish.id, found.dish.name, formatters, t));
+            }}
+          />
+        </section>
+      )}
 
       {drilldown && <DrillDownModal drilldown={drilldown} onClose={() => setDrilldown(null)} t={t} formatters={formatters} />}
     </div>
@@ -1212,7 +1373,108 @@ function SalesTab({ dataset, t, formatters }) {
 }
 
 // =====================================================================
-// ONGLET : COÛTS (Chantier 12 — Partie 2 : ajout Dépenses ponctuelles)
+// ONGLET : VENTES PAR JOUR DE LA SEMAINE (Chantier 31)
+// =====================================================================
+function WeekdaySalesTab({ dataset, t, formatters }) {
+  const [period, setPeriod] = usePersistentState('stats_weekday_period', DEFAULT_PERIODS.weekdaySales);
+  const [chartType, setChartType] = usePersistentState('stats_weekday_chart', 'bar');
+
+  const weekday = useMemo(() => getWeekdaySales(dataset, period), [dataset, period]);
+
+  const bars = useMemo(() => weekday.weekdays.map((w, i) => ({
+    key: w.key,
+    label: `stats.weekdays.${w.key}`,
+    value: w.revenue,
+    color: WEEKDAY_COLORS[i],
+    format: 'currency',
+    subMetrics: [
+      { label: 'stats.metrics.items', value: w.items, format: 'number' },
+      { label: 'stats.metrics.margin', value: w.margin, format: 'currency' },
+      { label: 'stats.metrics.marginPct', value: w.marginPct, format: 'percent' },
+      { label: 'stats.metrics.revenuePct', value: w.revenuePct, format: 'percent' },
+    ],
+  })), [weekday]);
+
+  const donutData = useMemo(() => ({
+    segments: weekday.weekdays.filter((w) => w.revenue > 0).map((w, i) => ({
+      key: w.key,
+      label: `stats.weekdays.${w.key}`,
+      value: w.revenue,
+      pct: w.revenuePct,
+      color: WEEKDAY_COLORS[i],
+    })),
+    total: weekday.totalRevenue,
+    topSegment: null,
+    format: 'currency',
+    empty: weekday.totalRevenue === 0,
+  }), [weekday]);
+  donutData.topSegment = donutData.segments[0] || null;
+
+  const lineSeries = useMemo(() => [{
+    key: 'revenue',
+    color: '#FF9800',
+    unit: 'currency',
+    labelKey: 'stats.metrics.revenue',
+    points: weekday.weekdays.map((w) => ({ key: `stats.weekdays.${w.key}`, value: w.revenue })),
+  }], [weekday]);
+
+  const groupedData = useMemo(() => ({
+    buckets: weekday.weekdays.map((w) => ({
+      key: w.key,
+      label: `stats.weekdays.${w.key}`,
+      current: w.revenue,
+      previous: 0,
+    })),
+    trendPct: 0,
+    currentLabel: 'stats.groupedBar.current',
+    previousLabel: 'stats.groupedBar.previous',
+    format: 'currency',
+    empty: weekday.totalRevenue === 0,
+  }), [weekday]);
+
+  return (
+    <div className="stats-content">
+      <PeriodSelector period={period} onChange={setPeriod} t={t} />
+
+      <div className="stats-kpi-grid">
+        <KpiCard icon="📅" label={t('stats.metrics.bestDay')} value={weekday.best ? t(`stats.weekdays.${weekday.best.key}`) : '—'} color="#FF9800" />
+        <KpiCard icon="📉" label={t('stats.metrics.worstDay')} value={weekday.worst ? t(`stats.weekdays.${weekday.worst.key}`) : '—'} color="#3C91A6" />
+        <KpiCard icon="💰" label={t('stats.metrics.revenue')} value={formatters.currency(weekday.totalRevenue)} color="#43A047" />
+        <KpiCard icon="📊" label={t('stats.metrics.avgRevenuePerDay')}
+          value={formatters.currency(weekday.weekdays.filter((w) => w.closingsCount > 0).reduce((s, w) => s + w.avgRevenue, 0) / Math.max(1, weekday.weekdays.filter((w) => w.closingsCount > 0).length))}
+          color="#9C27B0" />
+      </div>
+
+      <section className="stats-block">
+        <div className="stats-block-header">
+          <h3 className="stats-block-title">{t('stats.blocks.weekdaySales')}</h3>
+          <ChartTypeToggle chartType={chartType} onChange={setChartType} t={t} />
+        </div>
+        <ChartRenderer
+          type={chartType}
+          lineSeries={lineSeries}
+          donutData={donutData}
+          barData={bars}
+          groupedData={groupedData}
+          formatValue={formatters.format}
+          formatDateFn={formatters.date}
+          t={t}
+        />
+        {weekday.best && weekday.worst && weekday.best.key !== weekday.worst.key && (
+          <InsightBanner text={t('stats.insights.weekday')
+            .replace('{best}', t(`stats.weekdays.${weekday.best.key}`))
+            .replace('{worst}', t(`stats.weekdays.${weekday.worst.key}`))
+            .replace('{impact}', weekday.worst.avgRevenue > 0
+              ? (((weekday.best.avgRevenue - weekday.worst.avgRevenue) / weekday.worst.avgRevenue) * 100).toFixed(0)
+              : '0')} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+// =====================================================================
+// ONGLET : COÛTS
 // =====================================================================
 function CostsTab({ dataset, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_costs_period', DEFAULT_PERIODS.costs);
@@ -1227,8 +1489,10 @@ function CostsTab({ dataset, t, formatters }) {
   const fixed = useMemo(() => getFixedCostsBreakdown(dataset, period), [dataset, period]);
   const ings = useMemo(() => getIngredientCosts(dataset, period), [dataset, period]);
   const emps = useMemo(() => getEmployeeStats(dataset, period), [dataset, period]);
+  const topConsumed = useMemo(() => getTopConsumedIngredients(dataset, period, 15), [dataset, period]);
+  const yieldImpact = useMemo(() => getYieldImpact(dataset), [dataset]);
+  const supplierComp = useMemo(() => getSupplierPriceComparison(dataset), [dataset]);
 
-  // --- Chantier 12 — Partie 2 : dépenses ponctuelles (collection brute) ---
   const oneOffExpenses = useMemo(
     () => filterExpensesByPeriod(dataset.expenses || [], period),
     [dataset.expenses, period]
@@ -1237,28 +1501,22 @@ function CostsTab({ dataset, t, formatters }) {
     () => oneOffExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0),
     [oneOffExpenses]
   );
-  // Chantier 28 — F2 : seule exp.note est un champ texte libre sur
-  // createExpense (voir model.js). exp.description / exp.name / exp.label
-  // n'existent pas → priorité corrigée : note > category > '—'.
   const oneOffBars = useMemo(
     () => oneOffExpenses.map((exp) => {
       const name = exp.note || exp.category || '—';
       return {
         key: exp.id,
-        label: exp.date ? `${exp.date} · ${name}` : name,
+        label: exp.date ? `${formatters.date(exp.date)} · ${name}` : name,
         value: Number(exp.amount) || 0,
         color: '#E91E63',
         format: 'currency',
       };
     }),
-    [oneOffExpenses]
+    [oneOffExpenses, formatters]
   );
 
   const lineSeries = useMemo(() => [{
-    key: 'expenses',
-    color: '#E91E63',
-    unit: 'currency',
-    labelKey: 'stats.metrics.expenses',
+    key: 'expenses', color: '#E91E63', unit: 'currency', labelKey: 'stats.metrics.expenses',
     points: getKpiSeries(dataset, 'expenses', period),
   }], [dataset, period]);
 
@@ -1268,11 +1526,7 @@ function CostsTab({ dataset, t, formatters }) {
       initialPeriod: period,
       initialChartType: 'bar',
       render: (p, ct) => {
-        let bars = [];
-        let donut = null;
-        let line = null;
-        let grouped = null;
-
+        let bars = [], donut = null, line = null, grouped = null;
         if (key === 'fixed') {
           bars = getBarMetrics(dataset, p, 'fixedCosts').bars;
           line = [{ key, color: '#3C91A6', unit: 'currency', labelKey: 'stats.metrics.expenses', points: getKpiSeries(dataset, 'expenses', p, 'fixed') }];
@@ -1297,6 +1551,7 @@ function CostsTab({ dataset, t, formatters }) {
               barData={bars}
               groupedData={grouped}
               formatValue={formatters.format}
+              formatDateFn={formatters.date}
               t={t}
             />
           ),
@@ -1316,7 +1571,7 @@ function CostsTab({ dataset, t, formatters }) {
       render: (p) => {
         const bars = getBarMetrics(dataset, p, 'fixedCosts').bars.filter((b) => b.key === cost.id);
         return {
-          chart: <BarChart bars={bars} formatValue={formatters.format} t={t} />,
+          chart: <BarChart bars={bars} formatValue={formatters.format} formatDateFn={formatters.date} t={t} />,
           subMetrics: bars[0]?.subMetrics || [],
         };
       },
@@ -1331,7 +1586,7 @@ function CostsTab({ dataset, t, formatters }) {
       render: (p) => {
         const bars = getBarMetrics(dataset, p, 'ingredients').bars.filter((b) => b.key === ing.id);
         return {
-          chart: <BarChart bars={bars} formatValue={formatters.format} t={t} />,
+          chart: <BarChart bars={bars} formatValue={formatters.format} formatDateFn={formatters.date} t={t} />,
           subMetrics: bars[0]?.subMetrics || [],
         };
       },
@@ -1346,7 +1601,7 @@ function CostsTab({ dataset, t, formatters }) {
       render: (p) => {
         const bars = getBarMetrics(dataset, p, 'employees').bars.filter((b) => b.key === emp.id);
         return {
-          chart: <BarChart bars={bars} formatValue={formatters.format} t={t} />,
+          chart: <BarChart bars={bars} formatValue={formatters.format} formatDateFn={formatters.date} t={t} />,
           subMetrics: bars[0]?.subMetrics || [],
         };
       },
@@ -1379,6 +1634,7 @@ function CostsTab({ dataset, t, formatters }) {
           barData={expensesBars}
           groupedData={groupedData}
           formatValue={formatters.format}
+          formatDateFn={formatters.date}
           t={t}
           onBarClick={(b) => openExpenseDrill(b.key)}
           onDonutClick={(seg) => openExpenseDrill(seg.key)}
@@ -1399,6 +1655,7 @@ function CostsTab({ dataset, t, formatters }) {
           <BarChart
             bars={getBarMetrics(dataset, period, 'fixedCosts').bars}
             formatValue={formatters.format}
+            formatDateFn={formatters.date}
             t={t}
             onBarClick={(b) => {
               const cost = fixed.costs.find((c) => c.id === b.key);
@@ -1413,18 +1670,105 @@ function CostsTab({ dataset, t, formatters }) {
       )}
 
       {subTab === 'ingredients' && (
-        <section className="stats-block">
-          <div className="stats-block-header"><h3 className="stats-block-title">{t('stats.costSubtabs.ingredients')}</h3></div>
-          <BarChart
-            bars={getBarMetrics(dataset, period, 'ingredients').bars.slice(0, 15)}
-            formatValue={formatters.format}
-            t={t}
-            onBarClick={(b) => {
-              const ing = ings.ingredients.find((i) => i.id === b.key);
-              if (ing) openIngredientDrill(ing);
-            }}
-          />
-        </section>
+        <>
+          <section className="stats-block">
+            <div className="stats-block-header"><h3 className="stats-block-title">{t('stats.costSubtabs.ingredients')}</h3></div>
+            <BarChart
+              bars={getBarMetrics(dataset, period, 'ingredients').bars.slice(0, 15)}
+              formatValue={formatters.format}
+              formatDateFn={formatters.date}
+              t={t}
+              onBarClick={(b) => {
+                const ing = ings.ingredients.find((i) => i.id === b.key);
+                if (ing) openIngredientDrill(ing);
+              }}
+            />
+          </section>
+
+          {topConsumed.ingredients.length > 0 && (
+            <section className="stats-block">
+              <div className="stats-block-header">
+                <h3 className="stats-block-title">🥇 {t('stats.blocks.topConsumed')}</h3>
+              </div>
+              <BarChart
+                bars={topConsumed.ingredients.map((ing, i) => ({
+                  key: ing.id,
+                  label: ing.name,
+                  value: ing.quantityInBase,
+                  color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+                  format: 'number',
+                  subMetrics: [
+                    { label: 'stats.metrics.cost', value: ing.cost, format: 'currency' },
+                    { label: 'stats.metrics.share', value: ing.costPct, format: 'percent' },
+                  ],
+                }))}
+                formatValue={formatters.format}
+                formatDateFn={formatters.date}
+                t={t}
+              />
+            </section>
+          )}
+
+          {yieldImpact.length > 0 && (
+            <section className="stats-block">
+              <div className="stats-block-header">
+                <h3 className="stats-block-title">⚖️ {t('stats.blocks.yieldImpact')}</h3>
+              </div>
+              <BarChart
+                bars={yieldImpact.map((y) => ({
+                  key: y.id,
+                  label: y.name,
+                  value: y.delta,
+                  color: '#E65100',
+                  format: 'currency',
+                  subMetrics: [
+                    { label: 'stats.metrics.yield_pct', value: y.yield_pct, format: 'percent' },
+                    { label: 'stats.metrics.theoreticalCost', value: y.theoretical_cost, format: 'currency' },
+                    { label: 'stats.metrics.realCost', value: y.real_cost, format: 'currency' },
+                    { label: 'stats.metrics.deltaPct', value: y.deltaPct, format: 'percent' },
+                  ],
+                }))}
+                formatValue={formatters.format}
+                formatDateFn={formatters.date}
+                t={t}
+              />
+            </section>
+          )}
+
+          {supplierComp.length > 0 && (
+            <section className="stats-block">
+              <div className="stats-block-header">
+                <h3 className="stats-block-title">🏷️ {t('stats.blocks.supplierComparison')}</h3>
+              </div>
+              <div className="stats-supplier-comp">
+                {supplierComp.slice(0, 10).map((sc) => (
+                  <div key={sc.ingredient.id} className="stats-supplier-comp-row">
+                    <div className="stats-supplier-comp-header">
+                      <strong>{sc.ingredient.name}</strong>
+                      {sc.savingPct > 0 && (
+                        <span className="stats-kpi-badge stats-kpi-badge--up">
+                          {t('stats.metrics.savingPct')} {Math.round(sc.savingPct)}%
+                        </span>
+                      )}
+                    </div>
+                    {sc.offers.map((o) => (
+                      <div key={o.offerId} className="stats-supplier-offer">
+                        <span className="stats-supplier-offer-name">
+                          {o.supplierName} · {o.purchaseOptionLabel}
+                        </span>
+                        <span className="stats-supplier-offer-price">
+                          {formatters.currency(o.costPerBase)}
+                          {o.isBest && <span className="stats-kpi-badge stats-kpi-badge--up">🏆</span>}
+                          {o.isPreferred && <span className="stats-kpi-badge stats-kpi-badge--info">⭐</span>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
 
       {subTab === 'employees' && (
@@ -1433,6 +1777,7 @@ function CostsTab({ dataset, t, formatters }) {
           <BarChart
             bars={getBarMetrics(dataset, period, 'employees').bars}
             formatValue={formatters.format}
+            formatDateFn={formatters.date}
             t={t}
             onBarClick={(b) => {
               const emp = emps.employees.find((e) => e.employee.id === b.key);
@@ -1445,11 +1790,7 @@ function CostsTab({ dataset, t, formatters }) {
       {subTab === 'oneOff' && (
         <section className="stats-block">
           <div className="stats-block-header"><h3 className="stats-block-title">{t('stats.costSubtabs.oneOff')}</h3></div>
-          <BarChart
-            bars={oneOffBars}
-            formatValue={formatters.format}
-            t={t}
-          />
+          <BarChart bars={oneOffBars} formatValue={formatters.format} formatDateFn={formatters.date} t={t} />
           <div className="stats-fixed-footer">
             <span>{t('stats.metrics.total')} : <strong>{formatters.currency(oneOffTotal)}</strong></span>
             <span>{oneOffExpenses.length} {t('stats.filters.items')}</span>
@@ -1478,10 +1819,7 @@ function StaffTab({ dataset, t, formatters }) {
   const topEmp = emps.employees[0]?.employee?.name || '—';
 
   const lineSeries = useMemo(() => [{
-    key: 'employees',
-    color: '#9C27B0',
-    unit: 'currency',
-    labelKey: 'stats.metrics.cost',
+    key: 'employees', color: '#9C27B0', unit: 'currency', labelKey: 'stats.metrics.cost',
     points: getKpiSeries(dataset, 'expenses', period, 'employees'),
   }], [dataset, period]);
 
@@ -1493,7 +1831,7 @@ function StaffTab({ dataset, t, formatters }) {
       render: (p) => {
         const b = getBarMetrics(dataset, p, 'employees').bars.find((x) => x.key === empId);
         return {
-          chart: b ? <BarChart bars={[b]} formatValue={formatters.format} t={t} /> : <EmptyState message={t('stats.noData')} />,
+          chart: b ? <BarChart bars={[b]} formatValue={formatters.format} formatDateFn={formatters.date} t={t} /> : <EmptyState message={t('stats.noData')} />,
           subMetrics: b ? b.subMetrics : [],
         };
       },
@@ -1523,6 +1861,7 @@ function StaffTab({ dataset, t, formatters }) {
           barData={bars}
           groupedData={groupedData}
           formatValue={formatters.format}
+          formatDateFn={formatters.date}
           t={t}
           onBarClick={(b) => openEmployeeDrill(b.key, safeT(t, b.label))}
           onDonutClick={(seg) => openEmployeeDrill(seg.key, safeT(t, seg.label))}
@@ -1558,10 +1897,7 @@ function WeatherTab({ dataset, t, formatters }) {
     : 0;
 
   const lineSeries = useMemo(() => [{
-    key: 'revenue',
-    color: '#FF9800',
-    unit: 'currency',
-    labelKey: 'stats.metrics.revenue',
+    key: 'revenue', color: '#FF9800', unit: 'currency', labelKey: 'stats.metrics.revenue',
     points: getKpiSeries(dataset, 'revenue', period),
   }], [dataset, period]);
 
@@ -1588,6 +1924,7 @@ function WeatherTab({ dataset, t, formatters }) {
           barData={bars}
           groupedData={groupedData}
           formatValue={formatters.format}
+          formatDateFn={formatters.date}
           t={t}
         />
         {best && worst && best.key !== worst.key && (
@@ -1639,16 +1976,12 @@ function ComparisonTab({ dataset, t, formatters }) {
     const total = items.reduce((s, m) => s + Math.max(0, m.current), 0);
     return {
       segments: items.map((m, i) => ({
-        key: m.key,
-        label: `stats.metrics.${m.key}`,
-        value: Math.max(0, m.current),
-        pct: total > 0 ? (Math.max(0, m.current) / total) * 100 : 0,
-        color: CYCLE_COLORS[i],
+        key: m.key, label: `stats.metrics.${m.key}`, value: Math.max(0, m.current),
+        pct: total > 0 ? (Math.max(0, m.current) / total) * 100 : 0, color: CYCLE_COLORS[i],
       })),
       total,
       topSegment: items[0] ? { key: items[0].key, label: `stats.metrics.${items[0].key}`, pct: total > 0 ? (items[0].current / total) * 100 : 0 } : null,
-      format: 'currency',
-      empty: false,
+      format: 'currency', empty: false,
     };
   }, [tableData]);
 
@@ -1681,6 +2014,7 @@ function ComparisonTab({ dataset, t, formatters }) {
                 empty: false,
               } : grouped}
               formatValue={formatters.format}
+              formatDateFn={formatters.date}
               t={t}
             />
           ) : <EmptyState message={t('stats.noData')} />,
@@ -1732,6 +2066,7 @@ function ComparisonTab({ dataset, t, formatters }) {
           barData={bars}
           groupedData={groupedData}
           formatValue={formatters.format}
+          formatDateFn={formatters.date}
           t={t}
           onBarClick={(b) => openMetricDrill(b.key)}
         />
@@ -1800,6 +2135,7 @@ export default function StatsPage() {
 
       {hasData && activeTab === 'overview' && <OverviewTab dataset={dataset} onNavigate={onNavigate} t={t} formatters={formatters} />}
       {hasData && activeTab === 'sales' && <SalesTab dataset={dataset} t={t} formatters={formatters} />}
+      {hasData && activeTab === 'weekdaySales' && <WeekdaySalesTab dataset={dataset} t={t} formatters={formatters} />}
       {hasData && activeTab === 'costs' && <CostsTab dataset={dataset} t={t} formatters={formatters} />}
       {hasData && activeTab === 'staff' && <StaffTab dataset={dataset} t={t} formatters={formatters} />}
       {hasData && activeTab === 'weather' && <WeatherTab dataset={dataset} t={t} formatters={formatters} />}

@@ -1,9 +1,15 @@
 /* src/pages/StatsPage.css */
 /* =====================================================================
-   Burihagio — Statistiques approfondies v5 (Chantier 11-F4)
-   6 onglets · 4 graphiques (Courbe / Donut / Barre / Barres Groupées) · KPI partout
+   Burihagio — Statistiques approfondies
+   Chantier 11-F4 · 12 · 28 · 31 (refonte StatsPage)
    Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C · #7A7A7A
-   Chantier 28 — F3 : pills ≥ 44px (cible tactile iOS)
+   Chantier 31 — ajouts :
+     • .stats-block--alert       (bandeau alertes stock)
+     • .stats-metric-pills       (pills CA/Marge/Charges/Articles)
+     • .stats-stock-value-*      (bloc valeur du stock)
+     • .stats-supplier-comp*     (comparateur fournisseurs)
+     • .stats-submetrics <details> (repliable)
+     • .stats-drilldown-footer-btn--inline (bouton compact)
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
@@ -43,7 +49,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   TABS PRINCIPAUX (6 onglets scrollables) — Chantier 28 F3 : 44px mini
+   TABS PRINCIPAUX (7 onglets scrollables) — 44px mini
    --------------------------------------------------------------------- */
 .stats-tabs {
   display: flex;
@@ -99,6 +105,16 @@
   animation: fadeInUp 0.3s ease-out both;
 }
 
+/* Chantier 31 — variante warning (alertes stock) */
+.stats-block--alert {
+  background: linear-gradient(135deg, #FFF8EC, #FFFFFF);
+  border-left: 4px solid #FF9800;
+}
+
+.stats-block--alert .stats-block-title {
+  color: #7A4A00;
+}
+
 .stats-block-header {
   display: flex;
   justify-content: space-between;
@@ -128,7 +144,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   SÉLECTEUR DE PÉRIODE — Chantier 28 F3 : 44px mini
+   SÉLECTEUR DE PÉRIODE — 44px mini
    --------------------------------------------------------------------- */
 .stats-period-selector {
   display: flex;
@@ -168,7 +184,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   SÉLECTEUR DE TYPE DE GRAPHIQUE — Chantier 28 F3 : 44px mini
+   SÉLECTEUR DE TYPE DE GRAPHIQUE — 44px mini
    --------------------------------------------------------------------- */
 .stats-chart-type-toggle {
   display: flex;
@@ -205,6 +221,46 @@
 }
 
 /* ---------------------------------------------------------------------
+   CHANTIER 31 — PILLS MÉTRIQUES (CA / Marge / Charges / Articles / Tout)
+   --------------------------------------------------------------------- */
+.stats-metric-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.stats-metric-pills::-webkit-scrollbar { display: none; }
+
+.stats-metric-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.stats-metric-pill--active {
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.stats-metric-pill:active {
+  transform: scale(0.97);
+}
+
+/* ---------------------------------------------------------------------
    KPI CARDS (grille 2x2 mobile, 4 cols desktop)
    --------------------------------------------------------------------- */
 .stats-kpi-grid {
@@ -232,9 +288,7 @@
   min-width: 0;
 }
 
-.stats-kpi-card--clickable {
-  cursor: pointer;
-}
+.stats-kpi-card--clickable { cursor: pointer; }
 
 .stats-kpi-card--clickable:active {
   transform: scale(0.97);
@@ -414,9 +468,7 @@
   border: 1px solid #EFEFEF;
 }
 
-.stats-heatmap-cell--weekend {
-  border-color: #FFE0B2;
-}
+.stats-heatmap-cell--weekend { border-color: #FFE0B2; }
 
 .stats-heatmap-day {
   font-size: 0.6rem;
@@ -553,9 +605,7 @@
   flex-shrink: 0;
 }
 
-.stats-line-legend-label {
-  line-height: 1;
-}
+.stats-line-legend-label { line-height: 1; }
 
 .stats-line-cumul-btn {
   padding: 5px 10px;
@@ -579,7 +629,7 @@
 .stats-line-svg-wrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 340 / 180;
+  aspect-ratio: 340 / 200;
 }
 
 .stats-line-svg {
@@ -630,7 +680,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   DONUT CHART (v5 — remplace la bulle)
+   DONUT CHART
    --------------------------------------------------------------------- */
 .stats-donut {
   display: flex;
@@ -657,9 +707,7 @@
   cursor: pointer;
   transition: stroke-opacity 0.15s ease, stroke-width 0.15s ease;
 }
-.stats-donut-arc:hover {
-  stroke-opacity: 0.85;
-}
+.stats-donut-arc:hover { stroke-opacity: 0.85; }
 
 .stats-donut-center {
   position: absolute;
@@ -764,7 +812,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   GROUPED BAR CHART (v5 — Actuel vs Précédent)
+   GROUPED BAR CHART
    --------------------------------------------------------------------- */
 .stats-grouped {
   display: flex;
@@ -966,7 +1014,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   SUB-METRICS TABLE
+   CHANTIER 31 — SUB-METRICS (repliable via <details>)
    --------------------------------------------------------------------- */
 .stats-submetrics {
   background: #FAFAFA;
@@ -976,20 +1024,57 @@
   margin-top: 12px;
 }
 
+/* Summary (= ancien titre h4) */
 .stats-submetrics-title {
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
   color: #2C2C2C;
-  margin: 0 0 8px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  margin: -6px 0;
+  padding: 6px 0;
+  user-select: none;
+}
+
+/* Suppression du marker natif (Chrome / Safari) */
+.stats-submetrics-title::-webkit-details-marker { display: none; }
+.stats-submetrics-title::marker { content: ''; }
+
+/* Indicateur ▾ / ▴ */
+.stats-submetrics-title::after {
+  content: '▾';
+  font-size: 0.85rem;
+  color: #3C91A6;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.stats-submetrics[open] .stats-submetrics-title::after {
+  transform: rotate(180deg);
+}
+
+.stats-submetrics-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7A7A7A;
+  margin-left: 4px;
 }
 
 .stats-submetrics-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #EFEFEF;
 }
 
 .stats-submetrics-row {
@@ -1102,7 +1187,7 @@
 }
 
 /* ---------------------------------------------------------------------
-   SUBTABS (coûts) — Chantier 28 F3 : 44px mini
+   SUBTABS (coûts) — 44px mini
    --------------------------------------------------------------------- */
 .stats-subtabs {
   display: flex;
@@ -1159,7 +1244,151 @@
 }
 
 /* ---------------------------------------------------------------------
-   DRILL-DOWN MODAL
+   CHANTIER 31 — BLOC VALEUR DU STOCK
+   --------------------------------------------------------------------- */
+.stats-stock-value-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #EAF4F6, #FFFFFF);
+  border-left: 3px solid #3C91A6;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2C2C2C;
+}
+
+.stats-stock-value-total strong {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #3C91A6;
+  white-space: nowrap;
+}
+
+.stats-stock-value-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-stock-value-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #FAFAFA;
+  border: 1px solid #EFEFEF;
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+
+.stats-stock-value-name {
+  font-weight: 800;
+  color: #2C2C2C;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.stats-stock-value-qty {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7A7A7A;
+  white-space: nowrap;
+}
+
+.stats-stock-value-amount {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #FF9800;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------
+   CHANTIER 31 — COMPARATEUR FOURNISSEURS
+   --------------------------------------------------------------------- */
+.stats-supplier-comp {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stats-supplier-comp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #FAFAFA;
+  border: 1px solid #EFEFEF;
+  border-radius: 12px;
+}
+
+.stats-supplier-comp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #EFEFEF;
+}
+
+.stats-supplier-comp-header strong {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #2C2C2C;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-supplier-offer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  min-width: 0;
+}
+
+.stats-supplier-offer-name {
+  color: #7A7A7A;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.stats-supplier-offer-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #3C91A6;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stats-supplier-offer-price .stats-kpi-badge {
+  font-size: 0.65rem;
+  padding: 1px 4px;
+}
+
+/* ---------------------------------------------------------------------
+   DRILL-DOWN MODAL (Chantier 31 : sans PeriodSelector)
    --------------------------------------------------------------------- */
 .stats-drilldown-backdrop {
   position: fixed;
@@ -1227,9 +1456,11 @@
 }
 .stats-drilldown-close:active { background: #EFEFEF; }
 
+/* Chantier 31 — la zone sélecteurs ne contient plus que le ChartTypeToggle */
 .stats-drilldown-selectors {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 10px;
 }
 
@@ -1253,6 +1484,29 @@
   transition: background 0.15s ease;
 }
 .stats-drilldown-footer-btn:active { background: #2E7284; }
+
+/* Chantier 31 — variante compacte inline (dans .stats-block-header) */
+.stats-drilldown-footer-btn--inline {
+  padding: 8px 12px;
+  min-height: 44px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #EAF4F6;
+  color: #3C91A6;
+  border: 1px solid #3C91A6;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stats-drilldown-footer-btn--inline:active {
+  background: #3C91A6;
+  color: #FFFFFF;
+}
 
 /* ---------------------------------------------------------------------
    ANIMATIONS
@@ -1295,7 +1549,7 @@
     max-height: 85vh;
   }
 
-  .stats-line-svg-wrapper { aspect-ratio: auto; height: 220px; }
+  .stats-line-svg-wrapper { aspect-ratio: auto; height: 240px; }
   .stats-grouped-svg { aspect-ratio: auto; height: 260px; }
 
   .stats-donut {
@@ -1306,6 +1560,24 @@
   }
   .stats-donut-chart { width: 200px; height: 200px; }
   .stats-donut-legend { flex: 1; max-width: 340px; }
+
+  /* Chantier 31 — pills non scrollables sur tablette */
+  .stats-metric-pills {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .stats-stock-value-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+@media (min-width: 900px) {
+  .stats-stock-value-list {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -1324,12 +1596,15 @@
   .stats-today-banner:active,
   .stats-bar-row:active,
   .stats-top3-card:active,
-  .stats-donut-legend-row:active {
+  .stats-donut-legend-row:active,
+  .stats-metric-pill:active,
+  .stats-drilldown-footer-btn--inline:active {
     transform: none;
   }
   .stats-bar-fill,
   .stats-line-point,
-  .stats-donut-arc {
+  .stats-donut-arc,
+  .stats-submetrics-title::after {
     transition: none;
   }
 }

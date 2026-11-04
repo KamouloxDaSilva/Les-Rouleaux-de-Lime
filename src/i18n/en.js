@@ -1,4 +1,5 @@
 // src/i18n/en.js
+// Chantier 31 — ajout des clés refonte StatsPage (aligné à vi.js et fr.js)
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Home', closing: 'Closing', menu: 'Menu', team: 'Management', settings: 'Settings', stats: 'Stats' },
@@ -372,6 +373,7 @@ export default {
     tabs: {
       overview: 'Overview',
       sales: 'Sales',
+      weekdaySales: 'By weekday',         // ← Chantier 31
       costs: 'Costs',
       staff: 'Staff',
       weather: 'Weather',
@@ -406,6 +408,16 @@ export default {
       byCategory: 'By category',
       top3: 'Top 3',
       flop3: 'Flop 3',
+      top3Sales: 'Top 3 SALES',                         // ← Chantier 31
+      flop3Sales: 'Top 3 WORST SALES',                  // ← Chantier 31
+      generalRanking: 'Full ranking',                    // ← Chantier 31
+      weekdaySales: 'Sales by weekday',                  // ← Chantier 31
+      stockAlerts: 'Stock alerts',                       // ← Chantier 31
+      stockValue: 'Stock value',                         // ← Chantier 31
+      promoImpact: 'Promotion impact',                   // ← Chantier 31
+      topConsumed: 'Most consumed ingredients',          // ← Chantier 31
+      yieldImpact: 'Yield impact',                       // ← Chantier 31
+      supplierComparison: 'Supplier price comparison',   // ← Chantier 31
       expensesRepartition: 'Expense breakdown',
       staff: 'Hours & costs per employee',
       weather: 'Weather impact',
@@ -417,6 +429,15 @@ export default {
     },
     heatmap: {
       title: 'Last 7 days',
+    },
+    weekdays: {                 // ← Chantier 31
+      mon: 'Monday',
+      tue: 'Tuesday',
+      wed: 'Wednesday',
+      thu: 'Thursday',
+      fri: 'Friday',
+      sat: 'Saturday',
+      sun: 'Sunday',
     },
     metrics: {
       revenue: 'Revenue',
@@ -458,6 +479,16 @@ export default {
       bestWeather: 'Best weather',
       worstWeather: 'Worst weather',
       weatherImpact: 'Weather impact',
+      // ── Chantier 31 ─────────────────────────────────────
+      stockValue: 'Stock value',
+      discountPerUnit: 'Discount / unit',
+      daysDiscounted: 'Days discounted',
+      bestDay: 'Best day',
+      worstDay: 'Worst day',
+      realCost: 'Real cost',
+      theoreticalCost: 'Theoretical cost',
+      savingPct: 'Savings',
+      yield_pct: 'Yield (%)',
     },
     series: {
       revenue: 'Revenue',
@@ -518,6 +549,10 @@ export default {
       staff: '⏱️ {topName} works {topPct}% of total hours.',
       weather: '☀️ {best} generates +{impact}% revenue/day vs {worst}.',
       comparison: '📈 Revenue {revDelta}% · Margin {margDelta}% vs previous period.',
+      weekday: '📅 {best} generates the most revenue, +{impact}% vs {worst}.', // ← Chantier 31
+    },
+    team: {                       // ← Chantier 31 : label réutilisé dans les alertes stock
+      minStock: 'Minimum stock',
     },
   },
   common: {
