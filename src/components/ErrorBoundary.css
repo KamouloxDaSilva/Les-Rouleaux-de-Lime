@@ -1,0 +1,81 @@
+/* src/components/ErrorBoundary.css */
+/* Chantier 33 — Barrière d'erreur */
+
+.error-boundary {
+  position: fixed;
+  inset: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 12px;
+  background: var(--color-surface);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.error-boundary__icon {
+  font-size: 4rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.error-boundary__title {
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.error-boundary__desc {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  max-width: 360px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.error-boundary__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--color-orange);
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-orange);
+  transition: transform var(--transition-fast) ease,
+              box-shadow var(--transition-fast) ease;
+  margin-top: 8px;
+}
+
+.error-boundary__btn:active {
+  transform: scale(0.97);
+}
+
+.error-boundary__btn:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-boundary__btn {
+    transition: none;
+  }
+  .error-boundary__btn:active {
+    transform: none;
+  }
+}

@@ -158,6 +158,16 @@ body.theme-dark .app-header {
 }
 
 /* =========================================================
+   Chantier 33 — Dark mode ErrorBoundary
+   (la carte + titre + bouton utilisent déjà les tokens
+   theme-aware via ErrorBoundary.css ; seule la description
+   doit être forcée pour garantir le contraste AA)
+   ========================================================= */
+body.theme-dark .error-boundary__desc {
+  color: var(--color-text-muted);
+}
+
+/* =========================================================
    Chantier 11-C — Filet de sécurité prefers-reduced-motion
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {

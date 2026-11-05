@@ -567,7 +567,7 @@ export default {
       minStock: 'Stock minimum',
     },
   },
-  common: {
+    common: {
     save: 'Enregistrer',
     cancel: 'Annuler',
     edit: 'Modifier',
@@ -583,6 +583,13 @@ export default {
       ml: { label: 'Millilitre', short: 'ml' },
       piece: { label: 'Pièce', short: 'pce' },
     },
+    // === Chantier 33 — nouveaux ===
+    errorBoundary: {
+      desc: 'Une erreur inattendue est survenue. Rechargez l\'application pour continuer.',
+      reload: 'Recharger l\'application',
+    },
+    exitWarning: 'Appuyez à nouveau sur retour pour quitter',
+    canCloseApp: 'Vous pouvez fermer l\'application.',
   },
   splash: { tagline: 'Les Rouleaux de Lime' },
   firstLaunch: {

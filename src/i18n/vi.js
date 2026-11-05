@@ -583,6 +583,13 @@ export default {
       ml: { label: 'Mililit', short: 'ml' },
       piece: { label: 'Cái', short: 'cái' },
     },
+    // === Chantier 33 — nouveaux ===
+    errorBoundary: {
+      desc: 'Đã xảy ra lỗi không mong muốn. Hãy tải lại ứng dụng để tiếp tục.',
+      reload: 'Tải lại ứng dụng',
+    },
+    exitWarning: 'Nhấn lại để thoát',
+    canCloseApp: 'Bạn có thể đóng ứng dụng.',
   },
   splash: { tagline: 'Bánh tráng cuốn Sài Gòn' },
   firstLaunch: {

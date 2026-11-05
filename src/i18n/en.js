@@ -562,7 +562,7 @@ export default {
       minStock: 'Minimum stock',
     },
   },
-  common: {
+    common: {
     save: 'Save',
     cancel: 'Cancel',
     edit: 'Edit',
@@ -578,6 +578,13 @@ export default {
       ml: { label: 'Millilitre', short: 'ml' },
       piece: { label: 'Piece', short: 'pc' },
     },
+    // === Chantier 33 — nouveaux ===
+    errorBoundary: {
+      desc: 'An unexpected error occurred. Reload the application to continue.',
+      reload: 'Reload application',
+    },
+    exitWarning: 'Press back again to exit',
+    canCloseApp: 'You can close the app.',
   },
   splash: { tagline: 'Fresh Spring Rolls' },
   firstLaunch: {
