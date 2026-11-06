@@ -1,7 +1,13 @@
 // src/i18n/fr.js
 // Chantier 31 — ajout des clés refonte StatsPage.
 // Chantier 32-A — ajout de settings.sections.appearance.{title,system,light,dark}
-//               pour le sélecteur de thème (mode sombre).
+// Chantier 36 — BASE_UNITS étendu, sections de formulaire titrées, hints.
+// Chantier 37 — ajout des clés stockManagement (adjust, directInput, etc.)
+// Chantier 38 — ajout team.suppliersOffers, team.receipts.duplicate,
+//               team.stockManagement.{orderFrom, estimatedTotal}
+// Chantier 39 FUSION — ajout stats.metrics.deltaPct,
+//               stats.drillDown.noShifts,
+//               stats.heatmap.legend.{excellent,good,neutral,low,bad}
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Accueil', closing: 'Clôture', menu: 'Menu', team: 'Gestion', settings: 'Réglages', stats: 'Stats' },
@@ -246,6 +252,21 @@ export default {
       stockQuantity: 'Stock',
       minStock: 'Stock minimum',
       stockAlert: 'Alerte stock',
+      defaultUnit: 'Par défaut',
+      sections: {
+        general: 'Informations générales',
+        baseUnit: 'Unité de base et coût de référence',
+        purchaseOptions: 'Conditionnements d\'achat',
+        recipeUnits: 'Unités de recette',
+        stock: 'Stock et péremption',
+        supplier: 'Fournisseur préféré',
+      },
+      purchaseOptionsTitle: 'Comment achetez-vous cet ingrédient ?',
+      purchaseOptionsHint: 'Ex : Si l\'unité est "g", saisissez 1000 pour un sac de 1kg. Si "ml", saisissez 1500 pour une bouteille de 1.5L.',
+      recipeUnitsTitle: 'Comment utilisez-vous cet ingrédient en cuisine ?',
+      recipeUnitsHint: 'Ex : Si l\'unité est "g", saisissez 150 pour une portion de 150g. Si "ml", saisissez 250 pour un verre de 250ml.',
+      costPer: 'Coût par',
+      yieldHint: '0.9 = 10% perdu',
     },
     supplierOffers: {
       title: 'Offres fournisseurs',
@@ -264,6 +285,20 @@ export default {
         lastPurchaseDate: 'Dernier achat',
         notes: 'Notes',
       },
+      sections: {
+        ingredient: 'Ingrédient et conditionnement',
+        price: 'Prix',
+        options: 'Options',
+      },
+      preferredHint: 'Met à jour le coût de référence de l\'ingrédient',
+      referenceUpdated: 'Coût de référence mis à jour pour',
+    },
+    suppliersOffers: {
+      title: 'Fournisseurs & Offres',
+      tabs: {
+        suppliers: 'Fournisseurs',
+        offers: 'Offres',
+      },
     },
     comparator: {
       title: 'Comparateur',
@@ -277,6 +312,7 @@ export default {
       title: 'Bons de réception',
       add: 'Ajouter un bon',
       empty: 'Aucun bon',
+      duplicate: 'Dupliquer ce bon',
       types: {
         receipt: 'Réception',
         return: 'Retour',
@@ -312,6 +348,16 @@ export default {
         correction: 'Correction',
         preparation: 'Préparation',
       },
+      adjust: 'Ajuster le stock',
+      directInput: 'Saisie directe',
+      byPackaging: 'Par conditionnement',
+      newStock: 'Nouveau stock',
+      generateOrder: 'Générer la commande',
+      noOffer: 'Aucune offre fournisseur',
+      bestPrice: 'Meilleur prix',
+      lastPurchase: 'Dernier achat',
+      orderFrom: 'Commander chez',
+      estimatedTotal: 'Total estimé',
     },
   },
   placeholder: { comingSoon: 'En développement...' },
@@ -442,6 +488,13 @@ export default {
     },
     heatmap: {
       title: '7 derniers jours',
+      legend: {
+        excellent: 'Très bonne',
+        good: 'Positive',
+        neutral: 'Oscille',
+        low: 'Petite perte',
+        bad: 'Perte',
+      },
     },
     weekdays: {
       mon: 'Lundi',
@@ -500,6 +553,7 @@ export default {
       realCost: 'Coût réel',
       theoreticalCost: 'Coût théorique',
       savingPct: 'Économie',
+      deltaPct: 'Écart %',
       yield_pct: 'Rendement (%)',
     },
     series: {
@@ -513,6 +567,7 @@ export default {
       profit: 'Détail de la marge',
       items: 'Détail des articles',
       expenses: 'Détail des charges',
+      noShifts: 'Aucun shift sur la période',
     },
     costSubtabs: {
       repartition: 'Répartition',
@@ -567,7 +622,7 @@ export default {
       minStock: 'Stock minimum',
     },
   },
-    common: {
+  common: {
     save: 'Enregistrer',
     cancel: 'Annuler',
     edit: 'Modifier',
@@ -578,12 +633,14 @@ export default {
     error: 'Erreur',
     success: 'Succès',
     loading: 'Chargement…',
+    soit: 'Soit',
     baseUnits: {
       g: { label: 'Gramme', short: 'g' },
+      kg: { label: 'Kilogramme', short: 'kg' },
       ml: { label: 'Millilitre', short: 'ml' },
+      L: { label: 'Litre', short: 'L' },
       piece: { label: 'Pièce', short: 'pce' },
     },
-    // === Chantier 33 — nouveaux ===
     errorBoundary: {
       desc: 'Une erreur inattendue est survenue. Rechargez l\'application pour continuer.',
       reload: 'Recharger l\'application',

@@ -1,7 +1,13 @@
 // src/i18n/vi.js
 // Chantier 31 — ajout des clés refonte StatsPage.
 // Chantier 32-A — ajout de settings.sections.appearance.{title,system,light,dark}
-//               pour le sélecteur de thème (mode sombre).
+// Chantier 36 — BASE_UNITS étendu, sections de formulaire titrées, hints.
+// Chantier 37 — ajout des clés stockManagement (adjust, directInput, etc.)
+// Chantier 38 — ajout team.suppliersOffers, team.receipts.duplicate,
+//               team.stockManagement.{orderFrom, estimatedTotal}
+// Chantier 39 FUSION — ajout stats.metrics.deltaPct,
+//               stats.drillDown.noShifts,
+//               stats.heatmap.legend.{excellent,good,neutral,low,bad}
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Trang chủ', closing: 'Chốt ngày', menu: 'Thực đơn', team: 'Quản lý', settings: 'Cài đặt', stats: 'Thống kê' },
@@ -246,6 +252,21 @@ export default {
       stockQuantity: 'Tồn kho',
       minStock: 'Tồn tối thiểu',
       stockAlert: 'Cảnh báo kho',
+      defaultUnit: 'Mặc định',
+      sections: {
+        general: 'Thông tin chung',
+        baseUnit: 'Đơn vị cơ bản và giá tham chiếu',
+        purchaseOptions: 'Quy cách mua',
+        recipeUnits: 'Đơn vị công thức',
+        stock: 'Tồn kho và hạn sử dụng',
+        supplier: 'Nhà cung cấp ưu tiên',
+      },
+      purchaseOptionsTitle: 'Bạn mua nguyên liệu này như thế nào?',
+      purchaseOptionsHint: 'Ví dụ: Nếu đơn vị là "g", nhập 1000 cho túi 1kg. Nếu "ml", nhập 1500 cho chai 1.5L.',
+      recipeUnitsTitle: 'Bạn sử dụng nguyên liệu này trong bếp như thế nào?',
+      recipeUnitsHint: 'Ví dụ: Nếu đơn vị là "g", nhập 150 cho một phần 150g. Nếu "ml", nhập 250 cho một ly 250ml.',
+      costPer: 'Chi phí mỗi',
+      yieldHint: '0.9 = mất 10%',
     },
     supplierOffers: {
       title: 'Ưu đãi nhà cung cấp',
@@ -264,6 +285,20 @@ export default {
         lastPurchaseDate: 'Lần mua cuối',
         notes: 'Ghi chú',
       },
+      sections: {
+        ingredient: 'Nguyên liệu và quy cách',
+        price: 'Giá',
+        options: 'Tùy chọn',
+      },
+      preferredHint: 'Cập nhật giá tham chiếu của nguyên liệu',
+      referenceUpdated: 'Đã cập nhật giá tham chiếu cho',
+    },
+    suppliersOffers: {
+      title: 'Nhà cung cấp & Ưu đãi',
+      tabs: {
+        suppliers: 'Nhà cung cấp',
+        offers: 'Ưu đãi',
+      },
     },
     comparator: {
       title: 'So sánh giá',
@@ -277,6 +312,7 @@ export default {
       title: 'Phiếu nhập hàng',
       add: 'Thêm phiếu',
       empty: 'Chưa có phiếu',
+      duplicate: 'Nhân bản phiếu',
       types: {
         receipt: 'Nhập hàng',
         return: 'Trả hàng',
@@ -312,6 +348,16 @@ export default {
         correction: 'Điều chỉnh',
         preparation: 'Sơ chế',
       },
+      adjust: 'Điều chỉnh kho',
+      directInput: 'Nhập trực tiếp',
+      byPackaging: 'Theo quy cách',
+      newStock: 'Tồn kho mới',
+      generateOrder: 'Tạo đơn hàng',
+      noOffer: 'Không có ưu đãi',
+      bestPrice: 'Giá tốt nhất',
+      lastPurchase: 'Lần mua cuối',
+      orderFrom: 'Đặt hàng từ',
+      estimatedTotal: 'Tổng ước tính',
     },
   },
   placeholder: { comingSoon: 'Đang phát triển...' },
@@ -442,6 +488,13 @@ export default {
     },
     heatmap: {
       title: '7 ngày gần đây',
+      legend: {
+        excellent: 'Rất tốt',
+        good: 'Tích cực',
+        neutral: 'Dao động',
+        low: 'Lỗ nhẹ',
+        bad: 'Lỗ',
+      },
     },
     weekdays: {
       mon: 'Thứ 2',
@@ -500,6 +553,7 @@ export default {
       realCost: 'Giá thực tế',
       theoreticalCost: 'Giá lý thuyết',
       savingPct: 'Tiết kiệm',
+      deltaPct: 'Chênh lệch %',
       yield_pct: 'Hiệu suất (%)',
     },
     series: {
@@ -513,6 +567,7 @@ export default {
       profit: 'Chi tiết lợi nhuận',
       items: 'Chi tiết món',
       expenses: 'Chi tiết chi phí',
+      noShifts: 'Không có ca làm việc trong kỳ',
     },
     costSubtabs: {
       repartition: 'Phân bổ',
@@ -578,12 +633,14 @@ export default {
     error: 'Lỗi',
     success: 'Thành công',
     loading: 'Đang tải…',
+    soit: 'Tức là',
     baseUnits: {
       g: { label: 'Gam', short: 'g' },
+      kg: { label: 'Kilôgam', short: 'kg' },
       ml: { label: 'Mililit', short: 'ml' },
+      L: { label: 'Lít', short: 'L' },
       piece: { label: 'Cái', short: 'cái' },
     },
-    // === Chantier 33 — nouveaux ===
     errorBoundary: {
       desc: 'Đã xảy ra lỗi không mong muốn. Hãy tải lại ứng dụng để tiếp tục.',
       reload: 'Tải lại ứng dụng',

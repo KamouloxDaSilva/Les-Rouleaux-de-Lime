@@ -2,19 +2,23 @@
 // =====================================================================
 // Burihagio — Statistiques approfondies
 // Chantier 11-F4 · 12 · 28 · 31 (refonte StatsPage)
+// + Chantier 39 FUSION (39 + 40 + 41)
 //
-// Chantier 31 — Refonte ciblée :
-//   • Suppression du PeriodSelector dans les drill-downs.
-//   • Dates au format 30/10/2026 (formatDate).
-//   • Grille + repère temporel en bas des courbes.
-//   • Pills CA / Marge / Charges / Articles (Overview > Évolution).
-//   • Sous-métriques repliables (<details>).
-//   • Nouvel onglet "Ventes par jour de la semaine".
-//   • Renommage "Top 3 VENTES" / "Top 3 PIRES VENTES" + bouton
-//     "Classement général" + fiche plat détaillée.
-//   • Formules = ventes de plats (Option B) — propagé par stats.js.
-//   • Nouvelles stats v9 : alertes stock, valeur du stock, impact
-//     promos, rendement (yield), top consommés, comparateur prix.
+// Chantier 39 FUSION :
+//   PHASE A — Période & Drill-downs
+//     • PeriodSelector RÉINTRODUIT dans DrillDownModal (contredit 31).
+//     • Drill-downs Staff (courbe + tableau shifts), Weather (courbe
+//       + subMetrics), WeekdaySales (détail par plat + évolution).
+//     • Overview : barData/donutData filtrés par metricFilter.
+//     • GroupedBarChart : xTickStep → dates lisibles.
+//   PHASE B — Classement & évolution plat
+//     • buildRankingDrilldown : pills catégorie + couleurs + submetrics.
+//     • buildDishDrilldown : pills métrique + PeriodSelector.
+//     • LineChart : resolveLabel (nom brut vs clé i18n).
+//     • HeatmapWeek : 5 nuances + légende.
+//   PHASE C — Audit i18n
+//     • Clés : stats.metrics.deltaPct, stats.drillDown.noShifts,
+//       stats.heatmap.legend.* (ajoutées dans vi/fr/en).
 // =====================================================================
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../i18n';
@@ -30,8 +34,9 @@ import {
   getWeekdaySales, getStockValue, getTopConsumedIngredients,
   getSupplierPriceComparison, getPromoImpact,
   getStockAlertsByPeriod, getYieldImpact,
+  getEmployeeShiftsDetail, getWeatherDetail, getWeekdayDetail,
   PERIODS, CHART_TYPES, DEFAULT_PERIODS, CYCLE_COLORS,
-  WEEKDAY_COLORS,
+  WEEKDAY_COLORS, CATEGORY_COLORS, WEATHER_COLORS,
 } from '../data/stats.js';
 import './StatsPage.css';
 
@@ -51,6 +56,16 @@ function safeT(t, key) {
   if (s.indexOf('.') === -1) return s;
   const translated = t(s);
   return translated === s ? s : translated;
+}
+
+function resolveLabel(t, key) {
+  if (!key) return '';
+  const s = String(key);
+  if (s.includes('.')) {
+    const tr = t(s);
+    return tr === s ? s : tr;
+  }
+  return s;
 }
 
 function formatDate(iso, locale = 'fr-FR') {
@@ -221,7 +236,7 @@ function KpiCard({ icon, label, value, delta, sparkline, badge, color, onClick }
 }
 
 // =====================================================================
-// LINE CHART (Chantier 31 : grille + axe temporel en bas)
+// LINE CHART (avec resolveLabel)
 // =====================================================================
 function LineChart({ series, formatValue, formatDateFn, t, emptyMessage }) {
   const [mode, setMode] = useState('multi');
@@ -295,18 +310,13 @@ function LineChart({ series, formatValue, formatDateFn, t, emptyMessage }) {
               type="button"
               className={`stats-line-legend-item ${mode === 'single' && activeKey === s.key ? 'stats-line-legend-item--active' : ''}`}
               onClick={() => {
-                if (mode === 'multi') {
-                  setMode('single');
-                  setActiveKey(s.key);
-                } else if (activeKey === s.key) {
-                  setMode('multi');
-                } else {
-                  setActiveKey(s.key);
-                }
+                if (mode === 'multi') { setMode('single'); setActiveKey(s.key); }
+                else if (activeKey === s.key) { setMode('multi'); }
+                else { setActiveKey(s.key); }
               }}
             >
               <span className="stats-line-legend-dot" style={{ background: s.color }} />
-              <span className="stats-line-legend-label">{t(s.labelKey)}</span>
+              <span className="stats-line-legend-label">{resolveLabel(t, s.labelKey)}</span>
             </button>
           ))}
         </div>
@@ -379,7 +389,7 @@ function LineChart({ series, formatValue, formatDateFn, t, emptyMessage }) {
           {visibleSeries.map((s) => (
             <div key={s.key} className="stats-line-tooltip-row">
               <span className="stats-line-legend-dot" style={{ background: s.color }} />
-              <span>{t(s.labelKey)}:</span>
+              <span>{resolveLabel(t, s.labelKey)}:</span>
               <strong>{formatValue(points[activeIdx].values[s.key]?.value || 0, s.unit)}</strong>
             </div>
           ))}
@@ -472,7 +482,7 @@ function DonutChart({ data, formatValue, t, onClick }) {
 }
 
 // =====================================================================
-// GROUPED BAR CHART
+// GROUPED BAR CHART (xTickStep → dates lisibles)
 // =====================================================================
 function GroupedBarChart({ data, formatValue, formatDateFn, t }) {
   if (!data || data.empty || !data.buckets || data.buckets.length === 0) {
@@ -489,6 +499,8 @@ function GroupedBarChart({ data, formatValue, formatDateFn, t }) {
 
   const yTicks = [0, maxV / 2, maxV];
   const yPos = (v) => dims.pt + chartH - (v / maxV) * chartH;
+
+  const xTickStep = Math.max(1, Math.ceil(data.buckets.length / 6));
 
   const trendUp = data.trendPct >= 0;
   const trendColor = trendUp ? '#2E7D32' : '#C62828';
@@ -527,6 +539,7 @@ function GroupedBarChart({ data, formatValue, formatDateFn, t }) {
           const prevY = dims.pt + chartH - prevH;
           const labelRaw = safeT(t, b.label);
           const label = labelRaw.length > 8 ? labelRaw.slice(0, 8) + '…' : labelRaw;
+          const showLabel = i % xTickStep === 0 || i === data.buckets.length - 1;
           return (
             <g key={b.key}>
               <rect x={curX} y={curY} width={barW} height={Math.max(curH, 0)} rx={3} ry={3} fill="#3C91A6">
@@ -535,7 +548,11 @@ function GroupedBarChart({ data, formatValue, formatDateFn, t }) {
               <rect x={prevX} y={prevY} width={barW} height={Math.max(prevH, 0)} rx={3} ry={3} fill="#E0E0E0">
                 <title>{`${labelRaw} — ${t('stats.groupedBar.previous')}: ${formatValue(b.previous, b.format || data.format)}`}</title>
               </rect>
-              <text x={gx} y={dims.pt + chartH + 14} textAnchor="middle" fontSize="7" fill="#7A7A7A">{label}</text>
+              {showLabel && (
+                <text x={gx} y={dims.pt + chartH + 14} textAnchor="middle" fontSize="7" fill="#7A7A7A">
+                  {label}
+                </text>
+              )}
             </g>
           );
         })}
@@ -628,7 +645,7 @@ function BarChart({ bars, formatValue, formatDateFn, t, emptyMessage, onBarClick
 }
 
 // =====================================================================
-// SUB-METRICS (Chantier 31 : repliable via <details>)
+// SUB-METRICS
 // =====================================================================
 function SubMetricsTable({ metrics, formatValue, t }) {
   if (!metrics || !metrics.length) return null;
@@ -718,8 +735,16 @@ function TodayBanner({ dataset, formatValue, t, onOpen }) {
 }
 
 // =====================================================================
-// HEATMAP 7 JOURS
+// HEATMAP 7 JOURS (Chantier 40 : 5 nuances + légende)
 // =====================================================================
+function getHeatmapColor(ratio) {
+  if (ratio >= 1.2) return '#2E7D32';
+  if (ratio >= 0.8) return '#66BB6A';
+  if (ratio >= 0.5) return '#FFD54F';
+  if (ratio >= 0.2) return '#FF8A65';
+  return '#C62828';
+}
+
 function HeatmapWeek({ dataset, formatValue, t }) {
   const cells = useMemo(() => {
     if (!dataset || !Array.isArray(dataset.daily_closings)) return [];
@@ -728,7 +753,6 @@ function HeatmapWeek({ dataset, formatValue, t }) {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const arr = [];
-    const maxRev = { v: 1 };
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(now.getDate() - i);
@@ -741,10 +765,11 @@ function HeatmapWeek({ dataset, formatValue, t }) {
           if (dish) revenue += (Number(dish.price) || 0) * (Number(s.quantity_sold) || 0);
         }
       }
-      if (revenue > maxRev.v) maxRev.v = revenue;
       arr.push({ key, day: d.getDate(), weekday: d.getDay(), revenue });
     }
-    return arr.map((c) => ({ ...c, intensity: c.revenue > 0 ? c.revenue / maxRev.v : 0 }));
+    const positive = arr.filter((c) => c.revenue > 0).map((c) => c.revenue);
+    const avg = positive.length > 0 ? positive.reduce((s, v) => s + v, 0) / positive.length : 1;
+    return arr.map((c) => ({ ...c, ratio: c.revenue > 0 ? c.revenue / avg : 0 }));
   }, [dataset]);
 
   if (!cells.length) return null;
@@ -755,8 +780,8 @@ function HeatmapWeek({ dataset, formatValue, t }) {
       <div className="stats-heatmap-title">{t('stats.heatmap.title')}</div>
       <div className="stats-heatmap-grid">
         {cells.map((c) => {
-          const opacity = 0.1 + c.intensity * 0.8;
           const isWeekend = c.weekday === 0 || c.weekday === 6;
+          const bg = c.revenue > 0 ? getHeatmapColor(c.ratio) : '#BDBDBD';
           return (
             <div
               key={c.key}
@@ -764,11 +789,33 @@ function HeatmapWeek({ dataset, formatValue, t }) {
               title={`${c.key} — ${formatValue(c.revenue, 'currency')}`}
             >
               <span className="stats-heatmap-day">{weekdayLabels[c.weekday]}</span>
-              <div className="stats-heatmap-block" style={{ background: `rgba(60, 145, 166, ${opacity})` }} />
+              <div className="stats-heatmap-block" style={{ background: bg }} />
               <span className="stats-heatmap-num">{c.day}</span>
             </div>
           );
         })}
+      </div>
+      <div className="stats-heatmap-legend">
+        <span className="stats-heatmap-legend-item">
+          <span className="stats-heatmap-legend-swatch" style={{ background: '#2E7D32' }} />
+          {t('stats.heatmap.legend.excellent')}
+        </span>
+        <span className="stats-heatmap-legend-item">
+          <span className="stats-heatmap-legend-swatch" style={{ background: '#66BB6A' }} />
+          {t('stats.heatmap.legend.good')}
+        </span>
+        <span className="stats-heatmap-legend-item">
+          <span className="stats-heatmap-legend-swatch" style={{ background: '#FFD54F' }} />
+          {t('stats.heatmap.legend.neutral')}
+        </span>
+        <span className="stats-heatmap-legend-item">
+          <span className="stats-heatmap-legend-swatch" style={{ background: '#FF8A65' }} />
+          {t('stats.heatmap.legend.low')}
+        </span>
+        <span className="stats-heatmap-legend-item">
+          <span className="stats-heatmap-legend-swatch" style={{ background: '#C62828' }} />
+          {t('stats.heatmap.legend.bad')}
+        </span>
       </div>
     </div>
   );
@@ -808,14 +855,27 @@ function ChartRenderer({
 }
 
 // =====================================================================
-// DRILLDOWN MODAL (Chantier 31 : SANS PeriodSelector)
+// DRILLDOWN MODAL — Chantier 39 FUSION
+//   • PeriodSelector réintroduit (contredit 31)
+//   • Pills catégorie (classement) + pills métrique (évolution plat)
+//   • render(period, chartType, { category, metric })
 // =====================================================================
 function DrillDownModal({ drilldown, onClose, t, formatters }) {
+  const [period, setPeriod] = useState(drilldown.initialPeriod || 'month');
   const [chartType, setChartType] = useState(drilldown.initialChartType || 'bar');
+  const [category, setCategory] = useState(drilldown.initialCategory || 'all');
+  const [metric, setMetric] = useState(drilldown.initialMetric || 'qty');
+
+  useEffect(() => {
+    setPeriod(drilldown.initialPeriod || 'month');
+    setChartType(drilldown.initialChartType || 'bar');
+    setCategory(drilldown.initialCategory || 'all');
+    setMetric(drilldown.initialMetric || 'qty');
+  }, [drilldown]);
 
   const content = useMemo(
-    () => drilldown.render(drilldown.initialPeriod || 'month', chartType),
-    [drilldown, chartType]
+    () => drilldown.render(period, chartType, { category, metric }),
+    [drilldown, period, chartType, category, metric]
   );
 
   return (
@@ -825,6 +885,49 @@ function DrillDownModal({ drilldown, onClose, t, formatters }) {
           <h2 className="stats-drilldown-title">{drilldown.title}</h2>
           <button type="button" className="stats-drilldown-close" onClick={onClose} aria-label={t('common.close')}>×</button>
         </div>
+
+        <PeriodSelector period={period} onChange={setPeriod} t={t} />
+
+        {drilldown.showCategorySelector && (
+          <div className="stats-metric-pills" role="tablist">
+            {['all', 'dish', 'drink', 'dessert', 'sauce'].map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={category === k}
+                className={`stats-metric-pill ${category === k ? 'stats-metric-pill--active' : ''}`}
+                style={category === k
+                  ? { background: CATEGORY_COLORS[k] || '#3C91A6', color: '#fff', borderColor: CATEGORY_COLORS[k] || '#3C91A6' }
+                  : { color: CATEGORY_COLORS[k] || '#3C91A6', borderColor: CATEGORY_COLORS[k] || '#3C91A6' }}
+                onClick={() => setCategory(k)}
+              >
+                {k === 'all' ? t('stats.filters.all') : t(`menu.sections.${k}`)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {drilldown.showMetricSelector && (
+          <div className="stats-metric-pills" role="tablist">
+            {['qty', 'revenue', 'margin'].map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={metric === k}
+                className={`stats-metric-pill ${metric === k ? 'stats-metric-pill--active' : ''}`}
+                style={metric === k
+                  ? { background: '#3C91A6', color: '#fff', borderColor: '#3C91A6' }
+                  : { color: '#3C91A6', borderColor: '#3C91A6' }}
+                onClick={() => setMetric(k)}
+              >
+                {t(`stats.metrics.${k}`)}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="stats-drilldown-selectors">
           <ChartTypeToggle chartType={chartType} onChange={setChartType} t={t} />
         </div>
@@ -837,41 +940,52 @@ function DrillDownModal({ drilldown, onClose, t, formatters }) {
 }
 
 // =====================================================================
-// FACTORY : fiche plat détaillée
+// FACTORY : fiche plat détaillée (Chantier 40 : metric + PeriodSelector)
 // =====================================================================
 function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
   return {
     title: dishName,
     initialPeriod: period,
     initialChartType: 'line',
-    render: (p, ct) => {
+    initialMetric: 'qty',
+    showMetricSelector: true,
+    render: (p, ct, { metric = 'qty' }) => {
       const det = getFullRanking(dataset, p).find((x) => x.dish.id === dishId);
-      const seriesData = getDishIndividualSeries(dataset, p, dishId);
+      const seriesData = getDishIndividualSeries(dataset, p, dishId, metric);
       const points = seriesData.series[0]?.points || [];
-      const totalQty = points.reduce((s, pt) => s + pt.value, 0);
+      const unit = metric === 'qty' ? 'number' : 'currency';
+      const labelKey = metric === 'qty' ? dishName : `stats.metrics.${metric}`;
 
-      let lineSeries, donutData, barData, groupedData;
+      const lineSeries = [{ key: dishId, color: '#3C91A6', unit, labelKey, points }];
 
-      lineSeries = [{ key: dishId, color: '#3C91A6', unit: 'number', labelKey: 'stats.metrics.qty', points }];
-
-      barData = points.map((pt) => ({
-        key: pt.key, label: pt.key, value: pt.value, color: '#3C91A6', format: 'number',
+      const barData = points.map((pt) => ({
+        key: pt.key,
+        label: pt.key,
+        value: pt.value,
+        color: '#3C91A6',
+        format: unit,
       }));
 
       const last5 = points.slice(-5).filter((pt) => pt.value > 0);
+      let donutData;
       if (last5.length > 0) {
         const sum5 = last5.reduce((s, pt) => s + pt.value, 0);
         donutData = {
           segments: last5.map((pt, i) => ({
-            key: pt.key, label: pt.key, value: pt.value,
+            key: pt.key,
+            label: pt.key,
+            value: pt.value,
             pct: sum5 > 0 ? (pt.value / sum5) * 100 : 0,
             color: CYCLE_COLORS[i % CYCLE_COLORS.length],
           })),
-          total: sum5, topSegment: null, format: 'number', empty: false,
+          total: sum5,
+          topSegment: null,
+          format: unit,
+          empty: false,
         };
         donutData.topSegment = donutData.segments.reduce((m, s) => (s.value > (m?.value || 0) ? s : m), null);
       } else {
-        donutData = { segments: [], total: 0, topSegment: null, format: 'number', empty: true };
+        donutData = { segments: [], total: 0, topSegment: null, format: unit, empty: true };
       }
 
       const prevRange = getPreviousPeriodRange(p);
@@ -883,12 +997,14 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
         })();
         prevQty = prevPoints > 0 ? Math.round(prevPoints * 0.9) : 0;
       }
-      groupedData = {
-        buckets: [{ key: dishId, label: dishName, current: totalQty, previous: prevQty }],
-        trendPct: prevQty > 0 ? ((totalQty - prevQty) / prevQty) * 100 : 0,
+      const totalVal = points.reduce((s, pt) => s + pt.value, 0);
+      const groupedData = {
+        buckets: [{ key: dishId, label: dishName, current: totalVal, previous: prevQty }],
+        trendPct: prevQty > 0 ? ((totalVal - prevQty) / prevQty) * 100 : 0,
         currentLabel: 'stats.groupedBar.current',
         previousLabel: 'stats.groupedBar.previous',
-        format: 'number', empty: false,
+        format: unit,
+        empty: false,
       };
 
       return {
@@ -919,42 +1035,51 @@ function buildDishDrilldown(dataset, period, dishId, dishName, formatters, t) {
 }
 
 // =====================================================================
-// FACTORY : classement général
+// FACTORY : classement général (Chantier 40 : catégorie + couleurs)
 // =====================================================================
 function buildRankingDrilldown(dataset, period, formatters, t) {
   return {
     title: t('stats.blocks.generalRanking'),
     initialPeriod: period,
     initialChartType: 'bar',
-    render: (p, ct) => {
-      const ranking = getFullRanking(dataset, p);
+    initialCategory: 'all',
+    showCategorySelector: true,
+    render: (p, ct, { category = 'all' }) => {
+      const cat = category === 'all' ? null : category;
+      const ranking = getFullRanking(dataset, p, cat);
       const bars = ranking.map((it) => ({
         key: it.dish.id,
         label: it.dish.name,
         value: it.revenue,
-        color: '#3C91A6',
+        color: CATEGORY_COLORS[it.dish.category] || '#3C91A6',
         subMetrics: [
           { label: 'stats.metrics.qty', value: it.qty, format: 'number' },
           { label: 'stats.metrics.margin', value: it.margin, format: 'currency' },
           { label: 'stats.metrics.marginPct', value: it.marginPct, format: 'percent' },
         ],
       }));
+      const totalRev = ranking.reduce((s, x) => s + x.revenue, 0);
       const donut = {
         segments: ranking.slice(0, 10).filter((it) => it.revenue > 0).map((it, i) => ({
-          key: it.dish.id, label: it.dish.name, value: it.revenue,
-          pct: ranking.reduce((s, x) => s + x.revenue, 0) > 0
-            ? (it.revenue / ranking.reduce((s, x) => s + x.revenue, 0)) * 100 : 0,
+          key: it.dish.id,
+          label: it.dish.name,
+          value: it.revenue,
+          pct: totalRev > 0 ? (it.revenue / totalRev) * 100 : 0,
           color: CYCLE_COLORS[i % CYCLE_COLORS.length],
         })),
-        total: ranking.reduce((s, x) => s + x.revenue, 0),
-        topSegment: null, format: 'currency', empty: ranking.length === 0,
+        total: totalRev,
+        topSegment: null,
+        format: 'currency',
+        empty: ranking.length === 0,
       };
       donut.topSegment = donut.segments[0] || null;
       const lineSeries = ranking.slice(0, 5).map((it, i) => {
         const s = getDishIndividualSeries(dataset, p, it.dish.id);
         return {
-          key: it.dish.id, color: CYCLE_COLORS[i % CYCLE_COLORS.length],
-          unit: 'number', labelKey: 'stats.metrics.qty',
+          key: it.dish.id,
+          color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+          unit: 'number',
+          labelKey: it.dish.name,
           points: s.series[0]?.points || [],
         };
       });
@@ -973,7 +1098,9 @@ function buildRankingDrilldown(dataset, period, formatters, t) {
           />
         ),
         subMetrics: ranking.slice(0, 15).map((it) => ({
-          label: it.dish.name, value: it.revenue, format: 'currency',
+          label: it.dish.name,
+          value: it.revenue,
+          format: 'currency',
         })),
       };
     },
@@ -981,7 +1108,7 @@ function buildRankingDrilldown(dataset, period, formatters, t) {
 }
 
 // =====================================================================
-// ONGLET : VUE D'ENSEMBLE
+// ONGLET : VUE D'ENSEMBLE (Chantier 39 : filtre bar/donut par metric)
 // =====================================================================
 function OverviewTab({ dataset, onNavigate, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_overview_period', DEFAULT_PERIODS.overview);
@@ -993,7 +1120,6 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
   const multi = useMemo(() => getMultiMetricSeries(dataset, period), [dataset, period]);
   const averages = useMemo(() => getDailyAverages(dataset, period), [dataset, period]);
   const top3 = useMemo(() => getDishesRanking(dataset, 3, period), [dataset, period]);
-  const donutData = useMemo(() => getDonutData(dataset, period, 'category'), [dataset, period]);
   const groupedData = useMemo(() => getGroupedBarData(dataset, period, 'revenue'), [dataset, period]);
   const stockValue = useMemo(() => getStockValue(dataset), [dataset]);
   const stockAlerts = useMemo(() => getStockAlertsByPeriod(dataset, period), [dataset, period]);
@@ -1005,15 +1131,15 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
   }, [multi, metricFilter]);
 
   const barData = useMemo(() => [
-    { key: 'revenue', label: 'stats.metrics.revenue', value: summary.totalRevenue, color: SERIES_COLORS.revenue, subMetrics: [
+    { key: 'revenue', label: 'stats.metrics.revenue', value: summary.totalRevenue, color: SERIES_COLORS.revenue, format: 'currency', subMetrics: [
       { label: 'stats.metrics.revenuePerDay', value: averages.revenuePerDay, format: 'currency' },
       { label: 'stats.metrics.total', value: summary.totalRevenue, format: 'currency' },
     ]},
-    { key: 'margin', label: 'stats.metrics.margin', value: summary.grossMargin, color: SERIES_COLORS.margin, subMetrics: [
+    { key: 'margin', label: 'stats.metrics.margin', value: summary.grossMargin, color: SERIES_COLORS.margin, format: 'currency', subMetrics: [
       { label: 'stats.metrics.marginPerDay', value: averages.marginPerDay, format: 'currency' },
       { label: 'stats.metrics.total', value: summary.grossMargin, format: 'currency' },
     ]},
-    { key: 'expenses', label: 'stats.metrics.expenses', value: summary.totalExpenses, color: SERIES_COLORS.expenses, subMetrics: [
+    { key: 'expenses', label: 'stats.metrics.expenses', value: summary.totalExpenses, color: SERIES_COLORS.expenses, format: 'currency', subMetrics: [
       { label: 'stats.metrics.expensesPerDay', value: averages.expensesPerDay, format: 'currency' },
       { label: 'stats.metrics.total', value: summary.totalExpenses, format: 'currency' },
     ]},
@@ -1022,6 +1148,17 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
       { label: 'stats.metrics.total', value: summary.totalItems, format: 'number' },
     ]},
   ], [summary, averages]);
+
+  // Chantier 39 FUSION — filtre barData/donutData par metricFilter
+  const filteredBarData = useMemo(() => {
+    if (metricFilter === 'all') return barData;
+    return barData.filter((b) => b.key === metricFilter);
+  }, [barData, metricFilter]);
+
+  const contextualDonut = useMemo(
+    () => getDonutData(dataset, period, metricFilter === 'all' ? 'category' : metricFilter),
+    [dataset, period, metricFilter]
+  );
 
   const sparklineData = (key) => {
     const s = multi.series.find((ss) => ss.key === key);
@@ -1044,6 +1181,7 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
           label: `menu.sections.${c.key}`,
           value: c.value,
           color: CYCLE_COLORS[c.key === 'dish' ? 0 : c.key === 'drink' ? 1 : c.key === 'dessert' ? 2 : 3],
+          format: isCur ? 'currency' : 'number',
           subMetrics: [
             { label: 'stats.metrics.amount', value: c.value, format: isCur ? 'currency' : 'number' },
             { label: 'stats.metrics.share', value: c.percentage, format: 'percent' },
@@ -1051,10 +1189,15 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
         }));
         const donut = {
           segments: breakdown.categories.filter((c) => c.value > 0).map((c, i) => ({
-            key: c.key, label: `menu.sections.${c.key}`, value: c.value, pct: c.percentage,
+            key: c.key,
+            label: `menu.sections.${c.key}`,
+            value: c.value,
+            pct: c.percentage,
             color: CYCLE_COLORS[i % CYCLE_COLORS.length],
           })),
-          total: breakdown.total, topSegment: null, format: isCur ? 'currency' : 'number',
+          total: breakdown.total,
+          topSegment: null,
+          format: isCur ? 'currency' : 'number',
           empty: breakdown.total === 0,
         };
         donut.topSegment = donut.segments[0] || null;
@@ -1074,7 +1217,9 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
             />
           ),
           subMetrics: breakdown.categories.map((c) => ({
-            label: `menu.sections.${c.key}`, value: c.value, format: isCur ? 'currency' : 'number',
+            label: `menu.sections.${c.key}`,
+            value: c.value,
+            format: isCur ? 'currency' : 'number',
           })),
         };
       },
@@ -1149,13 +1294,13 @@ function OverviewTab({ dataset, onNavigate, t, formatters }) {
         <ChartRenderer
           type={chartType}
           lineSeries={filteredLineSeries}
-          donutData={donutData}
-          barData={barData}
+          donutData={contextualDonut}
+          barData={filteredBarData}
           groupedData={groupedData}
           formatValue={formatters.format}
           formatDateFn={formatters.date}
           t={t}
-          onDonutClick={() => openKpiDrill('revenue')}
+          onDonutClick={() => openKpiDrill(metricFilter === 'all' ? 'revenue' : metricFilter)}
         />
         {summary.closingsCount > 0 && (
           <InsightBanner text={t('stats.insights.overview')
@@ -1241,7 +1386,7 @@ function SalesTab({ dataset, t, formatters }) {
           key: it.dish.id,
           label: it.dish.name,
           value: it.revenue,
-          color: '#3C91A6',
+          color: CATEGORY_COLORS[it.dish.category] || '#3C91A6',
           subMetrics: [
             { label: 'stats.metrics.qty', value: it.qty, format: 'number' },
             { label: 'stats.metrics.marginPct', value: it.marginPct, format: 'percent' },
@@ -1249,20 +1394,26 @@ function SalesTab({ dataset, t, formatters }) {
         }));
         const donut = {
           segments: r.slice(0, 8).filter((it) => it.revenue > 0).map((it, i) => ({
-            key: it.dish.id, label: it.dish.name, value: it.revenue,
+            key: it.dish.id,
+            label: it.dish.name,
+            value: it.revenue,
             pct: r.reduce((s, x) => s + x.revenue, 0) > 0 ? (it.revenue / r.reduce((s, x) => s + x.revenue, 0)) * 100 : 0,
             color: CYCLE_COLORS[i % CYCLE_COLORS.length],
           })),
           total: r.reduce((s, x) => s + x.revenue, 0),
-          topSegment: null, format: 'currency', empty: r.length === 0,
+          topSegment: null,
+          format: 'currency',
+          empty: r.length === 0,
         };
         donut.topSegment = donut.segments[0] || null;
         const topSer = r.slice(0, 5);
         const lineSeriesR = topSer.map((it, i) => {
           const s = getDishIndividualSeries(dataset, p, it.dish.id);
           return {
-            key: it.dish.id, color: CYCLE_COLORS[i % CYCLE_COLORS.length],
-            unit: 'number', labelKey: 'stats.metrics.qty',
+            key: it.dish.id,
+            color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+            unit: 'number',
+            labelKey: it.dish.name,
             points: s.series[0]?.points || [],
           };
         });
@@ -1373,11 +1524,12 @@ function SalesTab({ dataset, t, formatters }) {
 }
 
 // =====================================================================
-// ONGLET : VENTES PAR JOUR DE LA SEMAINE (Chantier 31)
+// ONGLET : VENTES PAR JOUR DE LA SEMAINE + drill-down
 // =====================================================================
 function WeekdaySalesTab({ dataset, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_weekday_period', DEFAULT_PERIODS.weekdaySales);
   const [chartType, setChartType] = usePersistentState('stats_weekday_chart', 'bar');
+  const [drilldown, setDrilldown] = useState(null);
 
   const weekday = useMemo(() => getWeekdaySales(dataset, period), [dataset, period]);
 
@@ -1395,20 +1547,23 @@ function WeekdaySalesTab({ dataset, t, formatters }) {
     ],
   })), [weekday]);
 
-  const donutData = useMemo(() => ({
-    segments: weekday.weekdays.filter((w) => w.revenue > 0).map((w, i) => ({
-      key: w.key,
-      label: `stats.weekdays.${w.key}`,
-      value: w.revenue,
-      pct: w.revenuePct,
-      color: WEEKDAY_COLORS[i],
-    })),
-    total: weekday.totalRevenue,
-    topSegment: null,
-    format: 'currency',
-    empty: weekday.totalRevenue === 0,
-  }), [weekday]);
-  donutData.topSegment = donutData.segments[0] || null;
+  const donutData = useMemo(() => {
+    const d = {
+      segments: weekday.weekdays.filter((w) => w.revenue > 0).map((w, i) => ({
+        key: w.key,
+        label: `stats.weekdays.${w.key}`,
+        value: w.revenue,
+        pct: w.revenuePct,
+        color: WEEKDAY_COLORS[i],
+      })),
+      total: weekday.totalRevenue,
+      topSegment: null,
+      format: 'currency',
+      empty: weekday.totalRevenue === 0,
+    };
+    d.topSegment = d.segments[0] || null;
+    return d;
+  }, [weekday]);
 
   const lineSeries = useMemo(() => [{
     key: 'revenue',
@@ -1431,6 +1586,55 @@ function WeekdaySalesTab({ dataset, t, formatters }) {
     format: 'currency',
     empty: weekday.totalRevenue === 0,
   }), [weekday]);
+
+  const openWeekdayDrill = (wKey) => {
+    setDrilldown({
+      title: t(`stats.weekdays.${wKey}`),
+      initialPeriod: period,
+      initialChartType: 'bar',
+      render: (p, ct) => {
+        const detail = getWeekdayDetail(dataset, p, wKey);
+        const detailBars = detail.dishes.map((d) => ({
+          key: d.dish.id,
+          label: d.dish.name,
+          value: d.revenue,
+          color: '#3C91A6',
+          format: 'currency',
+          subMetrics: [
+            { label: 'stats.metrics.qty', value: d.qty, format: 'number' },
+            { label: 'stats.metrics.margin', value: d.margin, format: 'currency' },
+            { label: 'stats.metrics.marginPct', value: d.marginPct, format: 'percent' },
+          ],
+        }));
+        const evolutionSeries = [{
+          key: wKey,
+          color: WEEKDAY_COLORS[detail.target?.weekday || 0],
+          unit: 'currency',
+          labelKey: `stats.weekdays.${wKey}`,
+          points: detail.evolution,
+        }];
+        return {
+          chart: (
+            <ChartRenderer
+              type={ct}
+              lineSeries={evolutionSeries}
+              barData={detailBars}
+              formatValue={formatters.format}
+              formatDateFn={formatters.date}
+              t={t}
+            />
+          ),
+          subMetrics: detail.target ? [
+            { label: 'stats.metrics.revenue', value: detail.target.revenue, format: 'currency' },
+            { label: 'stats.metrics.margin', value: detail.target.margin, format: 'currency' },
+            { label: 'stats.metrics.items', value: detail.target.items, format: 'number' },
+            { label: 'stats.metrics.revenuePct', value: detail.target.revenuePct, format: 'percent' },
+            { label: 'stats.metrics.days', value: detail.daysCount, format: 'number' },
+          ] : [],
+        };
+      },
+    });
+  };
 
   return (
     <div className="stats-content">
@@ -1459,6 +1663,8 @@ function WeekdaySalesTab({ dataset, t, formatters }) {
           formatValue={formatters.format}
           formatDateFn={formatters.date}
           t={t}
+          onBarClick={(b) => openWeekdayDrill(b.key)}
+          onDonutClick={(seg) => openWeekdayDrill(seg.key)}
         />
         {weekday.best && weekday.worst && weekday.best.key !== weekday.worst.key && (
           <InsightBanner text={t('stats.insights.weekday')
@@ -1469,6 +1675,8 @@ function WeekdaySalesTab({ dataset, t, formatters }) {
               : '0')} />
         )}
       </section>
+
+      {drilldown && <DrillDownModal drilldown={drilldown} onClose={() => setDrilldown(null)} t={t} formatters={formatters} />}
     </div>
   );
 }
@@ -1493,14 +1701,8 @@ function CostsTab({ dataset, t, formatters }) {
   const yieldImpact = useMemo(() => getYieldImpact(dataset), [dataset]);
   const supplierComp = useMemo(() => getSupplierPriceComparison(dataset), [dataset]);
 
-  const oneOffExpenses = useMemo(
-    () => filterExpensesByPeriod(dataset.expenses || [], period),
-    [dataset.expenses, period]
-  );
-  const oneOffTotal = useMemo(
-    () => oneOffExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0),
-    [oneOffExpenses]
-  );
+  const oneOffExpenses = useMemo(() => filterExpensesByPeriod(dataset.expenses || [], period), [dataset.expenses, period]);
+  const oneOffTotal = useMemo(() => oneOffExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0), [oneOffExpenses]);
   const oneOffBars = useMemo(
     () => oneOffExpenses.map((exp) => {
       const name = exp.note || exp.category || '—';
@@ -1804,7 +2006,7 @@ function CostsTab({ dataset, t, formatters }) {
 }
 
 // =====================================================================
-// ONGLET : PERSONNEL
+// ONGLET : PERSONNEL (+ drill-down Chantier 39)
 // =====================================================================
 function StaffTab({ dataset, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_staff_period', DEFAULT_PERIODS.staff);
@@ -1827,12 +2029,70 @@ function StaffTab({ dataset, t, formatters }) {
     setDrilldown({
       title: empName,
       initialPeriod: period,
-      initialChartType: 'bar',
-      render: (p) => {
-        const b = getBarMetrics(dataset, p, 'employees').bars.find((x) => x.key === empId);
+      initialChartType: 'line',
+      render: (p, ct) => {
+        const detail = getEmployeeShiftsDetail(dataset, p, empId);
+        const detailLineSeries = [
+          {
+            key: 'hours',
+            color: '#3C91A6',
+            unit: 'number',
+            labelKey: 'stats.metrics.hours',
+            points: detail.hoursPoints,
+          },
+          {
+            key: 'cost',
+            color: '#FF9800',
+            unit: 'currency',
+            labelKey: 'stats.metrics.cost',
+            points: detail.costPoints,
+          },
+        ];
+        const detailBarData = detail.costPoints.map((pt) => ({
+          key: pt.key,
+          label: pt.key,
+          value: pt.value,
+          color: '#FF9800',
+          format: 'currency',
+        }));
         return {
-          chart: b ? <BarChart bars={[b]} formatValue={formatters.format} formatDateFn={formatters.date} t={t} /> : <EmptyState message={t('stats.noData')} />,
-          subMetrics: b ? b.subMetrics : [],
+          chart: (
+            <div>
+              <ChartRenderer
+                type={ct}
+                lineSeries={detailLineSeries}
+                barData={detailBarData}
+                formatValue={formatters.format}
+                formatDateFn={formatters.date}
+                t={t}
+              />
+              <table className="stats-shift-table">
+                <thead>
+                  <tr>
+                    <th>{t('closing.date')}</th>
+                    <th>{t('stats.metrics.hours')}</th>
+                    <th>{t('stats.metrics.cost')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detail.shiftRows.length === 0 && (
+                    <tr><td colSpan={3}>{t('stats.drillDown.noShifts')}</td></tr>
+                  )}
+                  {detail.shiftRows.map((r, i) => (
+                    <tr key={i}>
+                      <td>{formatters.date(r.date)}</td>
+                      <td>{r.hours.toFixed(1)} h</td>
+                      <td>{formatters.currency(r.cost)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ),
+          subMetrics: [
+            { label: 'stats.metrics.hours', value: detail.totalHours, format: 'number' },
+            { label: 'stats.metrics.cost', value: detail.totalCost, format: 'currency' },
+          ],
         };
       },
     });
@@ -1879,11 +2139,12 @@ function StaffTab({ dataset, t, formatters }) {
 }
 
 // =====================================================================
-// ONGLET : MÉTÉO
+// ONGLET : MÉTÉO (+ drill-down Chantier 39)
 // =====================================================================
 function WeatherTab({ dataset, t, formatters }) {
   const [period, setPeriod] = usePersistentState('stats_weather_period', DEFAULT_PERIODS.weather);
   const [chartType, setChartType] = usePersistentState('stats_weather_chart', 'bar');
+  const [drilldown, setDrilldown] = useState(null);
 
   const weather = useMemo(() => getWeatherBreakdown(dataset, period), [dataset, period]);
   const bars = useMemo(() => getBarMetrics(dataset, period, 'weather').bars, [dataset, period]);
@@ -1900,6 +2161,59 @@ function WeatherTab({ dataset, t, formatters }) {
     key: 'revenue', color: '#FF9800', unit: 'currency', labelKey: 'stats.metrics.revenue',
     points: getKpiSeries(dataset, 'revenue', period),
   }], [dataset, period]);
+
+  const openWeatherDrill = (wKey) => {
+    setDrilldown({
+      title: t(`stats.weather.${wKey}`),
+      initialPeriod: period,
+      initialChartType: 'line',
+      render: (p, ct) => {
+        const detail = getWeatherDetail(dataset, p, wKey);
+        const target = detail.target;
+        const weatherLineSeries = [{
+          key: wKey,
+          color: WEATHER_COLORS[wKey] || '#3C91A6',
+          unit: 'currency',
+          labelKey: `stats.weather.${wKey}`,
+          points: detail.revenuePoints,
+        }];
+        const weatherBarData = detail.allWeathers.map((w) => ({
+          key: w.key,
+          label: `stats.weather.${w.key}`,
+          value: w.revenue,
+          color: WEATHER_COLORS[w.key] || '#BDBDBD',
+          format: 'currency',
+          subMetrics: [
+            { label: 'stats.metrics.days', value: w.days, format: 'number' },
+            { label: 'stats.metrics.revenuePerDay', value: w.avgRevenuePerDay, format: 'currency' },
+            { label: 'stats.metrics.margin', value: w.margin, format: 'currency' },
+            { label: 'stats.metrics.revenuePct', value: w.revenuePct, format: 'percent' },
+          ],
+        }));
+        return {
+          chart: (
+            <ChartRenderer
+              type={ct}
+              lineSeries={weatherLineSeries}
+              barData={weatherBarData}
+              donutData={getDonutData(dataset, p, 'weather')}
+              formatValue={formatters.format}
+              formatDateFn={formatters.date}
+              t={t}
+            />
+          ),
+          subMetrics: target ? [
+            { label: 'stats.metrics.days', value: target.days, format: 'number' },
+            { label: 'stats.metrics.revenue', value: target.revenue, format: 'currency' },
+            { label: 'stats.metrics.revenuePerDay', value: target.avgRevenuePerDay, format: 'currency' },
+            { label: 'stats.metrics.margin', value: target.margin, format: 'currency' },
+            { label: 'stats.metrics.marginPct', value: target.marginPct, format: 'percent' },
+            { label: 'stats.metrics.itemsPerDay', value: target.avgItemsPerDay, format: 'number' },
+          ] : [],
+        };
+      },
+    });
+  };
 
   return (
     <div className="stats-content">
@@ -1926,6 +2240,8 @@ function WeatherTab({ dataset, t, formatters }) {
           formatValue={formatters.format}
           formatDateFn={formatters.date}
           t={t}
+          onBarClick={(b) => openWeatherDrill(b.key)}
+          onDonutClick={(seg) => openWeatherDrill(seg.key)}
         />
         {best && worst && best.key !== worst.key && (
           <InsightBanner text={t('stats.insights.weather')
@@ -1934,6 +2250,8 @@ function WeatherTab({ dataset, t, formatters }) {
             .replace('{impact}', impact.toFixed(0))} />
         )}
       </section>
+
+      {drilldown && <DrillDownModal drilldown={drilldown} onClose={() => setDrilldown(null)} t={t} formatters={formatters} />}
     </div>
   );
 }
@@ -1976,12 +2294,16 @@ function ComparisonTab({ dataset, t, formatters }) {
     const total = items.reduce((s, m) => s + Math.max(0, m.current), 0);
     return {
       segments: items.map((m, i) => ({
-        key: m.key, label: `stats.metrics.${m.key}`, value: Math.max(0, m.current),
-        pct: total > 0 ? (Math.max(0, m.current) / total) * 100 : 0, color: CYCLE_COLORS[i],
+        key: m.key,
+        label: `stats.metrics.${m.key}`,
+        value: Math.max(0, m.current),
+        pct: total > 0 ? (Math.max(0, m.current) / total) * 100 : 0,
+        color: CYCLE_COLORS[i],
       })),
       total,
       topSegment: items[0] ? { key: items[0].key, label: `stats.metrics.${items[0].key}`, pct: total > 0 ? (items[0].current / total) * 100 : 0 } : null,
-      format: 'currency', empty: false,
+      format: 'currency',
+      empty: false,
     };
   }, [tableData]);
 

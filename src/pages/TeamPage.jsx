@@ -1,4 +1,9 @@
 // src/pages/TeamPage.jsx
+// Chantier 38 — Fournisseurs & Bons de Réception
+// - Fusion Fournisseurs + Offres dans `suppliersOffers` (2 sous-onglets)
+// - Bandeau alertes stock + génération commande enrichie (prix)
+// - Bons de réception groupés par période + duplication
+// - Lien Stock ↔ Fournisseur (bouton "Commander chez X")
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useI18n } from '../i18n';
 import {
@@ -13,7 +18,6 @@ import {
   createSupplierOffer,
   createPurchaseReceipt,
   createPurchaseReceiptLine,
-  MENU_CATEGORIES,
   INGREDIENT_CATEGORIES,
   STORAGE_TYPES,
   BASE_UNITS,
@@ -36,17 +40,14 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import Stepper from '../components/Stepper';
 import './TeamPage.css';
 
-// ── Emojis catégories MENU (pour le stock) ──────────────────────────
 const MENU_CATEGORY_EMOJI = { dish: '🥗', drink: '🥤', dessert: '🍰', sauce: '🥫' };
 
-// ── Emojis catégories INGRÉDIENTS v9 ────────────────────────────────
 const INGREDIENT_CATEGORY_EMOJI = {
   meat: '🥩', fish: '🐟', vegetable: '🥬', fruit: '🍎', staple: '🍚',
   dairy: '🧀', spice: '🌿', sauce: '🥫', oil: '🫒', beverage: '🥤',
   packaging: '📦', cleaning: '🧴',
 };
 
-// ── Presets par catégorie (SPEC_UNITES §5) ──────────────────────────
 const CATEGORY_PRESETS = {
   meat: {
     base_unit: 'g',
@@ -169,9 +170,7 @@ const CATEGORY_PRESETS = {
       { label: 'pack 100', quantity_in_base: 100 },
       { label: 'carton 1000', quantity_in_base: 1000 },
     ],
-    recipe_units: [
-      { label: 'piece', quantity_in_base: 1, is_default: true },
-    ],
+    recipe_units: [{ label: 'piece', quantity_in_base: 1, is_default: true }],
   },
   cleaning: {
     base_unit: 'ml',
@@ -179,9 +178,7 @@ const CATEGORY_PRESETS = {
       { label: 'bidon 5L', quantity_in_base: 5000 },
       { label: 'bouteille 1L', quantity_in_base: 1000 },
     ],
-    recipe_units: [
-      { label: 'ml', quantity_in_base: 1, is_default: true },
-    ],
+    recipe_units: [{ label: 'ml', quantity_in_base: 1, is_default: true }],
   },
 };
 
@@ -211,6 +208,76 @@ function tempId() {
   return `tmp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// ---------- Chantier 38 : helpers pour groupement des bons ----------
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
+
+function getReceiptGroupKey(dateStr, period) {
+  if (!dateStr) return 'unknown';
+  if (period === 'all') return 'all';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  if (period === 'day') return dateStr;
+  if (period === 'year') return String(d.getFullYear());
+  if (period === 'month') {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+  if (period === 'week') {
+    return `${d.getFullYear()}-W${String(getWeekNumber(d)).padStart(2, '0')}`;
+  }
+  return dateStr;
+}
+
+function formatReceiptGroupLabel(key, period, locale) {
+  if (period === 'all') return '';
+  if (period === 'day') {
+    const d = new Date(key);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString(locale, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+    return key;
+  }
+  if (period === 'month') {
+    const [year, month] = key.split('-');
+    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString(locale, {
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+  return key;
+}
+
+function useLocalStorageState(key, defaultValue) {
+  const [state, setState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored !== null ? stored : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, state);
+    } catch {
+      /* ignore */
+    }
+  }, [key, state]);
+  return [state, setState];
+}
+
+const RECEIPTS_PERIODS = ['day', 'week', 'month', 'year', 'all'];
+
 function HubCard({ className = '', icon, title, subtitle, onClick }) {
   const handleKey = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -235,16 +302,15 @@ function HubCard({ className = '', icon, title, subtitle, onClick }) {
 
 export default function TeamPage() {
   const { t, formatCurrency } = useI18n();
+  const locale = t('home.locale');
   const [dataset, setDataset] = useState(null);
   const [view, setView] = useState('dashboard');
 
-  // --- MODALES ---
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false, title: '', message: '', onConfirm: null,
   });
 
-  // --- TOAST ---
   const [toast, setToast] = useState({ open: false, message: '', variant: 'success' });
   const showToast = useCallback((message, variant = 'success') => {
     setToast({ open: true, message, variant });
@@ -253,7 +319,6 @@ export default function TeamPage() {
     setToast((prev) => ({ ...prev, open: false }));
   }, []);
 
-  // --- FORMULAIRES ---
   const [empForm, setEmpForm] = useState({
     id: null, name: '', role: '', salary_type: 'monthly', amount: '', days_per_week: 5,
   });
@@ -268,8 +333,8 @@ export default function TeamPage() {
     preferred_supplier_id: '',
     storage_type: 'ambient',
     shelf_life_days: '',
-    stock_quantity: 0,
-    min_stock: 0,
+    stock_quantity: '',
+    min_stock: '',
     track_stock: true,
     yield_factor_pct: 100,
     purchase_options: [],
@@ -284,19 +349,26 @@ export default function TeamPage() {
     id: null, dish_id: '', type: 'percentage', value: '', start_date: '', end_date: '',
   });
 
-  // --- PLANNING (CalendarStrip + BottomSheet) ---
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [taskSheetOpen, setTaskSheetOpen] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [newTaskType, setNewTaskType] = useState('day');
 
-  // --- STOCK / REAPPRO (Chantier 24) ---
   const [reapproSheetOpen, setReapproSheetOpen] = useState(false);
   const [reapproIngredient, setReapproIngredient] = useState(null);
   const [reapproOptionId, setReapproOptionId] = useState('');
   const [reapproQuantity, setReapproQuantity] = useState(1);
+  const [reapproMode, setReapproMode] = useState('direct');
+  const [directQty, setDirectQty] = useState('');
+  const [directUnit, setDirectUnit] = useState('');
 
-  // --- NOUVEAU Chantier 25 : Offres fournisseurs ---
+  const [adjustSheetOpen, setAdjustSheetOpen] = useState(false);
+  const [adjustIngredient, setAdjustIngredient] = useState(null);
+  const [adjustValue, setAdjustValue] = useState('');
+
+  const [orderSheetOpen, setOrderSheetOpen] = useState(false);
+  const [orderText, setOrderText] = useState('');
+
   const emptyOfferForm = {
     id: null,
     ingredient_id: '',
@@ -312,7 +384,6 @@ export default function TeamPage() {
   const [offerForm, setOfferForm] = useState(emptyOfferForm);
   const [offerSheetOpen, setOfferSheetOpen] = useState(false);
 
-  // --- NOUVEAU Chantier 25 : Bons de réception ---
   const emptyReceiptLine = {
     ingredient_id: '',
     purchase_option_id: '',
@@ -333,14 +404,24 @@ export default function TeamPage() {
 
   const selectedDayOfWeek = useMemo(() => {
     const d = selectedDate.getDay();
-    return (d + 6) % 7; // 0 = lundi, 6 = dimanche
+    return (d + 6) % 7;
   }, [selectedDate]);
 
-  // --- FILTRES ---
   const [ingredientFilter, setIngredientFilter] = useState('all');
   const [ingredientSearch, setIngredientSearch] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
   const [supplierSearch, setSupplierSearch] = useState('');
+
+  // Chantier 38 — sous-onglet Fournisseurs/Offres + filtres Offres
+  const [supplierTab, setSupplierTab] = useState('suppliers');
+  const [offerSearch, setOfferSearch] = useState('');
+  const [offerFilter, setOfferFilter] = useState('all');
+
+  // Chantier 38 — période de groupement des bons (persistée)
+  const [receiptsPeriod, setReceiptsPeriod] = useLocalStorageState(
+    'team_receipts_period',
+    'month'
+  );
 
   useEffect(() => {
     setDataset(loadDataset());
@@ -351,7 +432,6 @@ export default function TeamPage() {
     [dataset]
   );
 
-  // --- LISTES FILTRÉES & TRIÉES ---
   const filteredIngredients = useMemo(() => {
     if (!dataset) return [];
     let list = [...(dataset.ingredients || [])].sort(
@@ -373,7 +453,7 @@ export default function TeamPage() {
       (a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0)
     );
     if (stockFilter !== 'all') {
-      list = list.filter((i) => (i.category || 'dish') === stockFilter);
+      list = list.filter((i) => (i.category || '') === stockFilter);
     }
     return list;
   }, [dataset, stockFilter]);
@@ -388,7 +468,87 @@ export default function TeamPage() {
     return list.filter((s) => (s.name || '').toLowerCase().includes(q));
   }, [dataset, supplierSearch]);
 
-  // --- COMMIT (save avant setState pour atomicité) ---
+  const lowStockIngredients = useMemo(() => {
+    if (!dataset) return [];
+    return (dataset.ingredients || []).filter(
+      (i) => i.track_stock !== false && (i.stock_quantity || 0) <= (i.min_stock || 0)
+    );
+  }, [dataset]);
+
+  // Chantier 38 — Groupement des offres par ingrédient (vue "Offres")
+  const groupedOffers = useMemo(() => {
+    if (!dataset) return [];
+    let offers = [...(dataset.supplier_offers || [])];
+
+    if (offerSearch.trim()) {
+      const q = offerSearch.trim().toLowerCase();
+      offers = offers.filter((o) => {
+        const sup = dataset.suppliers.find((s) => s.id === o.supplier_id);
+        return (sup?.name || '').toLowerCase().includes(q);
+      });
+    }
+    if (offerFilter !== 'all') {
+      offers = offers.filter((o) => {
+        const ing = dataset.ingredients.find((i) => i.id === o.ingredient_id);
+        return (ing?.category || '') === offerFilter;
+      });
+    }
+
+    const byIngredient = {};
+    offers.forEach((offer) => {
+      if (!byIngredient[offer.ingredient_id]) byIngredient[offer.ingredient_id] = [];
+      byIngredient[offer.ingredient_id].push(offer);
+    });
+
+    const result = [];
+    Object.entries(byIngredient).forEach(([ingId, ingOffers]) => {
+      const ingredient = dataset.ingredients.find((i) => i.id === ingId);
+      if (!ingredient) return;
+
+      const withPrice = ingOffers
+        .map((offer) => {
+          const opt = (ingredient.purchase_options || []).find(
+            (o) => o.id === offer.purchase_option_id
+          );
+          const pricePerBase =
+            opt && opt.quantity_in_base
+              ? (Number(offer.cost) || 0) / opt.quantity_in_base
+              : Infinity;
+          return { offer, opt, pricePerBase };
+        })
+        .sort((a, b) => a.pricePerBase - b.pricePerBase);
+
+      const bestPrice = withPrice[0]?.pricePerBase || 0;
+      const enriched = withPrice.map((item, idx) => ({
+        ...item,
+        isBest: idx === 0,
+        isPreferred: item.offer.is_preferred === true,
+        diff:
+          bestPrice > 0 && idx > 0
+            ? ((item.pricePerBase - bestPrice) / bestPrice) * 100
+            : 0,
+      }));
+
+      result.push({ ingredient, offers: enriched });
+    });
+    return result;
+  }, [dataset, offerSearch, offerFilter]);
+
+  // Chantier 38 — Groupement des bons par période
+  const groupedReceipts = useMemo(() => {
+    if (!dataset) return {};
+    const receipts = [...(dataset.purchase_receipts || [])].sort((a, b) =>
+      (b.date || '').localeCompare(a.date || '')
+    );
+    const groups = {};
+    receipts.forEach((r) => {
+      const key = getReceiptGroupKey(r.date, receiptsPeriod);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    return groups;
+  }, [dataset, receiptsPeriod]);
+
   function commit(next, options = {}) {
     try {
       saveDataset(next);
@@ -401,7 +561,6 @@ export default function TeamPage() {
     }
   }
 
-  // --- HELPERS ---
   function handleBack() {
     setView('dashboard');
     setIsFormOpen(false);
@@ -411,6 +570,9 @@ export default function TeamPage() {
     setReapproIngredient(null);
     setOfferSheetOpen(false);
     setReceiptSheetOpen(false);
+    setAdjustSheetOpen(false);
+    setAdjustIngredient(null);
+    setOrderSheetOpen(false);
   }
 
   function openConfirm(title, message, onConfirm) {
@@ -471,7 +633,6 @@ export default function TeamPage() {
     commit({ ...dataset, tasks: nextTasks });
   }
 
-  // --- SAUVEGARDE EMPLOYÉS ---
   function saveEmployee(e) {
     e.preventDefault();
     const amount = Number(empForm.amount);
@@ -505,7 +666,6 @@ export default function TeamPage() {
     }
   }
 
-  // --- SAUVEGARDE CHARGES ---
   function saveCost(e) {
     e.preventDefault();
     const amount = Number(costForm.amount);
@@ -537,7 +697,6 @@ export default function TeamPage() {
     }
   }
 
-  // --- SAUVEGARDE INGRÉDIENTS (v9) ---
   function saveIngredient(e) {
     e.preventDefault();
     const yieldFactor = Math.max(0.01, (Number(ingForm.yield_factor_pct) || 100) / 100);
@@ -591,7 +750,6 @@ export default function TeamPage() {
     }
   }
 
-  // --- SAUVEGARDE FOURNISSEURS ---
   function saveSupplier(e) {
     e.preventDefault();
     let nextSups;
@@ -620,7 +778,6 @@ export default function TeamPage() {
     }
   }
 
-  // --- SAUVEGARDE DÉPENSES ---
   function saveExpense(e) {
     e.preventDefault();
     const amount = Number(expForm.amount);
@@ -643,7 +800,6 @@ export default function TeamPage() {
     }
   }
 
-  // --- SAUVEGARDE PROMOTIONS ---
   function savePromotion(e) {
     e.preventDefault();
     const value = Number(promoForm.value);
@@ -667,18 +823,131 @@ export default function TeamPage() {
     }
   }
 
-  // --- ACTIONS STOCK ---
-  function adjustStock(ing, amount) {
-    const nextIngs = dataset.ingredients.map((i) =>
-      i.id === ing.id
-        ? { ...i, stock_quantity: Math.max(0, (i.stock_quantity || 0) + amount) }
-        : i
-    );
-    commit({ ...dataset, ingredients: nextIngs });
+  // ============================================================
+  // HELPERS STOCK (Chantier 37 + 38)
+  // ============================================================
+  function getUnitsForIngredient(ing) {
+    const base = ing?.base_unit || 'g';
+    if (base === 'g') {
+      return [
+        { id: 'g', factor: 1, label: t('common.baseUnits.g.short') },
+        { id: 'kg', factor: 1000, label: t('common.baseUnits.kg.short') },
+      ];
+    }
+    if (base === 'ml') {
+      return [
+        { id: 'ml', factor: 1, label: t('common.baseUnits.ml.short') },
+        { id: 'L', factor: 1000, label: t('common.baseUnits.L.short') },
+      ];
+    }
+    return [{ id: 'piece', factor: 1, label: t('common.baseUnits.piece.short') }];
   }
 
-  // --- RÉAPPROVISIONNEMENT (Chantier 24 — R4.6) ---
-  function openReappro(ing) {
+  function convertToBaseFromUnit(value, unitId, ing) {
+    const units = getUnitsForIngredient(ing);
+    const u = units.find((x) => x.id === unitId) || units[0];
+    return (Number(value) || 0) * u.factor;
+  }
+
+  function getBestOfferForIngredient(ing) {
+    if (!ing) return null;
+    const offers = (dataset.supplier_offers || []).filter(
+      (o) => o.ingredient_id === ing.id && o.is_available !== false
+    );
+    if (offers.length === 0) return null;
+    let best = null;
+    for (const offer of offers) {
+      const opt = (ing.purchase_options || []).find((o) => o.id === offer.purchase_option_id);
+      if (!opt || !opt.quantity_in_base) continue;
+      const pricePerBase = (Number(offer.cost) || 0) / opt.quantity_in_base;
+      if (!best || pricePerBase < best.pricePerBase) {
+        const sup = (dataset.suppliers || []).find((s) => s.id === offer.supplier_id);
+        best = { offer, opt, pricePerBase, supplierName: sup ? sup.name : '' };
+      }
+    }
+    return best;
+  }
+
+  function getLastPurchaseForIngredient(ing) {
+    if (!ing) return null;
+    const receipts = [...(dataset.purchase_receipts || [])]
+      .filter((r) => r.type === 'receipt')
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    for (const r of receipts) {
+      const line = (r.lines || []).find((l) => l.ingredient_id === ing.id);
+      if (line) return { date: r.date, cost: line.cost };
+    }
+    return null;
+  }
+
+  function openAdjustStock(ing) {
+    setAdjustIngredient(ing);
+    setAdjustValue(String(ing.stock_quantity || 0));
+    setAdjustSheetOpen(true);
+  }
+
+  function saveAdjustStock(e) {
+    e.preventDefault();
+    if (!adjustIngredient) return;
+    const num = Number(adjustValue) || 0;
+    const nextIngs = dataset.ingredients.map((i) =>
+      i.id === adjustIngredient.id
+        ? { ...i, stock_quantity: num, stock_alert: num < 0 }
+        : i
+    );
+    const ok = commit({ ...dataset, ingredients: nextIngs }, {
+      success: t('common.success'),
+    });
+    if (ok) {
+      setAdjustSheetOpen(false);
+      setAdjustIngredient(null);
+      setAdjustValue('');
+    }
+  }
+
+  // Chantier 38 — Génération commande ENRICHIE (offre + prix total estimé)
+  function openOrderSheet() {
+    if (lowStockIngredients.length === 0) return;
+    let estimatedTotal = 0;
+    const lines = lowStockIngredients.map((ing, idx) => {
+      const stock = ing.stock_quantity || 0;
+      const min = ing.min_stock || 0;
+      const target = min * 2;
+      const toOrder = Math.max(0, target - stock);
+      const baseUnitShort = t(`common.baseUnits.${ing.base_unit || 'g'}.short`);
+      const bestOffer = getBestOfferForIngredient(ing);
+
+      let offerLine = '';
+      if (bestOffer && bestOffer.opt) {
+        const optQty = Number(bestOffer.opt.quantity_in_base) || 1;
+        const packsNeeded = Math.ceil(toOrder / optQty);
+        const lineTotal = packsNeeded * (Number(bestOffer.offer.cost) || 0);
+        estimatedTotal += lineTotal;
+        offerLine =
+          `\n   → ${bestOffer.supplierName} : ${bestOffer.opt.label} = ` +
+          `${formatCurrency(bestOffer.offer.cost)} × ${packsNeeded} = ${formatCurrency(lineTotal)}`;
+      } else {
+        offerLine = `\n   → ${t('team.stockManagement.noOffer')}`;
+      }
+
+      return (
+        `${idx + 1}. ${ing.name}\n` +
+        `   - Cần: ${toOrder} ${baseUnitShort} ` +
+        `(hiện còn ${stock}${baseUnitShort}, min ${min}${baseUnitShort})` +
+        offerLine
+      );
+    });
+
+    const header = `XIN CHÀO,\nTôi cần đặt hàng:\n\n`;
+    const footer = `\n\n${t('team.stockManagement.estimatedTotal')}: ${formatCurrency(estimatedTotal)}`;
+    setOrderText(`${header}${lines.join('\n\n')}${footer}`);
+    setOrderSheetOpen(true);
+  }
+
+  // ============================================================
+  // RÉAPPRO (Chantier 37 + 38 : accepte un bestOffer pré-sélectionné)
+  // ============================================================
+  function openReappro(ing, preselectedOffer = null) {
     if (!ing || ing.track_stock === false) return;
     const stock = ing.stock_quantity || 0;
     const min = ing.min_stock || 0;
@@ -688,16 +957,26 @@ export default function TeamPage() {
 
     let qty = 1;
     let optionId = '';
+    let mode = 'direct';
 
-    if (options.length > 0) {
-      const opt = options[0];
-      optionId = opt.id;
-      const qtyBase = Number(opt.quantity_in_base) || 1;
-      qty = Math.max(1, Math.ceil(toOrder / qtyBase));
+    if (preselectedOffer && preselectedOffer.opt) {
+      optionId = preselectedOffer.opt.id;
+      const optQtyBase = Number(preselectedOffer.opt.quantity_in_base) || 1;
+      qty = Math.max(1, Math.ceil(toOrder / optQtyBase));
+      mode = 'packaging';
+    } else if (options.length > 0) {
+      optionId = options[0].id;
+      const optQtyBase = Number(options[0].quantity_in_base) || 1;
+      qty = Math.max(1, Math.ceil(toOrder / optQtyBase));
     } else {
       qty = Math.max(1, toOrder);
     }
 
+    const units = getUnitsForIngredient(ing);
+
+    setReapproMode(mode);
+    setDirectQty(toOrder > 0 ? String(toOrder) : '');
+    setDirectUnit(units[0].id);
     setReapproIngredient(ing);
     setReapproOptionId(optionId);
     setReapproQuantity(qty);
@@ -708,18 +987,22 @@ export default function TeamPage() {
     e.preventDefault();
     if (!reapproIngredient) return;
 
-    const options = reapproIngredient.purchase_options || [];
     let addBase = 0;
 
-    if (options.length > 0) {
-      const opt = options.find((o) => o.id === reapproOptionId) || options[0];
-      if (!opt) {
-        showToast(t('common.error'), 'error');
-        return;
-      }
-      addBase = reapproQuantity * (Number(opt.quantity_in_base) || 1);
+    if (reapproMode === 'direct') {
+      addBase = convertToBaseFromUnit(directQty, directUnit, reapproIngredient);
     } else {
-      addBase = reapproQuantity;
+      const options = reapproIngredient.purchase_options || [];
+      if (options.length > 0) {
+        const opt = options.find((o) => o.id === reapproOptionId) || options[0];
+        if (!opt) {
+          showToast(t('common.error'), 'error');
+          return;
+        }
+        addBase = reapproQuantity * (Number(opt.quantity_in_base) || 1);
+      } else {
+        addBase = reapproQuantity;
+      }
     }
 
     if (!Number.isFinite(addBase) || addBase <= 0) return;
@@ -740,7 +1023,6 @@ export default function TeamPage() {
     }
   }
 
-  // --- PLANNING ---
   function nextTaskSortOrder(type, dayOfWeek) {
     const allTasks = dataset.tasks || [];
     const bucket = type === 'day' ? `day_${dayOfWeek}` : type;
@@ -793,7 +1075,6 @@ export default function TeamPage() {
     );
   }
 
-  // --- FORMULAIRE INGRÉDIENT v9 ---
   function openIngredientForm(ing = null) {
     if (ing) {
       setIngForm({
@@ -805,8 +1086,8 @@ export default function TeamPage() {
         preferred_supplier_id: ing.preferred_supplier_id || '',
         storage_type: ing.storage_type || 'ambient',
         shelf_life_days: ing.shelf_life_days != null ? String(ing.shelf_life_days) : '',
-        stock_quantity: ing.stock_quantity || 0,
-        min_stock: ing.min_stock || 0,
+        stock_quantity: ing.stock_quantity || '',
+        min_stock: ing.min_stock || '',
         track_stock: ing.track_stock !== false,
         yield_factor_pct: Math.round((ing.yield_factor || 1) * 100),
         purchase_options: (ing.purchase_options || []).map((o) => ({ ...o, id: o.id || tempId() })),
@@ -835,7 +1116,7 @@ export default function TeamPage() {
       ...f,
       purchase_options: [
         ...f.purchase_options,
-        { id: tempId(), label: '', quantity_in_base: 1 },
+        { id: tempId(), label: '', quantity_in_base: '' },
       ],
     }));
   }
@@ -861,7 +1142,7 @@ export default function TeamPage() {
       ...f,
       recipe_units: [
         ...f.recipe_units,
-        { id: tempId(), label: '', quantity_in_base: 1, is_default: false },
+        { id: tempId(), label: '', quantity_in_base: '', is_default: false },
       ],
     }));
   }
@@ -892,7 +1173,6 @@ export default function TeamPage() {
     }));
   }
 
-  // --- PILLS FILTRE CATÉGORIE (générique) ---
   function renderCategoryFilterPills(currentFilter, onFilterChange, categories, emojiMap, labelPrefix) {
     return (
       <div className="category-filter-row" role="group" aria-label={t('menu.tabs.ingredients')}>
@@ -918,20 +1198,9 @@ export default function TeamPage() {
     );
   }
 
-  // ========== CHANTIER 25 : OFFRES FOURNISSEURS ==========
-
   function getPurchaseOption(ingredient, optionId) {
     if (!ingredient) return null;
     return (ingredient.purchase_options || []).find((o) => o.id === optionId) || null;
-  }
-
-  function getOfferPricePerBase(offer) {
-    if (!offer) return 0;
-    const ingredient = dataset.ingredients.find((i) => i.id === offer.ingredient_id);
-    if (!ingredient) return 0;
-    const opt = getPurchaseOption(ingredient, offer.purchase_option_id);
-    if (!opt || !opt.quantity_in_base) return 0;
-    return (Number(offer.cost) || 0) / opt.quantity_in_base;
   }
 
   function openNewOffer() {
@@ -1008,7 +1277,6 @@ export default function TeamPage() {
       nextOffers.push(newOffer);
     }
 
-    // R4.1 : si is_preferred, mettre à jour reference_unit_cost et désactiver les autres offres préférées
     if (offerForm.is_preferred) {
       nextOffers = nextOffers.map((o) => {
         if (o.ingredient_id === offerForm.ingredient_id && o.id !== newOffer.id) {
@@ -1017,11 +1285,13 @@ export default function TeamPage() {
         return o;
       });
       const refCost = (Number(offerForm.cost) || 0) / purchaseOption.quantity_in_base;
+      const oldCost = ingredient.reference_unit_cost || 0;
       const nextIngredients = dataset.ingredients.map((i) =>
         i.id === offerForm.ingredient_id ? { ...i, reference_unit_cost: refCost } : i
       );
+      const successMsg = `${t('team.supplierOffers.referenceUpdated')} ${ingredient.name} : ${formatCurrency(oldCost)} → ${formatCurrency(refCost)}`;
       const ok = commit({ ...dataset, supplier_offers: nextOffers, ingredients: nextIngredients }, {
-        success: t('common.success'),
+        success: successMsg,
       });
       if (ok) {
         setOfferSheetOpen(false);
@@ -1053,8 +1323,6 @@ export default function TeamPage() {
     );
   }
 
-  // ========== CHANTIER 25 : BONS DE RÉCEPTION ==========
-
   function openNewReceipt() {
     setReceiptForm({
       ...emptyReceiptForm,
@@ -1071,6 +1339,20 @@ export default function TeamPage() {
       supplier_id: receipt.supplier_id,
       date: receipt.date,
       lines: receipt.lines.map((l) => ({ ...l })),
+      notes: receipt.notes || '',
+    });
+    setReceiptSheetOpen(true);
+  }
+
+  // Chantier 38 — Duplication d'un bon (mêmes lignes, date = aujourd'hui)
+  function handleDuplicateReceipt(receipt) {
+    const today = new Date().toISOString().slice(0, 10);
+    setReceiptForm({
+      id: null,
+      type: receipt.type,
+      supplier_id: receipt.supplier_id,
+      date: today,
+      lines: (receipt.lines || []).map((l) => ({ ...l })),
       notes: receipt.notes || '',
     });
     setReceiptSheetOpen(true);
@@ -1163,18 +1445,19 @@ export default function TeamPage() {
       notes: receiptForm.notes || '',
     };
 
-    // Calcul de l'impact stock net (nouveau - ancien si édition)
     const stockDeltas = {};
     if (receiptForm.id) {
       const oldReceipt = dataset.purchase_receipts.find((r) => r.id === receiptForm.id);
       if (oldReceipt) {
         for (const line of oldReceipt.lines) {
-          stockDeltas[line.ingredient_id] = (stockDeltas[line.ingredient_id] || 0) - (line.stock_delta_in_base || 0);
+          stockDeltas[line.ingredient_id] =
+            (stockDeltas[line.ingredient_id] || 0) - (line.stock_delta_in_base || 0);
         }
       }
     }
     for (const line of lines) {
-      stockDeltas[line.ingredient_id] = (stockDeltas[line.ingredient_id] || 0) + (line.stock_delta_in_base || 0);
+      stockDeltas[line.ingredient_id] =
+        (stockDeltas[line.ingredient_id] || 0) + (line.stock_delta_in_base || 0);
     }
 
     const nextIngredients = dataset.ingredients.map((ing) => {
@@ -1208,10 +1491,10 @@ export default function TeamPage() {
       t('common.delete'),
       `${t('common.delete')} "${receipt.id}" ?`,
       () => {
-        // Annuler l'impact stock
         const stockDeltas = {};
         for (const line of receipt.lines) {
-          stockDeltas[line.ingredient_id] = (stockDeltas[line.ingredient_id] || 0) - (line.stock_delta_in_base || 0);
+          stockDeltas[line.ingredient_id] =
+            (stockDeltas[line.ingredient_id] || 0) - (line.stock_delta_in_base || 0);
         }
         const nextIngredients = dataset.ingredients.map((ing) => {
           const delta = stockDeltas[ing.id];
@@ -1231,10 +1514,10 @@ export default function TeamPage() {
     );
   }
 
-  // ========== TITRE DE LA VUE ==========
   function getViewTitle(viewName) {
     const map = {
       ingredients: 'team.costIngredients',
+      suppliersOffers: 'team.suppliersOffers.title',
       supplierOffers: 'team.supplierOffers.title',
       comparator: 'team.comparator.title',
       receipts: 'team.receipts.title',
@@ -1255,11 +1538,8 @@ export default function TeamPage() {
     );
   }
 
-  // --- CALCULS HUB ---
   const activeEmployees = dataset.employees.filter((e) => e.active !== false);
-  const lowStockCount = dataset.ingredients.filter(
-    (i) => i.track_stock !== false && (i.stock_quantity || 0) <= (i.min_stock || 0)
-  ).length;
+  const lowStockCount = lowStockIngredients.length;
   const totalMonthlyCharges = dataset.fixed_costs.reduce((sum, c) => {
     const amount = Number(c.amount) || 0;
     if (c.frequency === 'monthly') return sum + amount;
@@ -1267,7 +1547,6 @@ export default function TeamPage() {
     return sum + amount * 30;
   }, 0);
 
-  // --- TÂCHES PLANNING ---
   const tasksByType = TASK_TYPES.map((type) => {
     const tasks = (dataset.tasks || [])
       .filter((tk) => tk.type === type)
@@ -1281,6 +1560,11 @@ export default function TeamPage() {
     label: t(`team.taskTypes.${type}`),
   }));
 
+  const supplierTabOptions = [
+    { value: 'suppliers', label: t('team.suppliersOffers.tabs.suppliers') },
+    { value: 'offers', label: t('team.suppliersOffers.tabs.offers') },
+  ];
+
   return (
     <div className="team-page">
       <header className="team-header">
@@ -1290,7 +1574,6 @@ export default function TeamPage() {
         </h1>
       </header>
 
-      {/* ================= HUB ================= */}
       {view === 'dashboard' && (
         <div className="management-hub">
           <div className="hub-section">
@@ -1354,33 +1637,19 @@ export default function TeamPage() {
                 }
                 onClick={() => setView('stock')}
               />
-              <HubCard
-                className="card-green"
-                icon="🚚"
-                title={t('team.suppliers')}
-                subtitle={`${dataset.suppliers.length} ${t('team.filters.items')}`}
-                onClick={() => setView('suppliers')}
-              />
             </div>
           </div>
 
-          {/* NOUVELLE SECTION FOURNISSEURS */}
+          {/* Chantier 38 — 2 cartes au lieu de 3 */}
           <div className="hub-section">
             <h2 className="hub-section-title">{t('team.suppliers')}</h2>
             <div className="team-grid">
               <HubCard
                 className="card-blue"
                 icon="🏷️"
-                title={t('team.supplierOffers.title')}
-                subtitle={`${(dataset.supplier_offers || []).length} ${t('team.filters.items')}`}
-                onClick={() => setView('supplierOffers')}
-              />
-              <HubCard
-                className="card-orange"
-                icon="⚖️"
-                title={t('team.comparator.title')}
-                subtitle={t('team.comparator.bestPrice')}
-                onClick={() => setView('comparator')}
+                title={t('team.suppliersOffers.title')}
+                subtitle={`${(dataset.suppliers || []).length + (dataset.supplier_offers || []).length} ${t('team.filters.items')}`}
+                onClick={() => setView('suppliersOffers')}
               />
               <HubCard
                 className="card-green"
@@ -1407,7 +1676,6 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= EMPLOYÉS ================= */}
       {view === 'employees' && (
         <div className="section-container">
           <button
@@ -1490,7 +1758,6 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= CHARGES ================= */}
       {view === 'costs' && (
         <div className="section-container">
           <button
@@ -1563,7 +1830,6 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= INGRÉDIENTS (v9) ================= */}
       {view === 'ingredients' && (
         <div className="section-container">
           <button
@@ -1677,76 +1943,6 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= FOURNISSEURS ================= */}
-      {view === 'suppliers' && (
-        <div className="section-container">
-          <button
-            className="btn-primary full-width"
-            onClick={() => {
-              setSupForm({ id: null, name: '', phone: '', notes: '' });
-              setIsFormOpen(true);
-            }}
-          >
-            + {t('team.addSupplier')}
-          </button>
-
-          <SearchBar
-            value={supplierSearch}
-            onChange={setSupplierSearch}
-            placeholder={t('team.name')}
-            className="team-searchbar"
-          />
-
-          {filteredSuppliers.length === 0 ? (
-            <EmptyState
-              emoji="🚚"
-              title={t('team.noSupplier')}
-              desc={t('team.addSupplier')}
-            />
-          ) : (
-            <div className="list">
-              {filteredSuppliers.map((sup) => (
-                <div key={sup.id} className="list-item">
-                  <div className="list-item-info">
-                    <h4>{sup.name}</h4>
-                    <p>
-                      {sup.phone} {sup.notes && `· ${sup.notes}`}
-                    </p>
-                  </div>
-                  <div className="list-item-actions">
-                    <a
-                      href={`tel:${sup.phone}`}
-                      className="btn-icon"
-                      aria-label={t('team.phone')}
-                    >
-                      📞
-                    </a>
-                    <button
-                      className="btn-edit"
-                      onClick={() => {
-                        setSupForm(sup);
-                        setIsFormOpen(true);
-                      }}
-                      aria-label={t('common.edit')}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDeleteItem('suppliers', sup.id, sup.name)}
-                      aria-label={t('common.delete')}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ================= DÉPENSES ================= */}
       {view === 'expenses' && (
         <div className="section-container">
           <button
@@ -1793,7 +1989,6 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= PROMOTIONS ================= */}
       {view === 'promotions' && (
         <div className="section-container">
           <button
@@ -1849,15 +2044,27 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= STOCK (v9 + Réappro — Chantier 24) ================= */}
       {view === 'stock' && (
         <div className="section-container">
+          {lowStockIngredients.length > 0 && (
+            <div className="stock-alert-banner" role="alert">
+              <span>⚠️ {lowStockIngredients.length} {t('team.stockManagement.reappro')}</span>
+              <button
+                type="button"
+                className="btn-generate-order"
+                onClick={openOrderSheet}
+              >
+                📋 {t('team.stockManagement.generateOrder')}
+              </button>
+            </div>
+          )}
+
           {renderCategoryFilterPills(
             stockFilter,
             setStockFilter,
-            MENU_CATEGORIES,
-            MENU_CATEGORY_EMOJI,
-            'menu.sections'
+            INGREDIENT_CATEGORIES,
+            INGREDIENT_CATEGORY_EMOJI,
+            'ingredientCategories'
           )}
 
           {filteredStock.length === 0 ? (
@@ -1880,9 +2087,11 @@ export default function TeamPage() {
                   ? t(`common.baseUnits.${ing.base_unit}.short`)
                   : unitLabel(t, ing.unit);
                 const categoryEmoji =
-                  MENU_CATEGORY_EMOJI[ing.category]
-                  || INGREDIENT_CATEGORY_EMOJI[ing.category]
+                  INGREDIENT_CATEGORY_EMOJI[ing.category]
+                  || MENU_CATEGORY_EMOJI[ing.category]
                   || '🍽️';
+                const bestOffer = getBestOfferForIngredient(ing);
+                const lastPurchase = getLastPurchaseForIngredient(ing);
 
                 return (
                   <div
@@ -1915,38 +2124,53 @@ export default function TeamPage() {
                           />
                         </div>
                       )}
+                      <div className="stock-prices">
+                        {bestOffer ? (
+                          <>
+                            <span className="stock-price-best">
+                              🏆 {formatCurrency(bestOffer.pricePerBase)}/{baseUnitShort} · {bestOffer.supplierName}
+                            </span>
+                            {lastPurchase && (
+                              <span className="stock-price-secondary">
+                                {t('team.stockManagement.lastPurchase')} : {formatCurrency(lastPurchase.cost)} ({lastPurchase.date})
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="stock-price-empty">
+                            {t('team.stockManagement.noOffer')}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="stock-actions">
                       {trackStock && (
                         <button
                           type="button"
-                          className="btn-reappro"
-                          onClick={() => openReappro(ing)}
+                          className={bestOffer ? 'btn-order-supplier' : 'btn-reappro'}
+                          onClick={() =>
+                            bestOffer ? openReappro(ing, bestOffer) : openReappro(ing)
+                          }
                         >
-                          <span aria-hidden="true">📦</span>
-                          <span className="btn-reappro__label">
-                            {t('team.stockManagement.title')}
-                          </span>
+                          {bestOffer ? (
+                            <>
+                              📞 {t('team.stockManagement.orderFrom')} {bestOffer.supplierName}
+                            </>
+                          ) : (
+                            <>
+                              <span aria-hidden="true">📦</span>{' '}
+                              {t('team.stockManagement.title')}
+                            </>
+                          )}
                         </button>
                       )}
-                      <div className="stock-qty-actions">
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          onClick={() => adjustStock(ing, -1)}
-                          aria-label="−"
-                        >
-                          −
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          onClick={() => adjustStock(ing, 1)}
-                          aria-label="+"
-                        >
-                          +
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        className="btn-adjust"
+                        onClick={() => openAdjustStock(ing)}
+                      >
+                        ✏️ {t('team.stockManagement.adjust')}
+                      </button>
                     </div>
                   </div>
                 );
@@ -1956,7 +2180,6 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= PLANNING ================= */}
       {view === 'planning' && (
         <div className="section-container">
           <CalendarStrip
@@ -2055,56 +2278,197 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= CHANTIER 25 : OFFRES FOURNISSEURS ================= */}
-      {view === 'supplierOffers' && (
+      {/* ============================================================
+          VUE FUSIONNÉE Fournisseurs & Offres — Chantier 38
+          ============================================================ */}
+      {view === 'suppliersOffers' && (
         <div className="section-container">
-          <button className="btn-primary full-width" onClick={openNewOffer}>
-            + {t('team.supplierOffers.add')}
-          </button>
-          {(dataset.supplier_offers || []).length === 0 ? (
-            <EmptyState emoji="🏷️" title={t('team.supplierOffers.empty')} />
-          ) : (
-            <div className="list">
-              {dataset.supplier_offers.map((offer) => {
-                const ing = dataset.ingredients.find((i) => i.id === offer.ingredient_id);
-                const sup = dataset.suppliers.find((s) => s.id === offer.supplier_id);
-                const opt = ing && getPurchaseOption(ing, offer.purchase_option_id);
-                return (
-                  <div key={offer.id} className="list-item">
-                    <div className="list-item-info">
-                      <h4>
-                        {ing ? ing.name : '?'} · {sup ? sup.name : '?'}
-                      </h4>
-                      <p>
-                        {opt ? opt.label : '?'} · {formatCurrency(offer.cost)} ·{' '}
-                        {offer.is_preferred && '⭐'} {offer.is_available ? '' : '❌'}
-                      </p>
-                    </div>
-                    <div className="list-item-actions">
-                      <button
-                        className="btn-edit"
-                        onClick={() => openEditOffer(offer)}
-                        aria-label={t('common.edit')}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="btn-delete"
-                        onClick={() => handleDeleteOffer(offer)}
-                        aria-label={t('common.delete')}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+          {lowStockIngredients.length > 0 && (
+            <div className="supplier-alert-banner" role="alert">
+              <span>⚠️ {lowStockIngredients.length} {t('team.stockManagement.reappro')}</span>
+              <button
+                type="button"
+                className="btn-generate-order"
+                onClick={openOrderSheet}
+              >
+                📋 {t('team.stockManagement.generateOrder')}
+              </button>
             </div>
+          )}
+
+          <div className="suppliers-offers-tabs">
+            <PillSelector
+              value={supplierTab}
+              options={supplierTabOptions}
+              onChange={setSupplierTab}
+              ariaLabel={t('team.suppliersOffers.title')}
+            />
+          </div>
+
+          {supplierTab === 'suppliers' && (
+            <>
+              <button
+                className="btn-primary full-width"
+                onClick={() => {
+                  setSupForm({ id: null, name: '', phone: '', notes: '' });
+                  setIsFormOpen(true);
+                }}
+              >
+                + {t('team.addSupplier')}
+              </button>
+
+              <SearchBar
+                value={supplierSearch}
+                onChange={setSupplierSearch}
+                placeholder={t('team.name')}
+                className="team-searchbar"
+              />
+
+              {filteredSuppliers.length === 0 ? (
+                <EmptyState
+                  emoji="🚚"
+                  title={t('team.noSupplier')}
+                  desc={t('team.addSupplier')}
+                />
+              ) : (
+                <div className="list">
+                  {filteredSuppliers.map((sup) => (
+                    <div key={sup.id} className="list-item">
+                      <div className="list-item-info">
+                        <h4>{sup.name}</h4>
+                        <p>
+                          {sup.phone} {sup.notes && `· ${sup.notes}`}
+                        </p>
+                      </div>
+                      <div className="list-item-actions">
+                        <a
+                          href={`tel:${sup.phone}`}
+                          className="btn-icon"
+                          aria-label={t('team.phone')}
+                        >
+                          📞
+                        </a>
+                        <button
+                          className="btn-edit"
+                          onClick={() => {
+                            setSupForm(sup);
+                            setIsFormOpen(true);
+                          }}
+                          aria-label={t('common.edit')}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn-delete"
+                          onClick={() => handleDeleteItem('suppliers', sup.id, sup.name)}
+                          aria-label={t('common.delete')}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {supplierTab === 'offers' && (
+            <>
+              <button className="btn-primary full-width" onClick={openNewOffer}>
+                + {t('team.supplierOffers.add')}
+              </button>
+
+              <SearchBar
+                value={offerSearch}
+                onChange={setOfferSearch}
+                placeholder={t('team.supplierOffers.fields.supplier')}
+                className="team-searchbar"
+              />
+
+              {renderCategoryFilterPills(
+                offerFilter,
+                setOfferFilter,
+                INGREDIENT_CATEGORIES,
+                INGREDIENT_CATEGORY_EMOJI,
+                'ingredientCategories'
+              )}
+
+              {groupedOffers.length === 0 ? (
+                <EmptyState emoji="🏷️" title={t('team.supplierOffers.empty')} />
+              ) : (
+                <div className="offer-groups">
+                  {groupedOffers.map(({ ingredient, offers }) => {
+                    const baseUnitShort = t(`common.baseUnits.${ingredient.base_unit}.short`);
+                    const catEmoji = INGREDIENT_CATEGORY_EMOJI[ingredient.category] || '🍽️';
+                    return (
+                      <div key={ingredient.id} className="offer-group">
+                        <h4 className="offer-group__title">
+                          <span aria-hidden="true">{catEmoji}</span> {ingredient.name}{' '}
+                          <span className="offer-group__unit">({baseUnitShort})</span>
+                        </h4>
+                        <div className="offer-group__rows">
+                          {offers.map(({ offer, opt, pricePerBase, isBest, isPreferred, diff }) => {
+                            const sup = dataset.suppliers.find((s) => s.id === offer.supplier_id);
+                            return (
+                              <div
+                                key={offer.id}
+                                className={`offer-row ${isBest ? 'offer-row--best' : ''}`}
+                              >
+                                <div className="offer-row__main">
+                                  <span className="offer-row__supplier">
+                                    {sup ? sup.name : '?'}
+                                  </span>
+                                  <span className="offer-row__pack">
+                                    {opt ? opt.label : '?'}
+                                  </span>
+                                  <span className="offer-row__price">
+                                    {formatCurrency(offer.cost)}
+                                  </span>
+                                  <span className="offer-row__unit-price">
+                                    {formatCurrency(pricePerBase)}/{baseUnitShort}
+                                  </span>
+                                  {!isBest && (
+                                    <span className="offer-row__diff">+{diff.toFixed(1)}%</span>
+                                  )}
+                                  <span className="offer-row__badges">
+                                    {isBest && <span title={t('team.comparator.bestPrice')}>🏆</span>}
+                                    {isPreferred && <span title={t('team.comparator.preferred')}>⭐</span>}
+                                  </span>
+                                </div>
+                                <div className="offer-row__actions">
+                                  <button
+                                    type="button"
+                                    className="btn-edit"
+                                    onClick={() => openEditOffer(offer)}
+                                    aria-label={t('common.edit')}
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-delete"
+                                    onClick={() => handleDeleteOffer(offer)}
+                                    aria-label={t('common.delete')}
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
 
-      {/* ================= CHANTIER 25 : COMPARATEUR ================= */}
+      {/* Vue COMPARATEUR conservée pour rétrocompat (accessible via state) */}
       {view === 'comparator' && (
         <div className="section-container">
           {(() => {
@@ -2177,55 +2541,87 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ================= CHANTIER 25 : BONS DE RÉCEPTION ================= */}
+      {/* ============================================================
+          VUE BONS DE RÉCEPTION — Chantier 38 (groupement + duplication)
+          ============================================================ */}
       {view === 'receipts' && (
         <div className="section-container">
           <button className="btn-primary full-width" onClick={openNewReceipt}>
             + {t('team.receipts.add')}
           </button>
-          {(dataset.purchase_receipts || []).length === 0 ? (
+
+          {/* Sélecteur de période */}
+          <div className="category-filter-row" role="group" aria-label={t('team.receipts.title')}>
+            {RECEIPTS_PERIODS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`filter-pill ${receiptsPeriod === p ? 'filter-pill--active' : ''}`}
+                onClick={() => setReceiptsPeriod(p)}
+              >
+                {p === 'all' ? t('stats.filters.all') : t(`stats.periods.${p}`)}
+              </button>
+            ))}
+          </div>
+
+          {Object.keys(groupedReceipts).length === 0 ? (
             <EmptyState emoji="📄" title={t('team.receipts.empty')} />
           ) : (
-            <div className="list">
-              {dataset.purchase_receipts.map((receipt) => {
-                const sup = dataset.suppliers.find((s) => s.id === receipt.supplier_id);
-                return (
-                  <div key={receipt.id} className="list-item">
-                    <div className="list-item-info">
-                      <h4>
-                        {t(`team.receipts.types.${receipt.type}`)} · {receipt.date}
-                        {sup && ` · ${sup.name}`}
-                      </h4>
-                      <p>
-                        {receipt.lines.length} {t('team.receipts.fields.lines').toLowerCase()} ·{' '}
-                        {formatCurrency(receipt.total)}
-                      </p>
+            Object.entries(groupedReceipts).map(([key, receipts]) => (
+              <div key={key} className="receipt-group">
+                {receiptsPeriod !== 'all' && (
+                  <h3 className="receipt-group__title">
+                    {formatReceiptGroupLabel(key, receiptsPeriod, locale)}
+                  </h3>
+                )}
+                {receipts.map((receipt) => {
+                  const sup = dataset.suppliers.find((s) => s.id === receipt.supplier_id);
+                  return (
+                    <div key={receipt.id} className="list-item receipt-card">
+                      <div className="list-item-info">
+                        <h4>
+                          {t(`team.receipts.types.${receipt.type}`)} · {receipt.date}
+                          {sup && ` · ${sup.name}`}
+                        </h4>
+                        <p>
+                          {receipt.lines.length} {t('team.receipts.fields.lines').toLowerCase()} ·{' '}
+                          {formatCurrency(receipt.total)}
+                        </p>
+                      </div>
+                      <div className="receipt-card__actions">
+                        <button
+                          type="button"
+                          className="btn-duplicate"
+                          onClick={() => handleDuplicateReceipt(receipt)}
+                        >
+                          📋 {t('team.receipts.duplicate')}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-edit"
+                          onClick={() => openEditReceipt(receipt)}
+                          aria-label={t('common.edit')}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-delete"
+                          onClick={() => handleDeleteReceipt(receipt)}
+                          aria-label={t('common.delete')}
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
-                    <div className="list-item-actions">
-                      <button
-                        className="btn-edit"
-                        onClick={() => openEditReceipt(receipt)}
-                        aria-label={t('common.edit')}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="btn-delete"
-                        onClick={() => handleDeleteReceipt(receipt)}
-                        aria-label={t('common.delete')}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ))
           )}
         </div>
       )}
 
-      {/* ================= BOTTOM SHEET AJOUT TÂCHE ================= */}
       <BottomSheet
         open={taskSheetOpen}
         onClose={() => setTaskSheetOpen(false)}
@@ -2253,147 +2649,105 @@ export default function TeamPage() {
         </form>
       </BottomSheet>
 
-      {/* ================= BOTTOM SHEET INGRÉDIENT v9 ================= */}
       <BottomSheet
         open={ingredientSheetOpen}
         onClose={() => setIngredientSheetOpen(false)}
         title={ingForm.id ? t('common.edit') : t('menu.ingredients.add')}
       >
         <form className="form-card" onSubmit={saveIngredient}>
-          <input
-            className="form-input"
-            type="text"
-            placeholder={t('menu.ingredients.name')}
-            value={ingForm.name}
-            onChange={(e) => setIngForm({ ...ingForm, name: e.target.value })}
-            required
-          />
-
-          <div className="ingredient-form-row">
-            <select
-              className="form-select"
-              value={ingForm.category}
-              onChange={(e) => setIngForm({ ...ingForm, category: e.target.value })}
-            >
-              {INGREDIENT_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {INGREDIENT_CATEGORY_EMOJI[cat]} {t(`ingredientCategories.${cat}`)}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="preset-btn"
-              onClick={applyPresets}
-              aria-label={t('team.ingredientV9.purchaseOptions')}
-            >
-              {t('common.add')}
-            </button>
-          </div>
-
-          <div className="ingredient-form-row">
-            <select
-              className="form-select"
-              value={ingForm.base_unit}
-              onChange={(e) => setIngForm({ ...ingForm, base_unit: e.target.value })}
-            >
-              {BASE_UNITS.map((u) => (
-                <option key={u} value={u}>
-                  {t(`common.baseUnits.${u}.label`)}
-                </option>
-              ))}
-            </select>
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.ingredientV9.sections.general')}
+            </span>
             <input
               className="form-input"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder={`${t('team.ingredientV9.referenceUnitCost')} / ${t(`common.baseUnits.${ingForm.base_unit}.short`)}`}
-              value={ingForm.reference_unit_cost}
-              onChange={(e) => setIngForm({ ...ingForm, reference_unit_cost: e.target.value })}
+              type="text"
+              placeholder={t('menu.ingredients.name')}
+              value={ingForm.name}
+              onChange={(e) => setIngForm({ ...ingForm, name: e.target.value })}
               required
             />
-          </div>
-
-          <select
-            className="form-select"
-            value={ingForm.preferred_supplier_id}
-            onChange={(e) => setIngForm({ ...ingForm, preferred_supplier_id: e.target.value })}
-          >
-            <option value="">{t('team.noSupplier')}</option>
-            {dataset.suppliers.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-
-          <div className="ingredient-form-row">
-            <select
-              className="form-select"
-              value={ingForm.storage_type}
-              onChange={(e) => setIngForm({ ...ingForm, storage_type: e.target.value })}
-            >
-              {STORAGE_TYPES.map((st) => (
-                <option key={st} value={st}>{t(`storageTypes.${st}`)}</option>
-              ))}
-            </select>
-            <input
-              className="form-input"
-              type="number"
-              min="0"
-              placeholder={t('team.ingredientV9.shelfLifeDays')}
-              value={ingForm.shelf_life_days}
-              onChange={(e) => setIngForm({ ...ingForm, shelf_life_days: e.target.value })}
-            />
-          </div>
-
-          <div className="ingredient-form-row">
-            <input
-              className="form-input"
-              type="number"
-              min="0"
-              placeholder={t('team.ingredientV9.stockQuantity')}
-              value={ingForm.stock_quantity}
-              onChange={(e) => setIngForm({ ...ingForm, stock_quantity: e.target.value })}
-            />
-            <input
-              className="form-input"
-              type="number"
-              min="0"
-              placeholder={t('team.ingredientV9.minStock')}
-              value={ingForm.min_stock}
-              onChange={(e) => setIngForm({ ...ingForm, min_stock: e.target.value })}
-            />
-          </div>
-
-          <div className="checkbox-row">
-            <input
-              id="track-stock"
-              type="checkbox"
-              checked={ingForm.track_stock}
-              onChange={(e) => setIngForm({ ...ingForm, track_stock: e.target.checked })}
-            />
-            <label htmlFor="track-stock">{t('team.ingredientV9.trackStock')}</label>
-          </div>
-
-          <div className="ingredient-form-row">
-            <input
-              className="form-input"
-              type="number"
-              min="1"
-              max="100"
-              placeholder={t('team.ingredientV9.yieldFactor')}
-              value={ingForm.yield_factor_pct}
-              onChange={(e) => setIngForm({ ...ingForm, yield_factor_pct: e.target.value })}
-            />
-            <span style={{ fontSize: '0.85rem', color: '#8A8A8A', flex: '0 0 auto' }}>
-              %
-            </span>
+            <div className="ingredient-form-row">
+              <select
+                className="form-select"
+                value={ingForm.category}
+                onChange={(e) => setIngForm({ ...ingForm, category: e.target.value })}
+              >
+                {INGREDIENT_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {INGREDIENT_CATEGORY_EMOJI[cat]} {t(`ingredientCategories.${cat}`)}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="preset-btn"
+                onClick={applyPresets}
+                aria-label={t('team.ingredientV9.purchaseOptions')}
+              >
+                {t('common.add')}
+              </button>
+            </div>
           </div>
 
           <div className="ingredient-form-section">
             <span className="ingredient-form-section-title">
-              {t('team.ingredientV9.purchaseOptions')}
+              {t('team.ingredientV9.sections.baseUnit')}
             </span>
+            <div className="ingredient-form-row">
+              <select
+                className="form-select"
+                value={ingForm.base_unit}
+                onChange={(e) => setIngForm({ ...ingForm, base_unit: e.target.value })}
+              >
+                {BASE_UNITS.map((u) => (
+                  <option key={u} value={u}>
+                    {t(`common.baseUnits.${u}.label`)}
+                  </option>
+                ))}
+              </select>
+              <input
+                className="form-input"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder={`${t('team.ingredientV9.costPer')} ${t(`common.baseUnits.${ingForm.base_unit}.short`)}`}
+                value={ingForm.reference_unit_cost}
+                onChange={(e) => setIngForm({ ...ingForm, reference_unit_cost: e.target.value })}
+                required
+              />
+            </div>
+            <div className="ingredient-form-row">
+              <input
+                className="form-input"
+                type="number"
+                min="1"
+                max="100"
+                placeholder={t('team.ingredientV9.yieldFactor')}
+                value={ingForm.yield_factor_pct}
+                onChange={(e) => setIngForm({ ...ingForm, yield_factor_pct: e.target.value })}
+              />
+              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', flex: '0 0 auto' }}>
+                %
+              </span>
+            </div>
+            <p className="form-hint">{t('team.ingredientV9.yieldHint')}</p>
+            <div className="checkbox-row">
+              <input
+                id="track-stock"
+                type="checkbox"
+                checked={ingForm.track_stock}
+                onChange={(e) => setIngForm({ ...ingForm, track_stock: e.target.checked })}
+              />
+              <label htmlFor="track-stock">{t('team.ingredientV9.trackStock')}</label>
+            </div>
+          </div>
+
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.ingredientV9.sections.purchaseOptions')}
+            </span>
+            <p className="form-hint">{t('team.ingredientV9.purchaseOptionsTitle')}</p>
             <div className="dynamic-list">
               {ingForm.purchase_options.map((opt) => (
                 <div key={opt.id} className="dynamic-row">
@@ -2431,12 +2785,14 @@ export default function TeamPage() {
             <button type="button" className="dynamic-add-btn" onClick={addPurchaseOption}>
               + {t('team.ingredientV9.addPurchaseOption')}
             </button>
+            <p className="form-hint">{t('team.ingredientV9.purchaseOptionsHint')}</p>
           </div>
 
           <div className="ingredient-form-section">
             <span className="ingredient-form-section-title">
-              {t('team.ingredientV9.recipeUnits')}
+              {t('team.ingredientV9.sections.recipeUnits')}
             </span>
+            <p className="form-hint">{t('team.ingredientV9.recipeUnitsTitle')}</p>
             <div className="dynamic-list">
               {ingForm.recipe_units.map((unit) => (
                 <div key={unit.id} className="dynamic-row">
@@ -2457,14 +2813,19 @@ export default function TeamPage() {
                       value={unit.quantity_in_base}
                       onChange={(e) => updateRecipeUnit(unit.id, 'quantity_in_base', e.target.value)}
                     />
-                    <input
-                      className="default-radio"
-                      type="radio"
-                      name="default-recipe-unit"
-                      checked={unit.is_default === true}
-                      onChange={() => setDefaultRecipeUnit(unit.id)}
-                      aria-label={t('common.save')}
-                    />
+                    <div className="checkbox-row" style={{ flex: '0 0 auto', minHeight: 'auto', paddingTop: '4px' }}>
+                      <input
+                        className="default-radio"
+                        type="radio"
+                        name="default-recipe-unit"
+                        checked={unit.is_default === true}
+                        onChange={() => setDefaultRecipeUnit(unit.id)}
+                        id={`default-ru-${unit.id}`}
+                      />
+                      <label htmlFor={`default-ru-${unit.id}`} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap', fontWeight: 'normal' }}>
+                        {t('team.ingredientV9.defaultUnit')}
+                      </label>
+                    </div>
                   </div>
                   <div className="dynamic-row-actions">
                     <button
@@ -2482,15 +2843,83 @@ export default function TeamPage() {
             <button type="button" className="dynamic-add-btn" onClick={addRecipeUnit}>
               + {t('team.ingredientV9.addRecipeUnit')}
             </button>
+            <p className="form-hint">{t('team.ingredientV9.recipeUnitsHint')}</p>
           </div>
 
-          <button type="submit" className="btn-primary">
-            {t('common.save')}
-          </button>
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.ingredientV9.sections.stock')}
+            </span>
+            <div className="ingredient-form-row">
+              <input
+                className="form-input"
+                type="number"
+                step="any"
+                placeholder={t('team.ingredientV9.stockQuantity')}
+                value={ingForm.stock_quantity}
+                onChange={(e) => setIngForm({ ...ingForm, stock_quantity: e.target.value })}
+              />
+              <input
+                className="form-input"
+                type="number"
+                min="0"
+                placeholder={t('team.ingredientV9.minStock')}
+                value={ingForm.min_stock}
+                onChange={(e) => setIngForm({ ...ingForm, min_stock: e.target.value })}
+              />
+            </div>
+            <div className="ingredient-form-row">
+              <select
+                className="form-select"
+                value={ingForm.storage_type}
+                onChange={(e) => setIngForm({ ...ingForm, storage_type: e.target.value })}
+              >
+                {STORAGE_TYPES.map((st) => (
+                  <option key={st} value={st}>{t(`storageTypes.${st}`)}</option>
+                ))}
+              </select>
+              <input
+                className="form-input"
+                type="number"
+                min="0"
+                placeholder={t('team.ingredientV9.shelfLifeDays')}
+                value={ingForm.shelf_life_days}
+                onChange={(e) => setIngForm({ ...ingForm, shelf_life_days: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.ingredientV9.sections.supplier')}
+            </span>
+            <select
+              className="form-select"
+              value={ingForm.preferred_supplier_id}
+              onChange={(e) => setIngForm({ ...ingForm, preferred_supplier_id: e.target.value })}
+            >
+              <option value="">{t('team.noSupplier')}</option>
+              {dataset.suppliers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setIngredientSheetOpen(false)}
+            >
+              {t('common.cancel')}
+            </button>
+            <button type="submit" className="btn-primary">
+              {t('common.save')}
+            </button>
+          </div>
         </form>
       </BottomSheet>
 
-      {/* ================= BOTTOM SHEET RÉAPPROVISIONNEMENT (Chantier 24) ================= */}
       <BottomSheet
         open={reapproSheetOpen}
         onClose={() => { setReapproSheetOpen(false); setReapproIngredient(null); }}
@@ -2508,13 +2937,22 @@ export default function TeamPage() {
           const options = reapproIngredient.purchase_options || [];
           const selectedOption =
             options.find((o) => o.id === reapproOptionId) || options[0];
-          const addBase =
-            options.length > 0
-              ? reapproQuantity * (Number(selectedOption?.quantity_in_base) || 1)
-              : reapproQuantity;
           const baseUnitShort = reapproIngredient.base_unit
             ? t(`common.baseUnits.${reapproIngredient.base_unit}.short`)
             : '';
+          const units = getUnitsForIngredient(reapproIngredient);
+          const directAddBase = convertToBaseFromUnit(directQty, directUnit, reapproIngredient);
+          const directNewStock = stock + directAddBase;
+          const packAddBase =
+            options.length > 0
+              ? reapproQuantity * (Number(selectedOption?.quantity_in_base) || 1)
+              : reapproQuantity;
+          const packNewStock = stock + packAddBase;
+
+          const modeOptions = [
+            { value: 'direct', label: t('team.stockManagement.directInput') },
+            { value: 'packaging', label: t('team.stockManagement.byPackaging') },
+          ];
 
           return (
             <form className="form-card" onSubmit={saveReappro}>
@@ -2529,41 +2967,97 @@ export default function TeamPage() {
                 </div>
               </div>
 
-              {options.length > 0 && (
-                <select
-                  className="form-select"
-                  value={reapproOptionId}
-                  onChange={(e) => setReapproOptionId(e.target.value)}
-                  aria-label={t('team.ingredientV9.purchaseOptions')}
-                >
-                  {options.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.label} ({o.quantity_in_base} {baseUnitShort})
-                    </option>
-                  ))}
-                </select>
+              <PillSelector
+                value={reapproMode}
+                options={modeOptions}
+                onChange={setReapproMode}
+                ariaLabel={t('team.stockManagement.title')}
+              />
+
+              {reapproMode === 'direct' && (
+                <div className="reappro-direct">
+                  <label className="reappro-label">
+                    {t('team.stockManagement.directInput')}
+                  </label>
+                  <div className="reappro-input-row">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      className="form-input"
+                      value={directQty}
+                      onChange={(e) => setDirectQty(e.target.value)}
+                      placeholder="0"
+                      autoFocus
+                    />
+                    <select
+                      className="form-select"
+                      value={directUnit}
+                      onChange={(e) => setDirectUnit(e.target.value)}
+                    >
+                      {units.map((u) => (
+                        <option key={u.id} value={u.id}>{u.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="reappro-preview">
+                    <span>{t('team.stockManagement.newStock')}</span>
+                    <strong>
+                      {stock} + {directAddBase} = {directNewStock} {baseUnitShort}
+                    </strong>
+                  </div>
+                </div>
               )}
 
-              <div className="reappro-stepper-row">
-                <span className="reappro-label">
-                  {options.length > 0
-                    ? t('team.stockManagement.packCount')
-                    : baseUnitShort}
-                </span>
-                <Stepper
-                  value={reapproQuantity}
-                  min={1}
-                  max={9999}
-                  onChange={setReapproQuantity}
-                />
-              </div>
-
-              <div className="reappro-preview">
-                <span>{t('team.ingredientV9.stockQuantity')}</span>
-                <strong>
-                  + {addBase} {baseUnitShort}
-                </strong>
-              </div>
+              {reapproMode === 'packaging' && (
+                <div className="reappro-pack">
+                  <label className="reappro-label">
+                    {t('team.stockManagement.byPackaging')}
+                  </label>
+                  {options.length > 0 ? (
+                    <>
+                      <select
+                        className="form-select"
+                        value={reapproOptionId}
+                        onChange={(e) => setReapproOptionId(e.target.value)}
+                      >
+                        {options.map((o) => (
+                          <option key={o.id} value={o.id}>
+                            {o.label} ({o.quantity_in_base} {baseUnitShort})
+                          </option>
+                        ))}
+                      </select>
+                      <div className="reappro-stepper-row">
+                        <span className="reappro-label">
+                          {t('team.stockManagement.packCount')}
+                        </span>
+                        <Stepper
+                          value={reapproQuantity}
+                          min={1}
+                          max={9999}
+                          onChange={setReapproQuantity}
+                        />
+                      </div>
+                      <div className="reappro-preview">
+                        <span>{t('team.stockManagement.newStock')}</span>
+                        <strong>
+                          {stock} + {packAddBase} = {packNewStock} {baseUnitShort}
+                        </strong>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="reappro-stepper-row">
+                      <span className="reappro-label">{baseUnitShort}</span>
+                      <Stepper
+                        value={reapproQuantity}
+                        min={1}
+                        max={9999}
+                        onChange={setReapproQuantity}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button type="submit" className="btn-primary">
                 {t('common.save')}
@@ -2573,118 +3067,203 @@ export default function TeamPage() {
         })()}
       </BottomSheet>
 
-      {/* ================= CHANTIER 25 : BOTTOM SHEET OFFRE FOURNISSEUR ================= */}
+      <BottomSheet
+        open={adjustSheetOpen}
+        onClose={() => { setAdjustSheetOpen(false); setAdjustIngredient(null); }}
+        title={t('team.stockManagement.adjust')}
+      >
+        {adjustIngredient && (() => {
+          const baseUnitShort = adjustIngredient.base_unit
+            ? t(`common.baseUnits.${adjustIngredient.base_unit}.short`)
+            : unitLabel(t, adjustIngredient.unit);
+          return (
+            <form className="form-card" onSubmit={saveAdjustStock}>
+              <label className="reappro-label">
+                {t('team.stockManagement.newStock')}
+              </label>
+              <div className="reappro-input-row">
+                <input
+                  type="number"
+                  step="any"
+                  className="form-input"
+                  value={adjustValue}
+                  onChange={(e) => setAdjustValue(e.target.value)}
+                  autoFocus
+                />
+                <span className="reappro-input-unit">{baseUnitShort}</span>
+              </div>
+              <div className="reappro-preview">
+                <span>{adjustIngredient.name}</span>
+                <strong>
+                  {adjustIngredient.stock_quantity || 0} → {adjustValue || 0} {baseUnitShort}
+                </strong>
+              </div>
+              <p className="form-hint">{t('team.stockManagement.negativeStock')}</p>
+              <button type="submit" className="btn-primary">
+                {t('common.save')}
+              </button>
+            </form>
+          );
+        })()}
+      </BottomSheet>
+
+      <BottomSheet
+        open={orderSheetOpen}
+        onClose={() => setOrderSheetOpen(false)}
+        title={t('team.stockManagement.generateOrder')}
+      >
+        <div className="form-card">
+          <textarea
+            className="form-input order-textarea"
+            rows={14}
+            value={orderText}
+            onChange={(e) => setOrderText(e.target.value)}
+            onFocus={(e) => e.target.select()}
+          />
+        </div>
+      </BottomSheet>
+
       <BottomSheet
         open={offerSheetOpen}
         onClose={() => setOfferSheetOpen(false)}
         title={offerForm.id ? t('team.supplierOffers.edit') : t('team.supplierOffers.add')}
       >
         <form className="form-card" onSubmit={saveOffer}>
-          <select
-            className="form-select"
-            value={offerForm.ingredient_id}
-            onChange={(e) => handleOfferIngredientChange(e.target.value)}
-            required
-          >
-            <option value="">{t('team.ingredientV9.baseUnit')}</option>
-            {dataset.ingredients.map((ing) => (
-              <option key={ing.id} value={ing.id}>{ing.name}</option>
-            ))}
-          </select>
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.supplierOffers.sections.ingredient')}
+            </span>
+            <select
+              className="form-select"
+              value={offerForm.ingredient_id}
+              onChange={(e) => handleOfferIngredientChange(e.target.value)}
+              required
+            >
+              <option value="">{t('team.ingredientV9.baseUnit')}</option>
+              {dataset.ingredients.map((ing) => (
+                <option key={ing.id} value={ing.id}>{ing.name}</option>
+              ))}
+            </select>
+            <select
+              className="form-select"
+              value={offerForm.purchase_option_id}
+              onChange={(e) => updateOfferField('purchase_option_id', e.target.value)}
+              required
+            >
+              <option value="">{t('team.supplierOffers.fields.purchaseOption')}</option>
+              {(() => {
+                const ing = dataset.ingredients.find((i) => i.id === offerForm.ingredient_id);
+                return (ing?.purchase_options || []).map((opt) => (
+                  <option key={opt.id} value={opt.id}>{opt.label}</option>
+                ));
+              })()}
+            </select>
+            <select
+              className="form-select"
+              value={offerForm.supplier_id}
+              onChange={(e) => updateOfferField('supplier_id', e.target.value)}
+              required
+            >
+              <option value="">{t('team.supplierOffers.fields.supplier')}</option>
+              {dataset.suppliers.map((sup) => (
+                <option key={sup.id} value={sup.id}>{sup.name}</option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            className="form-select"
-            value={offerForm.supplier_id}
-            onChange={(e) => updateOfferField('supplier_id', e.target.value)}
-            required
-          >
-            <option value="">{t('team.supplierOffers.fields.supplier')}</option>
-            {dataset.suppliers.map((sup) => (
-              <option key={sup.id} value={sup.id}>{sup.name}</option>
-            ))}
-          </select>
-
-          <select
-            className="form-select"
-            value={offerForm.purchase_option_id}
-            onChange={(e) => updateOfferField('purchase_option_id', e.target.value)}
-            required
-          >
-            <option value="">{t('team.supplierOffers.fields.purchaseOption')}</option>
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.supplierOffers.sections.price')}
+            </span>
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              step="any"
+              placeholder={t('team.supplierOffers.fields.cost')}
+              value={offerForm.cost}
+              onChange={(e) => updateOfferField('cost', e.target.value)}
+              required
+            />
             {(() => {
               const ing = dataset.ingredients.find((i) => i.id === offerForm.ingredient_id);
-              return (ing?.purchase_options || []).map((opt) => (
-                <option key={opt.id} value={opt.id}>{opt.label}</option>
-              ));
+              const opt = ing && (ing.purchase_options || []).find((o) => o.id === offerForm.purchase_option_id);
+              if (!ing || !opt || !opt.quantity_in_base || !offerForm.cost) return null;
+              const pricePerBase = Number(offerForm.cost) / opt.quantity_in_base;
+              const baseUnitShort = t(`common.baseUnits.${ing.base_unit}.short`);
+              return (
+                <p className="price-preview">
+                  {t('common.soit')} {formatCurrency(pricePerBase)} / {baseUnitShort}
+                </p>
+              );
             })()}
-          </select>
-
-          <input
-            className="form-input"
-            type="number"
-            min="0"
-            step="any"
-            placeholder={t('team.supplierOffers.fields.cost')}
-            value={offerForm.cost}
-            onChange={(e) => updateOfferField('cost', e.target.value)}
-            required
-          />
-
-          <div className="checkbox-row">
-            <input
-              id="offer-available"
-              type="checkbox"
-              checked={offerForm.is_available}
-              onChange={(e) => updateOfferField('is_available', e.target.checked)}
-            />
-            <label htmlFor="offer-available">{t('team.supplierOffers.fields.isAvailable')}</label>
           </div>
 
-          <div className="checkbox-row">
+          <div className="ingredient-form-section">
+            <span className="ingredient-form-section-title">
+              {t('team.supplierOffers.sections.options')}
+            </span>
+            <div className="checkbox-row">
+              <input
+                id="offer-available"
+                type="checkbox"
+                checked={offerForm.is_available}
+                onChange={(e) => updateOfferField('is_available', e.target.checked)}
+              />
+              <label htmlFor="offer-available">{t('team.supplierOffers.fields.isAvailable')}</label>
+            </div>
+            <div className="checkbox-row">
+              <input
+                id="offer-preferred"
+                type="checkbox"
+                checked={offerForm.is_preferred}
+                onChange={(e) => updateOfferField('is_preferred', e.target.checked)}
+              />
+              <label htmlFor="offer-preferred">{t('team.supplierOffers.fields.isPreferred')}</label>
+            </div>
+            <p className="form-hint">{t('team.supplierOffers.preferredHint')}</p>
             <input
-              id="offer-preferred"
-              type="checkbox"
-              checked={offerForm.is_preferred}
-              onChange={(e) => updateOfferField('is_preferred', e.target.checked)}
+              className="form-input"
+              type="number"
+              min="1"
+              step="1"
+              placeholder={t('team.supplierOffers.fields.minOrderQuantity')}
+              value={offerForm.min_order_quantity}
+              onChange={(e) => updateOfferField('min_order_quantity', e.target.value)}
             />
-            <label htmlFor="offer-preferred">{t('team.supplierOffers.fields.isPreferred')}</label>
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              step="1"
+              placeholder={t('team.supplierOffers.fields.leadTimeDays')}
+              value={offerForm.lead_time_days}
+              onChange={(e) => updateOfferField('lead_time_days', e.target.value)}
+            />
+            <input
+              className="form-input"
+              type="text"
+              placeholder={t('team.supplierOffers.fields.notes')}
+              value={offerForm.notes}
+              onChange={(e) => updateOfferField('notes', e.target.value)}
+            />
           </div>
 
-          <input
-            className="form-input"
-            type="number"
-            min="1"
-            step="1"
-            placeholder={t('team.supplierOffers.fields.minOrderQuantity')}
-            value={offerForm.min_order_quantity}
-            onChange={(e) => updateOfferField('min_order_quantity', e.target.value)}
-          />
-
-          <input
-            className="form-input"
-            type="number"
-            min="0"
-            step="1"
-            placeholder={t('team.supplierOffers.fields.leadTimeDays')}
-            value={offerForm.lead_time_days}
-            onChange={(e) => updateOfferField('lead_time_days', e.target.value)}
-          />
-
-          <input
-            className="form-input"
-            type="text"
-            placeholder={t('team.supplierOffers.fields.notes')}
-            value={offerForm.notes}
-            onChange={(e) => updateOfferField('notes', e.target.value)}
-          />
-
-          <button type="submit" className="btn-primary">
-            {t('common.save')}
-          </button>
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setOfferSheetOpen(false)}
+            >
+              {t('common.cancel')}
+            </button>
+            <button type="submit" className="btn-primary">
+              {t('common.save')}
+            </button>
+          </div>
         </form>
       </BottomSheet>
 
-      {/* ================= CHANTIER 25 : BOTTOM SHEET BON DE RÉCEPTION ================= */}
       <BottomSheet
         open={receiptSheetOpen}
         onClose={() => setReceiptSheetOpen(false)}
@@ -2813,7 +3392,6 @@ export default function TeamPage() {
         </form>
       </BottomSheet>
 
-      {/* ================= TOAST ================= */}
       <Toast
         open={toast.open}
         message={toast.message}
@@ -2821,7 +3399,6 @@ export default function TeamPage() {
         onClose={closeToast}
       />
 
-      {/* ================= MODALES FORMULAIRES (autres vues) ================= */}
       <FormModal
         isOpen={isFormOpen && view === 'employees'}
         onClose={() => setIsFormOpen(false)}
@@ -2917,7 +3494,7 @@ export default function TeamPage() {
       </FormModal>
 
       <FormModal
-        isOpen={isFormOpen && view === 'suppliers'}
+        isOpen={isFormOpen && view === 'suppliersOffers' && supplierTab === 'suppliers'}
         onClose={() => setIsFormOpen(false)}
         title={supForm.id ? t('common.edit') : t('team.addSupplier')}
       >

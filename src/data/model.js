@@ -1,5 +1,6 @@
 // src/data/model.js
 // SCHEMA_VERSION 9 — Chantier 13 (SPEC_UNITES v1.0)
+// Chantier 36 — BASE_UNITS étendu à 5 valeurs (g, kg, ml, L, piece).
 // Backward compatible avec v8 : createIngredient / createDish / createEmptyDataset
 // continuent de fonctionner sans modification pour storage.js, fixtures.js et .jsx.
 
@@ -20,7 +21,8 @@ export const INGREDIENT_CATEGORIES = [
 ];
 
 // ── v9 — Unités canoniques (SPEC_UNITES section 1) ────────────────────
-export const BASE_UNITS = ['g', 'ml', 'piece'];
+// Chantier 36 : extension à 5 valeurs (kg et L ajoutés).
+export const BASE_UNITS = ['g', 'kg', 'ml', 'L', 'piece'];
 
 // ── v9 — Types de stockage ────────────────────────────────────────────
 export const STORAGE_TYPES = ['fresh', 'frozen', 'ambient', 'refrigerated'];
@@ -65,29 +67,28 @@ function normalizeIngredientCategory(value) {
 }
 
 // v9 — dérive base_unit depuis l'ancienne `unit` libre (kg, g, ml, tờ, …)
+// Chantier 36 : retourne désormais 'kg' et 'L' comme unités de base.
 function deriveBaseUnit(unit) {
   if (!unit) return 'g';
   const u = String(unit).trim().toLowerCase();
-  if (['g', 'kg', 't', 'gam', 'gram', 'grams'].includes(u)) return 'g';
-  if (['ml', 'cl', 'l', 'lit', 'lít', 'liter', 'litre'].includes(u)) return 'ml';
+  if (['g', 'gam', 'gram', 'grams'].includes(u)) return 'g';
+  if (['kg', 'kilo', 'kilogram'].includes(u)) return 'kg';
+  if (['ml', 'millilitre'].includes(u)) return 'ml';
+  if (['l', 'lit', 'lít', 'liter', 'litre'].includes(u)) return 'L';
   return 'piece';
 }
 
 // v9 — dérive reference_unit_cost (coût par base_unit) depuis (unit_cost, unit)
+// Chantier 36 : gère baseUnit 'g' et 'ml' ; pour 'kg' et 'L' le coût est déjà
+// exprimé dans l'unité de base (retourne unitCost tel quel).
 function deriveReferenceUnitCost(unitCost, unit, baseUnit) {
   if (!Number.isFinite(unitCost) || unitCost === 0) return 0;
   if (!unit) return unitCost;
   const u = String(unit).trim().toLowerCase();
-  if (baseUnit === 'g') {
-    if (u === 'kg') return unitCost / 1000;
-    if (u === 't') return unitCost / 1000000;
-    if (u === 'g') return unitCost;
-  }
-  if (baseUnit === 'ml') {
-    if (u === 'l' || u === 'lit' || u === 'lít') return unitCost / 1000;
-    if (u === 'cl') return unitCost / 10;
-    if (u === 'ml') return unitCost;
-  }
+  if (baseUnit === 'g' && u === 'kg') return unitCost / 1000;
+  if (baseUnit === 'g' && u === 'g') return unitCost;
+  if (baseUnit === 'ml' && (u === 'l' || u === 'lit')) return unitCost / 1000;
+  if (baseUnit === 'ml' && u === 'ml') return unitCost;
   return unitCost;
 }
 

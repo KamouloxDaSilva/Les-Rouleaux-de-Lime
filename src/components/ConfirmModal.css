@@ -1,7 +1,6 @@
 /* src/components/ConfirmModal.css */
-/* Chantier 12 — Partie 1 : modale de confirmation */
+/* Chantier 12 — Partie 1 · Chantier 34 — tokens couleurs */
 
-/* ---------- Backdrop ---------- */
 .confirm-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -15,9 +14,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ---------- Dialog ---------- */
 .confirm-modal {
-  background: #FFFFFF;
+  background: var(--color-surface);
   border-radius: 20px;
   width: 100%;
   max-width: 360px;
@@ -29,28 +27,25 @@
   animation: confirmModalPop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ---------- Titre ---------- */
 .confirm-modal__title {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 800;
-  color: #2C2C2C;
+  color: var(--color-text);
   text-align: center;
   line-height: 1.25;
   font-family: 'Baloo 2', system-ui, sans-serif;
 }
 
-/* ---------- Message ---------- */
 .confirm-modal__message {
   margin: 0;
   font-size: 0.92rem;
-  color: #4A4A4A;
+  color: var(--color-text-muted);
   text-align: center;
   line-height: 1.45;
   white-space: pre-line;
 }
 
-/* ---------- Actions ---------- */
 .confirm-modal__actions {
   display: flex;
   gap: 10px;
@@ -75,40 +70,36 @@
   transform: scale(0.97);
 }
 
-/* Annuler */
 .confirm-modal__btn--cancel {
-  background: #F5F0E6;
-  color: #2C2C2C;
-  border: 2px solid #E0D8C8;
+  background: var(--color-cream);
+  color: var(--color-text);
+  border: 2px solid var(--color-border-strong);
 }
 
 .confirm-modal__btn--cancel:active {
-  background: #EDE5D5;
+  background: var(--color-cream-soft);
 }
 
-/* Confirmer (bleu charte) */
 .confirm-modal__btn--confirm {
-  background: #3C91A6;
-  color: #FFFFFF;
+  background: var(--color-blue);
+  color: #fff;
   box-shadow: 0 4px 12px rgba(60, 145, 166, 0.3);
 }
 
 .confirm-modal__btn--confirm:active {
-  background: #2F7A8C;
+  filter: brightness(0.9);
 }
 
-/* Danger (rouge suppression) */
 .confirm-modal__btn--danger {
-  background: #C62828;
-  color: #FFFFFF;
+  background: var(--color-danger, #C62828);
+  color: #fff;
   box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3);
 }
 
 .confirm-modal__btn--danger:active {
-  background: #A01E1E;
+  filter: brightness(0.9);
 }
 
-/* ---------- Animations ---------- */
 @keyframes confirmModalFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -119,7 +110,6 @@
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* ---------- Accessibilité ---------- */
 @media (prefers-reduced-motion: reduce) {
   .confirm-modal-backdrop,
   .confirm-modal {
@@ -130,7 +120,6 @@
   }
 }
 
-/* ---------- Très petits écrans ---------- */
 @media (max-width: 340px) {
   .confirm-modal {
     padding: 20px 16px 16px;

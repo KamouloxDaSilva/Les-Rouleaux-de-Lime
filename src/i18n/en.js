@@ -1,7 +1,13 @@
 // src/i18n/en.js
 // Chantier 31 — ajout des clés refonte StatsPage.
 // Chantier 32-A — ajout de settings.sections.appearance.{title,system,light,dark}
-//               pour le sélecteur de thème (mode sombre).
+// Chantier 36 — BASE_UNITS étendu, sections de formulaire titrées, hints.
+// Chantier 37 — ajout des clés stockManagement (adjust, directInput, etc.)
+// Chantier 38 — ajout team.suppliersOffers, team.receipts.duplicate,
+//               team.stockManagement.{orderFrom, estimatedTotal}
+// Chantier 39 FUSION — ajout stats.metrics.deltaPct,
+//               stats.drillDown.noShifts,
+//               stats.heatmap.legend.{excellent,good,neutral,low,bad}
 export default {
   app: { name: 'Burihagio' },
   nav: { home: 'Home', closing: 'Closing', menu: 'Menu', team: 'Management', settings: 'Settings', stats: 'Stats' },
@@ -246,6 +252,21 @@ export default {
       stockQuantity: 'Stock',
       minStock: 'Min stock',
       stockAlert: 'Stock alert',
+      defaultUnit: 'Default',
+      sections: {
+        general: 'General information',
+        baseUnit: 'Base unit and reference cost',
+        purchaseOptions: 'Purchase packagings',
+        recipeUnits: 'Recipe units',
+        stock: 'Stock and shelf life',
+        supplier: 'Preferred supplier',
+      },
+      purchaseOptionsTitle: 'How do you buy this ingredient?',
+      purchaseOptionsHint: 'Ex: If unit is "g", enter 1000 for a 1kg bag. If "ml", enter 1500 for a 1.5L bottle.',
+      recipeUnitsTitle: 'How do you use this ingredient in the kitchen?',
+      recipeUnitsHint: 'Ex: If unit is "g", enter 150 for a 150g portion. If "ml", enter 250 for a 250ml glass.',
+      costPer: 'Cost per',
+      yieldHint: '0.9 = 10% lost',
     },
     supplierOffers: {
       title: 'Supplier offers',
@@ -264,6 +285,20 @@ export default {
         lastPurchaseDate: 'Last purchase',
         notes: 'Notes',
       },
+      sections: {
+        ingredient: 'Ingredient and packaging',
+        price: 'Price',
+        options: 'Options',
+      },
+      preferredHint: 'Updates the ingredient reference cost',
+      referenceUpdated: 'Reference cost updated for',
+    },
+    suppliersOffers: {
+      title: 'Suppliers & Offers',
+      tabs: {
+        suppliers: 'Suppliers',
+        offers: 'Offers',
+      },
     },
     comparator: {
       title: 'Comparator',
@@ -277,6 +312,7 @@ export default {
       title: 'Purchase receipts',
       add: 'Add receipt',
       empty: 'No receipts',
+      duplicate: 'Duplicate receipt',
       types: {
         receipt: 'Receipt',
         return: 'Return',
@@ -312,6 +348,16 @@ export default {
         correction: 'Correction',
         preparation: 'Preparation',
       },
+      adjust: 'Adjust stock',
+      directInput: 'Direct input',
+      byPackaging: 'By packaging',
+      newStock: 'New stock',
+      generateOrder: 'Generate order',
+      noOffer: 'No supplier offer',
+      bestPrice: 'Best price',
+      lastPurchase: 'Last purchase',
+      orderFrom: 'Order from',
+      estimatedTotal: 'Estimated total',
     },
   },
   placeholder: { comingSoon: 'Coming soon...' },
@@ -437,6 +483,13 @@ export default {
     },
     heatmap: {
       title: 'Last 7 days',
+      legend: {
+        excellent: 'Excellent',
+        good: 'Good',
+        neutral: 'Neutral',
+        low: 'Small loss',
+        bad: 'Loss',
+      },
     },
     weekdays: {
       mon: 'Monday',
@@ -495,6 +548,7 @@ export default {
       realCost: 'Real cost',
       theoreticalCost: 'Theoretical cost',
       savingPct: 'Savings',
+      deltaPct: 'Delta %',
       yield_pct: 'Yield (%)',
     },
     series: {
@@ -508,6 +562,7 @@ export default {
       profit: 'Margin details',
       items: 'Item details',
       expenses: 'Expense breakdown',
+      noShifts: 'No shifts in period',
     },
     costSubtabs: {
       repartition: 'Breakdown',
@@ -562,7 +617,7 @@ export default {
       minStock: 'Minimum stock',
     },
   },
-    common: {
+  common: {
     save: 'Save',
     cancel: 'Cancel',
     edit: 'Edit',
@@ -573,12 +628,14 @@ export default {
     error: 'Error',
     success: 'Success',
     loading: 'Loading…',
+    soit: 'That is',
     baseUnits: {
       g: { label: 'Gram', short: 'g' },
+      kg: { label: 'Kilogram', short: 'kg' },
       ml: { label: 'Millilitre', short: 'ml' },
+      L: { label: 'Liter', short: 'L' },
       piece: { label: 'Piece', short: 'pc' },
     },
-    // === Chantier 33 — nouveaux ===
     errorBoundary: {
       desc: 'An unexpected error occurred. Reload the application to continue.',
       reload: 'Reload application',

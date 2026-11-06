@@ -1,16 +1,16 @@
 /* src/pages/TeamPage.css */
 /* =========================================================
-   Burihagio — Onglet Gestion (Chantier 22 → 24)
-   Charte : #FAEBD5 · #FF9800 · #3C91A6 · #2C2C2C
+   Burihagio — Onglet Gestion
+   Corrigé : Mode sombre, Alignement, Scroll BottomSheet
    ========================================================= */
 
 .team-page {
   padding: 16px;
   padding-bottom: 96px;
-  background: #FAEBD5;
+  background: var(--color-cream);
   min-height: 100vh;
   font-family: 'Be Vietnam Pro', system-ui, sans-serif;
-  color: #2C2C2C;
+  color: var(--color-text);
   box-sizing: border-box;
   max-width: 720px;
   margin: 0 auto;
@@ -18,21 +18,26 @@
 
 /* --- HEADER --- */
 .team-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  position: relative;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
+  min-height: 52px;
   margin-bottom: 20px;
 }
-.team-header .back-button { grid-column: 1; justify-self: start; }
+.team-header .back-button { 
+  position: absolute; 
+  left: 0; 
+  top: 50%;
+  transform: translateY(-50%);
+}
 .team-title {
-  grid-column: 2;
   font-family: 'Baloo 2', system-ui, sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
   margin: 0;
   text-align: center;
-  color: #2C2C2C;
+  color: var(--color-text);
 }
 
 /* --- LOADING --- */
@@ -49,7 +54,7 @@
 .hub-section-title {
   font-size: 0.8rem;
   font-weight: 800;
-  color: #8A8A8A;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-left: 4px;
@@ -58,7 +63,7 @@
 .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 .team-card {
-  background: #FFFFFF;
+  background: var(--color-surface);
   border-radius: 20px;
   padding: 16px 12px;
   display: flex;
@@ -66,18 +71,15 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-  border: 1px solid #F0F0F0;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   animation: fadeInUp 0.3s ease-out both;
   min-height: 44px;
 }
-.team-card:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 2px;
-}
-.team-card:active { transform: scale(0.95); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.team-card:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
+.team-card:active { transform: scale(0.95); box-shadow: var(--shadow-sm); }
 .team-card .icon {
   font-size: 1.8rem;
   width: 56px;
@@ -88,20 +90,20 @@
   border-radius: 50%;
   margin-bottom: 10px;
 }
-.team-card h3 { margin: 0; font-size: 0.95rem; font-weight: 800; color: #2C2C2C; }
-.team-card p { margin: 4px 0 0; font-size: 0.72rem; font-weight: 600; color: #8A8A8A; }
+.team-card h3 { margin: 0; font-size: 0.95rem; font-weight: 800; color: var(--color-text); }
+.team-card p { margin: 4px 0 0; font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted); }
 
-.card-blue .icon { background: #EAF4F6; color: #3C91A6; }
-.card-orange .icon { background: #FFF3E0; color: #FF9800; }
-.card-green .icon { background: #E8F5E9; color: #43A047; }
-.card-purple .icon { background: #F3E5F5; color: #9C27B0; }
+.card-blue .icon { background: rgba(60, 145, 166, 0.15); color: var(--color-blue); }
+.card-orange .icon { background: rgba(255, 152, 0, 0.15); color: var(--color-orange); }
+.card-green .icon { background: rgba(67, 160, 71, 0.15); color: var(--color-success); }
+.card-purple .icon { background: rgba(156, 39, 176, 0.15); color: #9C27B0; }
 
 /* --- VUES SECONDAIRES --- */
 .section-container { animation: fadeInUp 0.3s ease-out both; }
 
 .btn-primary {
-  background: #FF9800;
-  color: #FFFFFF;
+  background: var(--color-orange);
+  color: #FFF;
   border: none;
   padding: 14px;
   border-radius: 12px;
@@ -114,10 +116,7 @@
   min-height: 44px;
 }
 .btn-primary:active { transform: scale(0.96); }
-.btn-primary:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 2px;
-}
+.btn-primary:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
 .btn-primary.full-width { width: 100%; margin-bottom: 16px; }
 
 /* --- SEARCHBAR wrapper --- */
@@ -130,11 +129,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #FFFFFF;
+  background: var(--color-surface);
   padding: 12px 14px;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  border: 1px solid #F0F0F0;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
   animation: fadeInUp 0.3s ease-out both;
   gap: 8px;
 }
@@ -144,7 +143,7 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 800;
-  color: #2C2C2C;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -152,12 +151,30 @@
 .list-item-info p {
   margin: 0;
   font-size: 0.8rem;
-  color: #8A8A8A;
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* --- CARTES INGRÉDIENTS (CORRIGÉ POUR ÉVITER L'ÉCRASEMENT) --- */
+.ingredient-card {
+  border-left: 4px solid var(--color-orange);
+  flex-direction: column; /* Force l'empilement vertical */
+  align-items: stretch;
+}
+.ingredient-card .list-item-info {
+  margin-bottom: 8px;
+}
+.ingredient-card .list-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 8px;
+}
+
+/* --- BOUTONS ICÔNES --- */
 .list-item-actions {
   display: grid;
   grid-template-columns: repeat(2, 44px);
@@ -166,15 +183,14 @@
   align-items: center;
 }
 
-/* --- BOUTONS ICÔNES (44×44 minimum) --- */
 .btn-icon {
   width: 44px;
   height: 44px;
   min-width: 44px;
   min-height: 44px;
-  background: #F5F5F5;
+  background: var(--color-surface-alt);
   border: none;
-  color: #7A7A7A;
+  color: var(--color-text-muted);
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
@@ -183,22 +199,16 @@
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s;
-  text-decoration: none;
 }
-.btn-icon:active { background: #E0E0E0; }
+.btn-icon:active { background: var(--color-border); }
 .btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-icon:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 2px;
-}
+.btn-icon:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
 
 .btn-edit, .btn-delete {
   background: transparent;
   border: none;
   width: 44px;
   height: 44px;
-  min-width: 44px;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -208,18 +218,23 @@
   transition: background 0.15s;
 }
 .btn-edit:active, .btn-delete:active { background: rgba(0, 0, 0, 0.05); }
-.btn-edit:focus-visible, .btn-delete:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 2px;
-}
+body.theme-dark .btn-edit:active, 
+body.theme-dark .btn-delete:active { background: rgba(255, 255, 255, 0.1); }
+.btn-edit:focus-visible, .btn-delete:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
 
-/* --- BADGE CATÉGORIE --- */
+/* --- BADGES --- */
 .category-badge {
   display: inline-block;
   margin-right: 4px;
   font-size: 1rem;
   line-height: 1;
   vertical-align: middle;
+}
+.ingredient-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 /* --- FILTRES PAR CATÉGORIE --- */
@@ -240,8 +255,8 @@
   gap: 6px;
   padding: 8px 14px;
   min-height: 44px;
-  background: #FFFFFF;
-  color: #2C2C2C;
+  background: var(--color-surface);
+  color: var(--color-text);
   border: 2px solid transparent;
   border-radius: 999px;
   font-size: 0.78rem;
@@ -249,100 +264,564 @@
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.filter-pill:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 2px;
-}
+.filter-pill:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
 .filter-pill__emoji { font-size: 0.95rem; line-height: 1; }
 .filter-pill__label { line-height: 1; }
 .filter-pill--active {
-  background: #3C91A6;
-  color: #FFFFFF;
-  border-color: #3C91A6;
+  background: var(--color-blue);
+  color: #FFF;
+  border-color: var(--color-blue);
   box-shadow: 0 4px 12px rgba(60, 145, 166, 0.3);
 }
 
-/* --- CARTES SPÉCIFIQUES --- */
-.ingredient-card { border-left: 4px solid #FF9800; }
-.promo-active { border-left: 4px solid #43A047; }
-.promo-inactive { border-left: 4px solid #BDBDBD; opacity: 0.6; }
-
-/* --- EXPENSES --- */
+/* --- EXPENSES & PROMOS --- */
+.promo-active { border-left: 4px solid var(--color-success); }
+.promo-inactive { border-left: 4px solid var(--color-border-strong); opacity: 0.6; }
 .expense-amount {
   display: inline-block;
   margin-top: 2px;
   font-weight: 800;
-  color: #E53935;
+  color: var(--color-danger);
   font-size: 0.85rem;
 }
 
 /* =========================================================
-   STOCK (v9 + Réappro — Chantier 24)
+   STOCK (v9 + Réappro)
+   ========================================================= */
+.stock-item { flex-direction: column; align-items: stretch; gap: 8px; }
+.stock-info { width: 100%; }
+.stock-header {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.stock-header h4 {
+  margin: 0; font-size: 0.95rem; font-weight: 800; color: var(--color-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stock-qty { font-size: 0.85rem; font-weight: 700; color: var(--color-text); flex-shrink: 0; }
+.stock-bar { width: 100%; height: 8px; background: var(--color-border); border-radius: 4px; overflow: hidden; }
+.stock-bar__fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+.stock-item--non-tracked { opacity: 0.65; background: var(--color-surface-alt); border-left: 4px solid var(--color-border-strong); }
+.stock-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.btn-reappro {
+  flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; padding: 0 12px; border-radius: 12px; background: var(--color-orange);
+  color: #FFF; font-weight: 700; font-size: 0.8rem; font-family: inherit; cursor: pointer;
+  border: none; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.25);
+  transition: background 0.15s, transform 0.15s; white-space: nowrap; overflow: hidden;
+}
+.btn-reappro:active { transform: scale(0.96); }
+.btn-reappro:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
+.btn-reappro__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stock-qty-actions { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
+
+/* --- BottomSheet Réapprovisionnement --- */
+.reappro-summary {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;
+  border-radius: 12px; background: rgba(60, 145, 166, 0.1); border: 1px solid rgba(60, 145, 166, 0.3);
+}
+.reappro-summary-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.9rem; }
+.reappro-summary-row span { color: var(--color-text-muted); font-weight: 600; }
+.reappro-summary-row strong { color: var(--color-blue); font-weight: 800; }
+.reappro-stepper-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; }
+.reappro-label { font-weight: 700; font-size: 0.9rem; color: var(--color-text); }
+.reappro-preview {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px;
+  border-radius: 12px; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.3); font-size: 0.9rem;
+}
+.reappro-preview span { color: var(--color-text-muted); font-weight: 600; }
+.reappro-preview strong { color: var(--color-orange); font-weight: 800; }
+
+/* --- PLANNING & CARDS --- */
+.card {
+  background: var(--color-surface); border-radius: 20px; padding: 16px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+}
+.planning-content { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.planning-hours-card { margin-top: 12px; }
+.planning-row { display: flex; align-items: center; gap: 12px; }
+.planning-row label { font-weight: 700; font-size: 0.85rem; color: var(--color-text-muted); min-width: 60px; }
+.planning-section-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+.planning-section-header label { font-weight: 700; font-size: 0.9rem; color: var(--color-text); }
+.planning-empty { margin: 0; font-size: 0.85rem; color: var(--color-text-muted); font-style: italic; }
+.tasks-list { display: flex; flex-direction: column; gap: 8px; }
+.task-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--color-surface-alt); padding: 6px 8px 6px 12px;
+  border-radius: 12px; border: 1px solid var(--color-border); font-size: 0.9rem; gap: 8px;
+}
+.task-item-label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; min-height: 44px; }
+.task-item-label input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; cursor: pointer; }
+.task-item-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text); }
+.task-done { text-decoration: line-through; opacity: 0.5; }
+
+/* =========================================================
+   FORMULAIRES (CORRIGÉ POUR LE SCROLL DANS LE BOTTOMSHEET)
+   ========================================================= */
+.form-card { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  /* Le correctif pour que le formulaire scrolle à l'intérieur du BottomSheet */
+  max-height: 70vh; /* Réduit légèrement pour laisser de la place aux boutons */
+  overflow-y: auto;
+  /* AJOUT DU FIX : Grand padding en bas + prise en compte de l'encoche iPhone */
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  -webkit-overflow-scrolling: touch;
+}
+
+.form-input, .form-select {
+  width: 100%; padding: 14px 16px; min-height: 44px;
+  border: 1px solid var(--color-border-strong); border-radius: 12px;
+  background: var(--color-surface); font-family: inherit; font-size: 0.95rem;
+  color: var(--color-text); box-sizing: border-box; outline: none; transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--color-blue); }
+.form-input:focus-visible, .form-select:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 1px; }
+.row-inputs { display: flex; gap: 10px; }
+.row-inputs > * { flex: 1; min-width: 0; }
+.task-form { display: flex; flex-direction: column; gap: 12px; }
+
+/* =========================================================
+   SECTIONS DE FORMULAIRE (Chantier 36)
+   ========================================================= */
+.ingredient-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+.ingredient-form-section:last-of-type { border-bottom: none; }
+
+.ingredient-form-section-title {
+  font-size: 0.8rem; font-weight: 800; color: var(--color-text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-left: 4px;
+}
+.ingredient-form-row { display: flex; gap: 10px; align-items: center; }
+.ingredient-form-row > * { flex: 1; min-width: 0; }
+
+.preset-btn {
+  background: var(--color-blue); color: #FFF; border: none; border-radius: 10px;
+  padding: 0 14px; min-height: 44px; font-weight: 700; font-size: 0.8rem;
+  cursor: pointer; white-space: nowrap; transition: background 0.15s; flex: 0 0 auto;
+}
+.preset-btn:active { filter: brightness(0.9); }
+.preset-btn:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 2px; }
+
+.dynamic-list { display: flex; flex-direction: column; gap: 8px; }
+.dynamic-row {
+  display: flex; gap: 8px; align-items: center;
+  background: var(--color-surface-alt); padding: 8px; border-radius: 12px; border: 1px solid var(--color-border);
+}
+.dynamic-row-inputs { display: flex; gap: 8px; flex: 1; min-width: 0; align-items: center; }
+.dynamic-row-inputs .form-input { flex: 1; min-width: 0; }
+.dynamic-row-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+.dynamic-add-btn {
+  background: transparent; border: 2px dashed var(--color-blue); color: var(--color-blue);
+  border-radius: 12px; padding: 10px; font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; transition: background 0.15s; min-height: 44px; font-family: inherit;
+}
+.dynamic-add-btn:active { background: rgba(60, 145, 166, 0.08); }
+.dynamic-add-btn:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
+
+.checkbox-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.checkbox-row input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; cursor: pointer; }
+.checkbox-row label { font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; }
+.default-radio { width: 22px; height: 22px; flex-shrink: 0; cursor: pointer; }
+
+.form-hint { font-size: 0.75rem; color: var(--color-text-muted); margin: 0; font-style: italic; line-height: 1.3; }
+.form-actions { display: flex; gap: 10px; margin-top: 12px; }
+.form-actions > * { flex: 1; }
+
+.btn-secondary {
+  background: var(--color-surface-alt); color: var(--color-text);
+  border: 1px solid var(--color-border-strong); padding: 14px; border-radius: 12px;
+  font-weight: 800; font-size: 1rem; cursor: pointer; font-family: inherit;
+  min-height: 44px; transition: transform 0.15s;
+}
+.btn-secondary:active { transform: scale(0.96); }
+.btn-secondary:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
+
+.price-preview {
+  font-size: 0.9rem; font-weight: 700; color: var(--color-blue);
+  background: rgba(60, 145, 166, 0.1); padding: 10px 12px;
+  border-radius: 8px; margin: 0; border: 1px solid rgba(60, 145, 166, 0.25);
+}
+
+/* =========================================================
+   COMPARATEUR / REÇUS
+   ========================================================= */
+.comparator-ingredient {
+  background: var(--color-surface); border-radius: 16px; padding: 14px; margin-bottom: 12px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
+}
+.comparator-ingredient h4 { margin: 0 0 10px; font-size: 0.95rem; font-weight: 800; color: var(--color-text); }
+.comparator-offers { display: flex; flex-direction: column; gap: 6px; }
+.comparator-offer-row {
+  display: grid; grid-template-columns: 1.2fr 1fr 0.8fr 0.9fr 0.5fr auto;
+  gap: 6px; align-items: center; padding: 8px 10px; border-radius: 10px;
+  background: var(--color-surface-alt); border: 1px solid var(--color-border); font-size: 0.82rem;
+}
+.comparator-offer-row--best { background: rgba(67, 160, 71, 0.15); border-color: rgba(67, 160, 71, 0.4); }
+.comparator-offer-supplier { font-weight: 700; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comparator-offer-pack { color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comparator-offer-cost { font-weight: 700; color: var(--color-text); text-align: right; }
+.comparator-offer-unit { font-weight: 800; color: var(--color-blue); text-align: right; }
+.comparator-offer-diff { font-size: 0.75rem; font-weight: 700; color: var(--color-danger); text-align: right; }
+.comparator-badges { display: flex; gap: 4px; font-size: 1rem; }
+
+.receipt-lines {
+  display: flex; flex-direction: column; gap: 10px; margin: 12px 0; padding: 12px;
+  background: var(--color-surface-alt); border-radius: 12px; border: 1px solid var(--color-border);
+}
+.receipt-lines-header { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.85rem; color: var(--color-text); }
+.receipt-line-row { display: grid; grid-template-columns: 1.2fr 1fr 0.7fr 0.7fr 0.8fr auto; gap: 6px; align-items: center; }
+.receipt-line-delta { font-weight: 700; font-size: 0.85rem; color: var(--color-blue); text-align: center; }
+@media (max-width: 480px) {
+  .receipt-line-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "ing ing" "opt opt" "qty cost" "delta remove";
+  }
+  .receipt-line-row > select:nth-child(1) { grid-area: ing; }
+  .receipt-line-row > select:nth-child(2) { grid-area: opt; }
+  .receipt-line-row > input:nth-child(3) { grid-area: qty; }
+  .receipt-line-row > input:nth-child(4) { grid-area: cost; }
+  .receipt-line-row > .receipt-line-delta { grid-area: delta; }
+  .receipt-line-row > .btn-delete { grid-area: remove; justify-self: end; }
+}
+
+/* --- ANIMATIONS & ACCESSIBILITÉ --- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.team-grid > .team-card:nth-child(1) { animation-delay: 0ms; }
+.team-grid > .team-card:nth-child(2) { animation-delay: 40ms; }
+.team-grid > .team-card:nth-child(3) { animation-delay: 80ms; }
+.team-grid > .team-card:nth-child(4) { animation-delay: 120ms; }
+.list > .list-item:nth-child(1) { animation-delay: 0ms; }
+.list > .list-item:nth-child(2) { animation-delay: 40ms; }
+.list > .list-item:nth-child(3) { animation-delay: 80ms; }
+.list > .list-item:nth-child(4) { animation-delay: 120ms; }
+.list > .list-item:nth-child(n+5) { animation-delay: 160ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .team-card, .list-item, .section-container, .btn-primary, .btn-icon, .btn-edit, .btn-delete,
+  .filter-pill, .btn-reappro, .stock-bar__fill, .btn-secondary {
+    animation: none;
+    transition: none;
+  }
+  .team-card:active, .btn-primary:active, .btn-reappro:active, .btn-secondary:active {
+    transform: none;
+    box-shadow: none;
+  }
+}
+/* =========================================================
+   CHANTIER 37 — STOCK & RÉAPPROVISIONNEMENT
    ========================================================= */
 
-.stock-item {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-.stock-info { width: 100%; }
-
-.stock-header {
+/* --- Bandeau "À réapprovisionner" --- */
+.stock-alert-banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: rgba(229, 57, 53, 0.12);
+  border: 1px solid rgba(229, 57, 53, 0.35);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-danger, #E53935);
 }
-.stock-header h4 {
-  margin: 0;
-  font-size: 0.95rem;
+.btn-generate-order {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-orange);
+  color: #FFF;
   font-weight: 800;
-  color: #2C2C2C;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: transform 0.15s, filter 0.15s;
 }
+.btn-generate-order:active { transform: scale(0.96); }
+.btn-generate-order:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
 
-.stock-qty {
-  font-size: 0.85rem;
+/* --- Carte stock : section prix --- */
+.stock-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+.stock-price-best {
   font-weight: 700;
-  color: #2C2C2C;
-  flex-shrink: 0;
-}
-
-.stock-bar {
-  width: 100%;
-  height: 8px;
-  background: #F0F0F0;
-  border-radius: 4px;
+  color: var(--color-text);
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.stock-bar__fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
+.stock-price-secondary {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stock-price-empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-weight: 600;
 }
 
-/* Carte grisée pour ingrédient non suivi (R4.5) */
-.stock-item--non-tracked {
-  opacity: 0.65;
-  background: #FAFAFA;
-  border-left: 4px solid #BDBDBD;
+/* --- Carte stock : bouton Ajuster --- */
+.btn-adjust {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font-weight: 800;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s, background 0.15s;
+}
+.btn-adjust:active { transform: scale(0.96); background: var(--color-border); }
+.btn-adjust:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
+
+/* --- Réappro : 2 modes --- */
+.reappro-direct,
+.reappro-pack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.reappro-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.reappro-input-row .form-input { flex: 1; min-width: 0; }
+.reappro-input-row .form-select { flex: 0 0 100px; }
+.reappro-input-unit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-strong);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  min-width: 44px;
 }
 
-/* Actions (réappro + ajustement rapide) */
-.stock-actions {
+/* --- Textarea commande --- */
+.order-textarea {
+  min-height: 220px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.4;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+/* --- Mode sombre --- */
+body.theme-dark .stock-alert-banner {
+  background: rgba(229, 57, 53, 0.2);
+  border-color: rgba(229, 57, 53, 0.5);
+}
+body.theme-dark .btn-adjust {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--color-text);
+}
+body.theme-dark .btn-adjust:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+body.theme-dark .reappro-input-unit {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Accessibilité : reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .btn-generate-order,
+  .btn-adjust {
+    transition: none;
+  }
+  .btn-generate-order:active,
+  .btn-adjust:active {
+    transform: none;
+  }
+}
+/* =========================================================
+   CHANTIER 38 — FOURNISSEURS & BONS DE RÉCEPTION
+   ========================================================= */
+
+/* --- Sous-onglets Fournisseurs/Offres --- */
+.suppliers-offers-tabs {
+  margin-bottom: 12px;
+}
+
+/* --- Bandeau alertes stock (variante supplier) --- */
+.supplier-alert-banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: rgba(229, 57, 53, 0.12);
+  border: 1px solid rgba(229, 57, 53, 0.35);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-danger, #E53935);
+}
+body.theme-dark .supplier-alert-banner {
+  background: rgba(229, 57, 53, 0.2);
+  border-color: rgba(229, 57, 53, 0.5);
 }
 
-.btn-reappro {
+/* --- Offres groupées par ingrédient --- */
+.offer-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.offer-group {
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.offer-group__title {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.offer-group__unit {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.offer-group__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.offer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+.offer-row--best {
+  background: rgba(67, 160, 71, 0.15);
+  border-color: rgba(67, 160, 71, 0.4);
+}
+
+.offer-row__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.offer-row__supplier {
+  font-weight: 700;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+.offer-row__pack {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+}
+.offer-row__price {
+  font-weight: 700;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+.offer-row__unit-price {
+  font-weight: 800;
+  color: var(--color-blue);
+  flex-shrink: 0;
+}
+.offer-row__diff {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-danger);
+  flex-shrink: 0;
+}
+.offer-row__badges {
+  display: inline-flex;
+  gap: 4px;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.offer-row__actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.offer-row__actions .btn-edit,
+.offer-row__actions .btn-delete {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 0.95rem;
+}
+
+/* --- Bouton "Commander chez X" sur carte stock --- */
+.btn-order-supplier {
   flex: 1;
   min-width: 0;
   display: inline-flex;
@@ -352,488 +831,108 @@
   min-height: 44px;
   padding: 0 12px;
   border-radius: 12px;
-  background: #FF9800;
-  color: #FFFFFF;
+  border: none;
+  background: var(--color-blue);
+  color: #FFF;
   font-weight: 700;
   font-size: 0.8rem;
   font-family: inherit;
   cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.25);
-  transition: background 0.15s, transform 0.15s;
+  box-shadow: 0 2px 8px rgba(60, 145, 166, 0.25);
+  transition: transform 0.15s, filter 0.15s;
   white-space: nowrap;
-  overflow: hidden;
-}
-.btn-reappro:active { transform: scale(0.96); }
-.btn-reappro:hover { background: #F08C00; }
-.btn-reappro:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 2px;
-}
-.btn-reappro__label {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+.btn-order-supplier:active { transform: scale(0.96); filter: brightness(0.9); }
+.btn-order-supplier:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 2px; }
+body.theme-dark .btn-order-supplier {
+  background: #4AA0B5;
 }
 
-.stock-qty-actions {
-  display: flex;
-  gap: 4px;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-/* --- BottomSheet Réapprovisionnement --- */
-.reappro-summary {
+/* --- Bons de réception groupés --- */
+.receipt-group {
+  margin-bottom: 18px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #EAF4F6;
-  border: 1px solid #D5E8EC;
-}
-.reappro-summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.9rem;
-}
-.reappro-summary-row span { color: #7A7A7A; font-weight: 600; }
-.reappro-summary-row strong { color: #3C91A6; font-weight: 800; }
-
-.reappro-stepper-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-}
-.reappro-label {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #2C2C2C;
-}
-
-.reappro-preview {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: #FFF3E0;
-  border: 1px solid #FFE0B2;
-  font-size: 0.9rem;
-}
-.reappro-preview span { color: #7A7A7A; font-weight: 600; }
-.reappro-preview strong { color: #FF9800; font-weight: 800; }
-
-/* --- PLANNING --- */
-.card {
-  background: #FFFFFF;
-  border-radius: 20px;
-  padding: 16px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-  border: 1px solid #F0F0F0;
-}
-
-.planning-content { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
-.planning-hours-card { margin-top: 12px; }
-.planning-row { display: flex; align-items: center; gap: 12px; }
-.planning-row label {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #4A4A4A;
-  min-width: 60px;
-}
-
-.planning-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-.planning-section-header label {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #2C2C2C;
-}
-.planning-empty {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #8A8A8A;
-  font-style: italic;
-}
-
-.tasks-list { display: flex; flex-direction: column; gap: 8px; }
-
-.task-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #FAFAFA;
-  padding: 6px 8px 6px 12px;
-  border-radius: 12px;
-  border: 1px solid #F0F0F0;
-  font-size: 0.9rem;
   gap: 8px;
 }
 
-.task-item-label {
-  display: flex;
-  align-items: center;
+.receipt-group__title {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 4px 0 4px 4px;
+}
+
+.receipt-card {
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
+}
+
+.receipt-card__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid var(--color-border);
+  padding-top: 8px;
+}
+
+.btn-duplicate {
   flex: 1;
-  min-width: 0;
-  cursor: pointer;
   min-height: 44px;
-}
-.task-item-label input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-blue);
+  background: rgba(60, 145, 166, 0.1);
+  color: var(--color-blue);
+  font-weight: 800;
+  font-size: 0.8rem;
+  font-family: inherit;
   cursor: pointer;
-}
-.task-item-label span {
+  transition: transform 0.15s, background 0.15s;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.task-done {
-  text-decoration: line-through;
-  opacity: 0.5;
+.btn-duplicate:active {
+  transform: scale(0.96);
+  background: rgba(60, 145, 166, 0.2);
 }
-
-/* --- FORMULAIRES --- */
-.form-card { display: flex; flex-direction: column; gap: 12px; }
-
-.form-input, .form-select {
-  width: 100%;
-  padding: 14px 16px;
-  min-height: 44px;
-  border: 1px solid #EBEBEB;
-  border-radius: 12px;
-  background: #FFFFFF;
-  font-family: inherit;
-  font-size: 0.95rem;
-  color: #2C2C2C;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.2s;
+.btn-duplicate:focus-visible {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 2px;
 }
-.form-input:focus, .form-select:focus { border-color: #3C91A6; }
-.form-input:focus-visible, .form-select:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 1px;
-}
-.row-inputs { display: flex; gap: 10px; }
-.row-inputs > * { flex: 1; min-width: 0; }
-
-/* --- TASK FORM (BottomSheet) --- */
-.task-form { display: flex; flex-direction: column; gap: 12px; }
-
-/* --- ANIMATIONS --- */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+body.theme-dark .btn-duplicate {
+  background: rgba(74, 160, 181, 0.15);
+  border-color: #4AA0B5;
+  color: #4AA0B5;
 }
 
-.team-grid > .team-card:nth-child(1) { animation-delay: 0ms; }
-.team-grid > .team-card:nth-child(2) { animation-delay: 40ms; }
-.team-grid > .team-card:nth-child(3) { animation-delay: 80ms; }
-.team-grid > .team-card:nth-child(4) { animation-delay: 120ms; }
+/* --- Mode sombre : offres groupées --- */
+body.theme-dark .offer-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.theme-dark .offer-row--best {
+  background: rgba(67, 160, 71, 0.2);
+  border-color: rgba(67, 160, 71, 0.5);
+}
 
-.list > .list-item:nth-child(1) { animation-delay: 0ms; }
-.list > .list-item:nth-child(2) { animation-delay: 40ms; }
-.list > .list-item:nth-child(3) { animation-delay: 80ms; }
-.list > .list-item:nth-child(4) { animation-delay: 120ms; }
-.list > .list-item:nth-child(n+5) { animation-delay: 160ms; }
-
-/* --- ACCESSIBILITÉ : prefers-reduced-motion --- */
+/* --- Accessibilité : reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
-  .team-card,
-  .list-item,
-  .section-container,
-  .btn-primary,
-  .btn-icon,
-  .btn-edit,
-  .btn-delete,
-  .filter-pill,
-  .btn-reappro,
-  .stock-bar__fill {
+  .offer-group,
+  .btn-order-supplier,
+  .btn-duplicate {
     animation: none;
     transition: none;
   }
-  .team-card:active,
-  .btn-primary:active,
-  .btn-reappro:active {
+  .btn-order-supplier:active,
+  .btn-duplicate:active {
     transform: none;
-    box-shadow: none;
   }
-}
-
-/* =========================================================
-   Chantier 23 — Formulaire ingrédient v9
-   ========================================================= */
-
-.ingredient-form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.ingredient-form-section-title {
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: #8A8A8A;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-left: 4px;
-}
-
-.ingredient-form-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-.ingredient-form-row > * {
-  flex: 1;
-  min-width: 0;
-}
-
-.preset-btn {
-  background: #3C91A6;
-  color: #FFFFFF;
-  border: none;
-  border-radius: 10px;
-  padding: 0 14px;
-  min-height: 44px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-  flex: 0 0 auto;
-}
-.preset-btn:active { background: #2F7A8C; }
-.preset-btn:focus-visible {
-  outline: 2px solid #FF9800;
-  outline-offset: 2px;
-}
-
-.dynamic-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dynamic-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  background: #FAFAFA;
-  padding: 8px;
-  border-radius: 12px;
-  border: 1px solid #F0F0F0;
-}
-
-.dynamic-row-inputs {
-  display: flex;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-.dynamic-row-inputs .form-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.dynamic-row-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.dynamic-add-btn {
-  background: transparent;
-  border: 2px dashed #3C91A6;
-  color: #3C91A6;
-  border-radius: 12px;
-  padding: 10px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.15s;
-  min-height: 44px;
-  font-family: inherit;
-}
-.dynamic-add-btn:active { background: rgba(60, 145, 166, 0.08); }
-.dynamic-add-btn:focus-visible {
-  outline: 2px solid #3C91A6;
-  outline-offset: 2px;
-}
-
-.ingredient-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-}
-.checkbox-row input[type="checkbox"] {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-.checkbox-row label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #2C2C2C;
-  cursor: pointer;
-}
-
-.default-radio {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .preset-btn,
-  .dynamic-add-btn {
-    transition: none;
-  }
-}
-/* =========================================================
-   Chantier 25 — Offres fournisseurs / Comparateur / Bons
-   ========================================================= */
-
-/* Comparateur */
-.comparator-ingredient {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  border: 1px solid #F0F0F0;
-}
-.comparator-ingredient h4 {
-  margin: 0 0 10px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #2C2C2C;
-}
-.comparator-offers {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.comparator-offer-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 0.8fr 0.9fr 0.5fr auto;
-  gap: 6px;
-  align-items: center;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #FAFAFA;
-  border: 1px solid #EFEFEF;
-  font-size: 0.82rem;
-}
-.comparator-offer-row--best {
-  background: #E8F5E9;
-  border-color: #A5D6A7;
-}
-.comparator-offer-supplier {
-  font-weight: 700;
-  color: #2C2C2C;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.comparator-offer-pack {
-  color: #7A7A7A;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.comparator-offer-cost {
-  font-weight: 700;
-  color: #2C2C2C;
-  text-align: right;
-}
-.comparator-offer-unit {
-  font-weight: 800;
-  color: #3C91A6;
-  text-align: right;
-}
-.comparator-offer-diff {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #E53935;
-  text-align: right;
-}
-.comparator-badges {
-  display: flex;
-  gap: 4px;
-  font-size: 1rem;
-}
-
-/* Bons de réception */
-.receipt-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 12px 0;
-  padding: 12px;
-  background: #FAFAFA;
-  border-radius: 12px;
-  border: 1px solid #F0F0F0;
-}
-.receipt-lines-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 800;
-  font-size: 0.85rem;
-  color: #2C2C2C;
-}
-.receipt-line-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 0.7fr 0.7fr 0.8fr auto;
-  gap: 6px;
-  align-items: center;
-}
-.receipt-line-delta {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #3C91A6;
-  text-align: center;
-}
-@media (max-width: 480px) {
-  .receipt-line-row {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "ing ing"
-      "opt opt"
-      "qty cost"
-      "delta remove";
-  }
-  .receipt-line-row > select:nth-child(1) { grid-area: ing; }
-  .receipt-line-row > select:nth-child(2) { grid-area: opt; }
-  .receipt-line-row > input:nth-child(3) { grid-area: qty; }
-  .receipt-line-row > input:nth-child(4) { grid-area: cost; }
-  .receipt-line-row > .receipt-line-delta { grid-area: delta; }
-  .receipt-line-row > .btn-delete { grid-area: remove; justify-self: end; }
 }

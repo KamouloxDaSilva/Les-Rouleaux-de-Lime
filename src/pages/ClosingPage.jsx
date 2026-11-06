@@ -1,6 +1,7 @@
 // src/pages/ClosingPage.jsx
 // Chantier 21 — Clôture v3 (calendrier + bilan)
 // Chantier 26 — Auto-déduction stock à la vente (R4.3)
+// Chantier 35 — couleurs sémantiques (foodCost rouge / marginPct vert)
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useI18n } from '../i18n';
 import {
@@ -377,7 +378,7 @@ export default function ClosingPage() {
             <span className="summary-stat__label">
               {t('stats.metrics.foodCost')}
             </span>
-            <span className="summary-stat__value">
+            <span className="summary-stat__value summary-stat__value--red">
               {formatCurrency(summary.foodCost)}
             </span>
           </div>
@@ -393,7 +394,7 @@ export default function ClosingPage() {
             <span className="summary-stat__label">
               {t('stats.metrics.marginPct')}
             </span>
-            <span className="summary-stat__value">
+            <span className="summary-stat__value summary-stat__value--green">
               {summary.marginPct.toFixed(1)}%
             </span>
           </div>

@@ -2,21 +2,15 @@
 // =====================================================================
 // Burihagio — Statistiques approfondies
 // Refonte v5 (Chantier 11-F4) + Chantier 12 + Chantier 30 + Chantier 31
+// + Chantier 39 FUSION (39+40+41)
 //
-// Chantier 31 — Refonte StatsPage :
-//   • Option B (validée) : les formules sont comptées comme ventes de
-//     plats. Helper `expandFormulaSales(closing, formulas)` utilisé
-//     partout où closing.sales est parcouru.
-//   • filterByRestaurant retourne aussi formulas / suppliers /
-//     supplierOffers.
-//   • getIngredientCosts enrichi v9 (quantity_in_base + yield_factor +
-//     reference_unit_cost) avec fallback v8.
-//   • 7 nouveaux helpers v9 :
-//     getWeekdaySales, getStockValue, getTopConsumedIngredients,
-//     getSupplierPriceComparison, getPromoImpact,
-//     getStockAlertsByPeriod, getYieldImpact.
-//   • Chantier 30 (getLastClosings, getTodayKPIs,
-//     getLowStockIngredients) préservés.
+// Chantier 39 FUSION :
+//   • getDonutData accepte les contextes métriques :
+//     'revenue' | 'margin' | 'items' | 'expenses'
+//   • getDishIndividualSeries accepte un 4ᵉ paramètre `metric`
+//     ('qty' | 'revenue' | 'margin').
+//   • 3 nouveaux helpers pour les drill-downs :
+//     getEmployeeShiftsDetail, getWeatherDetail, getWeekdayDetail.
 // =====================================================================
 import { getDishFoodCost, getDishSellingPrice } from './calculations.js';
 
@@ -40,7 +34,6 @@ export const CATEGORY_COLORS = { dish: '#3C91A6', drink: '#FF9800', dessert: '#E
 export const EXPENSE_COLORS = { fixed: '#3C91A6', ingredients: '#FF9800', employees: '#9C27B0', expenses: '#E91E63' };
 export const WEATHER_COLORS = { sunny: '#FF9800', cloudy: '#90A4AE', rainy: '#3C91A6', stormy: '#5E35B1', unknown: '#BDBDBD' };
 export const CYCLE_COLORS = ['#3C91A6', '#FF9800', '#E91E63', '#9C27B0', '#43A047', '#5E35B1', '#00ACC1', '#F4511E'];
-// Index 0 = lundi … 6 = dimanche ; week-end orange (charte)
 export const WEEKDAY_COLORS = ['#3C91A6', '#3C91A6', '#3C91A6', '#3C91A6', '#3C91A6', '#FF9800', '#FF9800'];
 
 // ---------------------------------------------------------------------
@@ -65,7 +58,6 @@ function filterByRestaurant(dataset, restaurantId) {
     employees: (dataset.employees || []).filter((e) => e && e.restaurant_id === rid),
     shifts: (dataset.shifts || []).filter((s) => s && s.restaurant_id === rid),
     expenses: (dataset.expenses || []).filter((e) => e && e.restaurant_id === rid),
-    // ── v9 / Chantier 31 ──────────────────────────────────────
     formulas: (dataset.formulas || []).filter((f) => f && f.restaurant_id === rid),
     suppliers: (dataset.suppliers || []).filter((s) => s && s.restaurant_id === rid),
     supplierOffers: (dataset.supplier_offers || []).filter((o) => o && o.restaurant_id === rid),
@@ -120,10 +112,6 @@ function getExpenseTotalInDateRange(dataset, startIso, endIso) {
 
 // ---------------------------------------------------------------------
 // CHANTIER 31 — OPTION B
-// Étend closing.sales en comptant chaque dish_id d'une formule vendue
-// comme un plat vendu (× quantity de composition × quantité de vente).
-// Tolérant : si l'entrée est un vrai plat, elle est passée telle quelle.
-// Support futur : sale.formula_id ou dish_id pointant vers une formule.
 // ---------------------------------------------------------------------
 export function expandFormulaSales(closing, formulas) {
   if (!closing || !Array.isArray(closing.sales)) return [];
@@ -158,7 +146,7 @@ export function expandFormulaSales(closing, formulas) {
 }
 
 // ---------------------------------------------------------------------
-// HELPERS MÉTIER (utilisent expandFormulaSales)
+// HELPERS MÉTIER
 // ---------------------------------------------------------------------
 function closingRevenue(closing, dishesById, category = null, dataset = null) {
   if (!closing || !Array.isArray(closing.sales)) return 0;
@@ -481,8 +469,11 @@ export function getMultiMetricSeries(dataset, period = 'week') {
   };
 }
 
-export function getDishIndividualSeries(dataset, period = 'week', dishId = null) {
-  const { closings, dishes, formulas } = filterByRestaurant(dataset);
+// ---------------------------------------------------------------------
+// CHANTIER 39 FUSION — getDishIndividualSeries étendu (metric)
+// ---------------------------------------------------------------------
+export function getDishIndividualSeries(dataset, period = 'week', dishId = null, metric = 'qty') {
+  const { closings, dishes, ingredients, formulas } = filterByRestaurant(dataset);
   const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
   const buckets = buildTimeBuckets(period, closings);
   const filteredClosings = filterClosingsByPeriod(closings, period);
@@ -495,7 +486,19 @@ export function getDishIndividualSeries(dataset, period = 'week', dishId = null)
       for (const c of filteredClosings) {
         if (c.date < bucket.startIso || c.date > bucket.endIso) continue;
         const expanded = expandFormulaSales(c, formulas);
-        for (const s of expanded) if (s.dish_id === dish.id) value += Number(s.quantity_sold) || 0;
+        for (const s of expanded) {
+          if (s.dish_id !== dish.id) continue;
+          const qty = Number(s.quantity_sold) || 0;
+          if (metric === 'qty') {
+            value += qty;
+          } else if (metric === 'revenue') {
+            value += qty * getDishSellingPrice(dataset, dish, c.date);
+          } else if (metric === 'margin') {
+            value += qty * (getDishSellingPrice(dataset, dish, c.date) - getDishFoodCost(dish, ingredients));
+          } else {
+            value += qty;
+          }
+        }
       }
       return { key: bucket.key, date: bucket.date, value };
     });
@@ -695,17 +698,12 @@ export function getIngredientCosts(dataset, period = null) {
       for (const r of dish.recipe) {
         const ing = ingById[r.ingredient_id];
         if (!ing) continue;
-        if (ing.track_stock === false) continue; // R4.5
+        if (ing.track_stock === false) continue;
         if (!usage[ing.id]) {
           usage[ing.id] = { ingredient: ing, quantityUsed: 0, cost: 0 };
         }
-        // v9 : quantity_in_base + reference_unit_cost / yield_factor
-        const qBase = Number.isFinite(r.quantity_in_base)
-          ? r.quantity_in_base
-          : (Number(r.quantity) || 0);
-        const refCost = Number.isFinite(ing.reference_unit_cost)
-          ? ing.reference_unit_cost
-          : (Number(ing.unit_cost) || 0);
+        const qBase = Number.isFinite(r.quantity_in_base) ? r.quantity_in_base : (Number(r.quantity) || 0);
+        const refCost = Number.isFinite(ing.reference_unit_cost) ? ing.reference_unit_cost : (Number(ing.unit_cost) || 0);
         const yf = Number.isFinite(ing.yield_factor) && ing.yield_factor > 0 ? ing.yield_factor : 1;
         usage[ing.id].quantityUsed += (soldQty * qBase) / yf;
         usage[ing.id].cost += (soldQty * qBase * refCost) / yf;
@@ -719,9 +717,7 @@ export function getIngredientCosts(dataset, period = null) {
       id: u.ingredient.id,
       name: u.ingredient.name,
       unit: u.ingredient.base_unit || u.ingredient.unit || '',
-      unitCost: Number.isFinite(u.ingredient.reference_unit_cost)
-        ? u.ingredient.reference_unit_cost
-        : (Number(u.ingredient.unit_cost) || 0),
+      unitCost: Number.isFinite(u.ingredient.reference_unit_cost) ? u.ingredient.reference_unit_cost : (Number(u.ingredient.unit_cost) || 0),
       supplier: u.ingredient.supplier || '',
       category: u.ingredient.category,
       quantityUsed: u.quantityUsed,
@@ -742,14 +738,9 @@ export function getFixedCostsBreakdown(dataset, period = null) {
     const daily = getFixedCostDailyAmount(c);
     const yearly = getFixedCostYearlyAmount(c);
     return {
-      id: c.id,
-      name: c.name,
-      amount: Number(c.amount) || 0,
-      frequency: c.frequency,
-      dailyAmount: daily,
-      periodAmount: daily * days,
-      yearlyAmount: yearly,
-      monthlyAmount: yearly / 12,
+      id: c.id, name: c.name, amount: Number(c.amount) || 0,
+      frequency: c.frequency, dailyAmount: daily,
+      periodAmount: daily * days, yearlyAmount: yearly, monthlyAmount: yearly / 12,
     };
   });
 
@@ -763,10 +754,7 @@ export function getFixedCostsBreakdown(dataset, period = null) {
       periodPct: totalPeriod > 0 ? (c.periodAmount / totalPeriod) * 100 : 0,
       yearlyPct: totalYearly > 0 ? (c.yearlyAmount / totalYearly) * 100 : 0,
     })),
-    totalPeriod,
-    totalMonthly,
-    totalYearly,
-    days,
+    totalPeriod, totalMonthly, totalYearly, days,
   };
 }
 
@@ -823,8 +811,7 @@ export function getDishDetails(dataset, period = null, dishId = null) {
 }
 
 // ---------------------------------------------------------------------
-// BUBBLE DATA — 4 contextes
-// @deprecated depuis v5 : remplacé côté UI par getDonutData + getGroupedBarData.
+// BUBBLE DATA (deprecated v5)
 // ---------------------------------------------------------------------
 export function getBubbleData(dataset, period = null, context = 'dishes') {
   if (context === 'overview') {
@@ -834,11 +821,8 @@ export function getBubbleData(dataset, period = null, context = 'dishes') {
     const filteredClosings = filterClosingsByPeriod(closings, period);
     const points = [];
     let maxRevenue = 0;
-
     for (const bucket of buckets) {
-      let revenue = 0;
-      let foodCost = 0;
-      let items = 0;
+      let revenue = 0, foodCost = 0, items = 0;
       for (const c of filteredClosings) {
         if (c.date < bucket.startIso || c.date > bucket.endIso) continue;
         revenue += closingRevenue(c, dishesById, null, dataset);
@@ -847,17 +831,8 @@ export function getBubbleData(dataset, period = null, context = 'dishes') {
       }
       const marginPct = revenue > 0 ? ((revenue - foodCost) / revenue) * 100 : 0;
       if (revenue > maxRevenue) maxRevenue = revenue;
-      points.push({
-        id: bucket.key,
-        label: bucket.key,
-        x: revenue,
-        y: marginPct,
-        size: items,
-        sizePct: 0,
-        meta: { foodCost, margin: revenue - foodCost, items, date: bucket.date },
-      });
+      points.push({ id: bucket.key, label: bucket.key, x: revenue, y: marginPct, size: items, sizePct: 0, meta: { foodCost, margin: revenue - foodCost, items, date: bucket.date } });
     }
-
     return {
       xLabel: 'stats.bubble.x.overview.revenue',
       yLabel: 'stats.bubble.y.overview.marginPct',
@@ -865,7 +840,6 @@ export function getBubbleData(dataset, period = null, context = 'dishes') {
       bubbles: points.map((p) => ({ ...p, sizePct: maxRevenue > 0 ? (p.x / maxRevenue) * 100 : 0 })),
     };
   }
-
   if (context === 'dishes') {
     const ranking = getFullRanking(dataset, period);
     const maxRevenue = ranking.reduce((m, r) => Math.max(m, r.revenue), 0) || 1;
@@ -874,23 +848,13 @@ export function getBubbleData(dataset, period = null, context = 'dishes') {
       yLabel: 'stats.bubble.y.dishes.marginPct',
       sizeLabel: 'stats.bubble.size.revenue',
       bubbles: ranking.map((r) => ({
-        id: r.dish.id,
-        label: r.dish.name,
-        category: r.dish.category,
-        x: r.qty,
-        y: r.marginPct,
-        size: r.revenue,
+        id: r.dish.id, label: r.dish.name, category: r.dish.category,
+        x: r.qty, y: r.marginPct, size: r.revenue,
         sizePct: (r.revenue / maxRevenue) * 100,
-        meta: {
-          price: r.dish.price,
-          foodCost: r.foodCost / Math.max(1, r.qty),
-          margin: r.margin,
-          marginPct: r.marginPct,
-        },
+        meta: { price: r.dish.price, foodCost: r.foodCost / Math.max(1, r.qty), margin: r.margin, marginPct: r.marginPct },
       })),
     };
   }
-
   if (context === 'employees') {
     const stats = getEmployeeStats(dataset, period);
     const maxCost = stats.employees.reduce((m, r) => Math.max(m, r.cost), 0) || 1;
@@ -899,21 +863,13 @@ export function getBubbleData(dataset, period = null, context = 'dishes') {
       yLabel: 'stats.bubble.y.employees.hourlyRate',
       sizeLabel: 'stats.bubble.size.cost',
       bubbles: stats.employees.map((r) => ({
-        id: r.employee.id,
-        label: r.employee.name,
-        x: r.hours,
-        y: r.hourlyRate,
-        size: r.cost,
+        id: r.employee.id, label: r.employee.name,
+        x: r.hours, y: r.hourlyRate, size: r.cost,
         sizePct: (r.cost / maxCost) * 100,
-        meta: {
-          daysWorked: r.daysWorked,
-          avgHoursPerShift: r.avgHoursPerShift,
-          costPct: r.costPct,
-        },
+        meta: { daysWorked: r.daysWorked, avgHoursPerShift: r.avgHoursPerShift, costPct: r.costPct },
       })),
     };
   }
-
   if (context === 'weather') {
     const stats = getWeatherBreakdown(dataset, period);
     const maxRevenue = stats.weathers.reduce((m, w) => Math.max(m, w.revenue), 0) || 1;
@@ -922,26 +878,18 @@ export function getBubbleData(dataset, period = null, context = 'dishes') {
       yLabel: 'stats.bubble.y.weather.avgRevenuePerDay',
       sizeLabel: 'stats.bubble.size.revenue',
       bubbles: stats.weathers.map((w) => ({
-        id: w.key,
-        label: `stats.weather.${w.key}`,
-        x: w.days,
-        y: w.avgRevenuePerDay,
-        size: w.revenue,
+        id: w.key, label: `stats.weather.${w.key}`,
+        x: w.days, y: w.avgRevenuePerDay, size: w.revenue,
         sizePct: (w.revenue / maxRevenue) * 100,
-        meta: {
-          revenuePct: w.revenuePct,
-          marginPct: w.marginPct,
-          avgItemsPerDay: w.avgItemsPerDay,
-        },
+        meta: { revenuePct: w.revenuePct, marginPct: w.marginPct, avgItemsPerDay: w.avgItemsPerDay },
       })),
     };
   }
-
   return { xLabel: '', yLabel: '', sizeLabel: '', bubbles: [] };
 }
 
 // ---------------------------------------------------------------------
-// BAR METRICS (avec sous-métriques)
+// BAR METRICS
 // ---------------------------------------------------------------------
 export function getBarMetrics(dataset, period = null, mode = 'category') {
   if (mode === 'category') {
@@ -950,9 +898,7 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
     const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
     const acc = {};
     const CATS = ['dish', 'drink', 'dessert', 'sauce'];
-    for (const cat of CATS) {
-      acc[cat] = { key: cat, label: `menu.sections.${cat}`, revenue: 0, items: 0, foodCost: 0, margin: 0 };
-    }
+    for (const cat of CATS) acc[cat] = { key: cat, label: `menu.sections.${cat}`, revenue: 0, items: 0, foodCost: 0, margin: 0 };
     for (const c of filteredClosings) {
       const expanded = expandFormulaSales(c, formulas);
       for (const s of expanded) {
@@ -973,9 +919,8 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
     return {
       mode,
       bars: Object.values(acc).map((a) => ({
-        key: a.key,
-        label: a.label,
-        value: a.revenue,
+        key: a.key, label: a.label, value: a.revenue,
+        format: 'currency',
         color: a.key === 'dish' ? '#3C91A6' : a.key === 'drink' ? '#FF9800' : a.key === 'dessert' ? '#E91E63' : '#9C27B0',
         subMetrics: [
           { label: 'stats.metrics.items', value: a.items, format: 'number' },
@@ -996,9 +941,7 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
     return {
       mode,
       bars: b.categories.map((c) => ({
-        key: c.key,
-        label: `stats.expensesComponents.${c.key}`,
-        value: c.value,
+        key: c.key, label: `stats.expensesComponents.${c.key}`, value: c.value, format: 'currency',
         color: c.key === 'fixed' ? '#3C91A6' : c.key === 'ingredients' ? '#FF9800' : c.key === 'employees' ? '#9C27B0' : '#E91E63',
         subMetrics: [
           { label: 'stats.metrics.amount', value: c.value, format: 'currency' },
@@ -1013,9 +956,7 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
     return {
       mode,
       bars: w.weathers.map((row) => ({
-        key: row.key,
-        label: `stats.weather.${row.key}`,
-        value: row.revenue,
+        key: row.key, label: `stats.weather.${row.key}`, value: row.revenue, format: 'currency',
         color: row.key === 'sunny' ? '#FF9800' : row.key === 'cloudy' ? '#90A4AE' : row.key === 'rainy' ? '#3C91A6' : row.key === 'stormy' ? '#5E35B1' : '#BDBDBD',
         subMetrics: [
           { label: 'stats.metrics.days', value: row.days, format: 'number' },
@@ -1035,9 +976,7 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
     return {
       mode,
       bars: e.employees.map((row) => ({
-        key: row.employee.id,
-        label: row.employee.name,
-        value: row.cost,
+        key: row.employee.id, label: row.employee.name, value: row.cost, format: 'currency',
         color: '#3C91A6',
         subMetrics: [
           { label: 'stats.metrics.hours', value: row.hours, format: 'number' },
@@ -1057,10 +996,7 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
     return {
       mode,
       bars: i.ingredients.map((row) => ({
-        key: row.id,
-        label: row.name,
-        value: row.cost,
-        color: '#FF9800',
+        key: row.id, label: row.name, value: row.cost, format: 'currency', color: '#FF9800',
         subMetrics: [
           { label: 'stats.metrics.quantityUsed', value: row.quantityUsed, format: 'number', unit: row.unit },
           { label: 'stats.metrics.unitCost', value: row.unitCost, format: 'currency', unit: row.unit },
@@ -1076,10 +1012,7 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
     return {
       mode,
       bars: f.costs.map((row) => ({
-        key: row.id,
-        label: row.name,
-        value: row.periodAmount,
-        color: '#3C91A6',
+        key: row.id, label: row.name, value: row.periodAmount, format: 'currency', color: '#3C91A6',
         subMetrics: [
           { label: 'stats.metrics.amount', value: row.amount, format: 'currency', unit: `/${row.frequency}` },
           { label: 'stats.metrics.periodAmount', value: row.periodAmount, format: 'currency' },
@@ -1095,7 +1028,7 @@ export function getBarMetrics(dataset, period = null, mode = 'category') {
 }
 
 // ---------------------------------------------------------------------
-// COMPARAISON vs période précédente
+// COMPARAISON
 // ---------------------------------------------------------------------
 export function getComparison(dataset, period = 'week') {
   const prev = getPreviousPeriodRange(period);
@@ -1106,9 +1039,7 @@ export function getComparison(dataset, period = 'week') {
 
   function computePeriod(startIso, endIso) {
     const list = filterClosingsByDateRange(closings, startIso, endIso);
-    let revenue = 0;
-    let foodCost = 0;
-    let items = 0;
+    let revenue = 0, foodCost = 0, items = 0;
     for (const c of list) {
       revenue += closingRevenue(c, dishesById, null, dataset);
       foodCost += closingFoodCost(c, dishesById, ingredients, null, formulas);
@@ -1179,7 +1110,7 @@ export function getComparison(dataset, period = 'week') {
 }
 
 // =====================================================================
-// DONUT DATA (v5)
+// DONUT DATA (v5 + Chantier 39 FUSION — contextes métriques)
 // =====================================================================
 function buildDonut({ items, total, format, emptyLabel }) {
   const segments = items.filter((it) => it.value > 0).sort((a, b) => b.value - a.value);
@@ -1190,6 +1121,25 @@ function buildDonut({ items, total, format, emptyLabel }) {
 }
 
 export function getDonutData(dataset, period = 'month', context = 'category') {
+  // ── CHANTIER 39 FUSION — contextes métriques ─────────────────────
+  // 'margin' → getCategoryBreakdown attend 'profit'
+  if (context === 'revenue' || context === 'margin' || context === 'items') {
+    const kpiType = context === 'margin' ? 'profit' : context;
+    const breakdown = getCategoryBreakdown(dataset, kpiType, period);
+    return buildDonut({
+      items: breakdown.categories.map((c) => ({
+        key: c.key,
+        label: `menu.sections.${c.key}`,
+        value: c.value,
+        pct: c.percentage,
+        color: CATEGORY_COLORS[c.key] || '#3C91A6',
+      })),
+      total: breakdown.total,
+      format: context === 'items' ? 'number' : 'currency',
+      emptyLabel: `stats.metrics.${context}`,
+    });
+  }
+
   if (context === 'category' || context === 'overview' || context === 'sales') {
     const breakdown = getCategoryBreakdown(dataset, 'revenue', period);
     return buildDonut({
@@ -1226,11 +1176,8 @@ export function getDonutData(dataset, period = 'month', context = 'category') {
     const breakdown = getWeatherBreakdown(dataset, period);
     return buildDonut({
       items: breakdown.weathers.map((w) => ({
-        key: w.key,
-        label: `stats.weather.${w.key}`,
-        value: w.revenue,
-        pct: w.revenuePct,
-        color: WEATHER_COLORS[w.key] || '#BDBDBD',
+        key: w.key, label: `stats.weather.${w.key}`, value: w.revenue,
+        pct: w.revenuePct, color: WEATHER_COLORS[w.key] || '#BDBDBD',
       })),
       total: breakdown.totalRevenue,
       format: 'currency',
@@ -1241,50 +1188,32 @@ export function getDonutData(dataset, period = 'month', context = 'category') {
   if (context === 'staff' || context === 'employees') {
     const stats = getEmployeeStats(dataset, period);
     const items = stats.employees.map((e, i) => ({
-      key: e.employee.id,
-      label: e.employee.name,
-      value: e.cost,
-      pct: e.costPct,
-      color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+      key: e.employee.id, label: e.employee.name, value: e.cost,
+      pct: e.costPct, color: CYCLE_COLORS[i % CYCLE_COLORS.length],
     }));
-    return buildDonut({
-      items,
-      total: stats.totalCost,
-      format: 'currency',
-      emptyLabel: 'stats.metrics.cost',
-    });
+    return buildDonut({ items, total: stats.totalCost, format: 'currency', emptyLabel: 'stats.metrics.cost' });
   }
 
   if (context === 'ingredients') {
     const stats = getIngredientCosts(dataset, period);
     const items = stats.ingredients.slice(0, 10).map((ing, i) => ({
-      key: ing.id,
-      label: ing.name,
-      value: ing.cost,
-      pct: ing.costPct,
-      color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+      key: ing.id, label: ing.name, value: ing.cost,
+      pct: ing.costPct, color: CYCLE_COLORS[i % CYCLE_COLORS.length],
     }));
-    return buildDonut({
-      items,
-      total: stats.totalCost,
-      format: 'currency',
-      emptyLabel: 'stats.metrics.foodCost',
-    });
+    return buildDonut({ items, total: stats.totalCost, format: 'currency', emptyLabel: 'stats.metrics.foodCost' });
   }
 
   return { segments: [], total: 0, topSegment: null, format: 'currency', emptyLabel: '', empty: true };
 }
 
 // =====================================================================
-// GROUPED BAR DATA (v5) — 2 barres/bucket : Actuel vs Précédent.
+// GROUPED BAR DATA (v5)
 // =====================================================================
 export function getGroupedBarData(dataset, period = 'week', context = 'revenue') {
   const { closings, dishes, ingredients, fixedCosts, employees, shifts, formulas } = filterByRestaurant(dataset);
   const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
   const prev = getPreviousPeriodRange(period);
-  if (!prev) {
-    return { buckets: [], trendPct: 0, currentLabel: '', previousLabel: '', format: 'currency', empty: true };
-  }
+  if (!prev) return { buckets: [], trendPct: 0, currentLabel: '', previousLabel: '', format: 'currency', empty: true };
 
   const computeTrend = (buckets) => {
     const sumCur = buckets.reduce((s, b) => s + b.current, 0);
@@ -1307,15 +1236,8 @@ export function getGroupedBarData(dataset, period = 'week', context = 'revenue')
 
     const computeValue = (bucket) => {
       const inRange = closings.filter((c) => c.date >= bucket.startIso && c.date <= bucket.endIso);
-      if (context === 'revenue') {
-        return inRange.reduce((s, c) => s + closingRevenue(c, dishesById, null, dataset), 0);
-      }
-      if (context === 'margin') {
-        return inRange.reduce(
-          (s, c) => s + closingRevenue(c, dishesById, null, dataset) - closingFoodCost(c, dishesById, ingredients, null, formulas),
-          0
-        );
-      }
+      if (context === 'revenue') return inRange.reduce((s, c) => s + closingRevenue(c, dishesById, null, dataset), 0);
+      if (context === 'margin') return inRange.reduce((s, c) => s + closingRevenue(c, dishesById, null, dataset) - closingFoodCost(c, dishesById, ingredients, null, formulas), 0);
       if (context === 'expenses') {
         const foodCost = inRange.reduce((s, c) => s + closingFoodCost(c, dishesById, ingredients, null, formulas), 0);
         const fixed = fixedCosts.reduce((s, c) => s + getFixedCostDailyAmount(c), 0) * bucket.days;
@@ -1323,9 +1245,7 @@ export function getGroupedBarData(dataset, period = 'week', context = 'revenue')
         const exp = getExpenseTotalInDateRange(dataset, bucket.startIso, bucket.endIso);
         return fixed + foodCost + labor + exp;
       }
-      if (context === 'items') {
-        return inRange.reduce((s, c) => s + closingItemsCount(c, dishesById, null, formulas), 0);
-      }
+      if (context === 'items') return inRange.reduce((s, c) => s + closingItemsCount(c, dishesById, null, formulas), 0);
       return 0;
     };
 
@@ -1337,8 +1257,7 @@ export function getGroupedBarData(dataset, period = 'week', context = 'revenue')
     });
 
     return {
-      buckets,
-      trendPct: computeTrend(buckets),
+      buckets, trendPct: computeTrend(buckets),
       currentLabel: 'stats.groupedBar.current',
       previousLabel: 'stats.groupedBar.previous',
       format: context === 'items' ? 'number' : 'currency',
@@ -1361,25 +1280,16 @@ export function getGroupedBarData(dataset, period = 'week', context = 'revenue')
       }
       return acc;
     };
-
     const curAcc = categoryRevenue(filterClosingsByPeriod(closings, period));
     const prevAcc = categoryRevenue(filterClosingsByDateRange(closings, prev.startIso, prev.endIso));
     const buckets = CATS
       .filter((k) => (curAcc[k] || 0) > 0 || (prevAcc[k] || 0) > 0)
-      .map((k) => ({
-        key: k,
-        label: `menu.sections.${k}`,
-        current: curAcc[k] || 0,
-        previous: prevAcc[k] || 0,
-      }));
-
+      .map((k) => ({ key: k, label: `menu.sections.${k}`, current: curAcc[k] || 0, previous: prevAcc[k] || 0 }));
     return {
-      buckets,
-      trendPct: computeTrend(buckets),
+      buckets, trendPct: computeTrend(buckets),
       currentLabel: 'stats.groupedBar.current',
       previousLabel: 'stats.groupedBar.previous',
-      format: 'currency',
-      empty: buckets.length === 0,
+      format: 'currency', empty: buckets.length === 0,
     };
   }
 
@@ -1399,30 +1309,20 @@ export function getGroupedBarData(dataset, period = 'week', context = 'revenue')
       }
       return acc;
     };
-
     const curList = filterClosingsByPeriod(closings, period);
     const curStart = curList.length > 0 ? curList.map((c) => c.date).sort()[0] : toLocalISODate(new Date());
     const curEnd = curList.length > 0 ? curList.map((c) => c.date).sort().slice(-1)[0] : toLocalISODate(new Date());
     const curAcc = computeCosts(curStart, curEnd);
     const prevAcc = computeCosts(prev.startIso, prev.endIso);
-
     const allIds = new Set([...Object.keys(curAcc), ...Object.keys(prevAcc)]);
     const buckets = Array.from(allIds)
-      .map((id) => ({
-        key: id,
-        label: curAcc[id]?.name || prevAcc[id]?.name || id,
-        current: curAcc[id]?.cost || 0,
-        previous: prevAcc[id]?.cost || 0,
-      }))
+      .map((id) => ({ key: id, label: curAcc[id]?.name || prevAcc[id]?.name || id, current: curAcc[id]?.cost || 0, previous: prevAcc[id]?.cost || 0 }))
       .filter((b) => b.current > 0 || b.previous > 0);
-
     return {
-      buckets,
-      trendPct: computeTrend(buckets),
+      buckets, trendPct: computeTrend(buckets),
       currentLabel: 'stats.groupedBar.current',
       previousLabel: 'stats.groupedBar.previous',
-      format: 'currency',
-      empty: buckets.length === 0,
+      format: 'currency', empty: buckets.length === 0,
     };
   }
 
@@ -1437,86 +1337,53 @@ export function getGroupedBarData(dataset, period = 'week', context = 'revenue')
       }
       return acc;
     };
-
     const curAcc = revenueByWeather(filterClosingsByPeriod(closings, period));
     const prevAcc = revenueByWeather(filterClosingsByDateRange(closings, prev.startIso, prev.endIso));
     const buckets = WEATHERS
       .filter((k) => (curAcc[k] || 0) > 0 || (prevAcc[k] || 0) > 0)
-      .map((k) => ({
-        key: k,
-        label: `stats.weather.${k}`,
-        current: curAcc[k] || 0,
-        previous: prevAcc[k] || 0,
-      }));
-
+      .map((k) => ({ key: k, label: `stats.weather.${k}`, current: curAcc[k] || 0, previous: prevAcc[k] || 0 }));
     return {
-      buckets,
-      trendPct: computeTrend(buckets),
+      buckets, trendPct: computeTrend(buckets),
       currentLabel: 'stats.groupedBar.current',
       previousLabel: 'stats.groupedBar.previous',
-      format: 'currency',
-      empty: buckets.length === 0,
+      format: 'currency', empty: buckets.length === 0,
     };
   }
 
   if (context === 'metrics') {
     const comp = getComparison(dataset, period);
     if (!comp.metrics || comp.metrics.length === 0) {
-      return {
-        buckets: [],
-        trendPct: 0,
-        currentLabel: 'stats.groupedBar.current',
-        previousLabel: 'stats.groupedBar.previous',
-        format: 'currency',
-        empty: true,
-      };
+      return { buckets: [], trendPct: 0, currentLabel: 'stats.groupedBar.current', previousLabel: 'stats.groupedBar.previous', format: 'currency', empty: true };
     }
     const pick = ['revenue', 'margin', 'expenses', 'items'];
     const buckets = comp.metrics
       .filter((m) => pick.includes(m.key))
-      .map((m) => ({
-        key: m.key,
-        label: `stats.metrics.${m.key}`,
-        current: m.current,
-        previous: m.previous,
-        format: m.key === 'items' ? 'number' : 'currency',
-      }));
+      .map((m) => ({ key: m.key, label: `stats.metrics.${m.key}`, current: m.current, previous: m.previous, format: m.key === 'items' ? 'number' : 'currency' }));
     const rev = comp.metrics.find((m) => m.key === 'revenue');
     return {
-      buckets,
-      trendPct: rev ? rev.deltaPct : 0,
+      buckets, trendPct: rev ? rev.deltaPct : 0,
       currentLabel: 'stats.groupedBar.current',
       previousLabel: 'stats.groupedBar.previous',
-      format: 'currency',
-      empty: buckets.length === 0,
+      format: 'currency', empty: buckets.length === 0,
     };
   }
 
-  return {
-    buckets: [],
-    trendPct: 0,
-    currentLabel: '',
-    previousLabel: '',
-    format: 'currency',
-    empty: true,
-  };
+  return { buckets: [], trendPct: 0, currentLabel: '', previousLabel: '', format: 'currency', empty: true };
 }
 
 // =====================================================================
-// CHANTIER 30 — Helpers résumé pour HomePage (INCHANGÉS)
+// CHANTIER 30 — Helpers HomePage
 // =====================================================================
 export function getLastClosings(dataset, limit = 3) {
   const { closings, dishes, formulas } = filterByRestaurant(dataset);
   const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
   const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 3;
-
   return (closings || [])
     .filter((c) => c && typeof c.date === 'string')
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
     .slice(0, safeLimit)
     .map((c) => ({
-      date: c.date,
-      weather: c.weather || '',
+      date: c.date, weather: c.weather || '',
       revenue: closingRevenue(c, dishesById, null, dataset),
       itemsSold: closingItemsCount(c, dishesById, null, formulas),
     }));
@@ -1525,16 +1392,11 @@ export function getLastClosings(dataset, limit = 3) {
 export function getTodayKPIs(dataset, dateStr) {
   const empty = { revenue: 0, margin: 0, itemsSold: 0, hasClosing: false };
   if (!dataset || !dateStr) return empty;
-
   const { closings, dishes, ingredients, formulas } = filterByRestaurant(dataset);
   const closing = (closings || []).find((c) => c && c.date === dateStr);
   if (!closing || !Array.isArray(closing.sales)) return empty;
-
   const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
-  let revenue = 0;
-  let foodCost = 0;
-  let itemsSold = 0;
-
+  let revenue = 0, foodCost = 0, itemsSold = 0;
   const expanded = expandFormulaSales(closing, formulas);
   for (const s of expanded) {
     if (!s) continue;
@@ -1547,7 +1409,6 @@ export function getTodayKPIs(dataset, dateStr) {
     revenue += qty * price;
     foodCost += qty * getDishFoodCost(dish, ingredients);
   }
-
   return { revenue, margin: revenue - foodCost, itemsSold, hasClosing: true };
 }
 
@@ -1562,36 +1423,17 @@ export function getLowStockIngredients(dataset) {
 // =====================================================================
 // CHANTIER 31 — NOUVEAUX HELPERS v9
 // =====================================================================
-
-/**
- * Agrège CA / marge / articles par jour de la semaine.
- * Renvoie : { weekdays: [{ key, weekday, closingsCount, revenue,
- *             foodCost, margin, marginPct, items, revenuePct,
- *             avgRevenue, avgItems, color }], totalRevenue, best, worst }
- * - weekday : 0 = lundi, 6 = dimanche.
- * - labelKey à traduire côté UI : `stats.weekdays.${key}`.
- * - Option B appliquée (formules comptées comme plats vendus).
- */
 export function getWeekdaySales(dataset, period = 'month') {
   const { closings, dishes, ingredients, formulas } = filterByRestaurant(dataset);
   const filtered = filterClosingsByPeriod(closings, period);
   const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
   const keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-
-  const acc = keys.map((key, idx) => ({
-    key,
-    weekday: idx,
-    closingsCount: 0,
-    revenue: 0,
-    foodCost: 0,
-    items: 0,
-  }));
+  const acc = keys.map((key, idx) => ({ key, weekday: idx, closingsCount: 0, revenue: 0, foodCost: 0, items: 0 }));
 
   for (const c of filtered) {
     const d = parseLocalDate(c.date);
     if (!d) continue;
-    const jsDay = d.getDay(); // 0 = dimanche
-    const wd = (jsDay + 6) % 7; // 0 = lundi
+    const wd = (d.getDay() + 6) % 7;
     acc[wd].closingsCount += 1;
     acc[wd].revenue += closingRevenue(c, dishesById, null, dataset);
     acc[wd].foodCost += closingFoodCost(c, dishesById, ingredients, null, formulas);
@@ -1599,7 +1441,6 @@ export function getWeekdaySales(dataset, period = 'month') {
   }
 
   const totalRevenue = acc.reduce((s, a) => s + a.revenue, 0);
-
   const weekdays = acc.map((a, i) => ({
     ...a,
     margin: a.revenue - a.foodCost,
@@ -1613,57 +1454,34 @@ export function getWeekdaySales(dataset, period = 'month') {
   const active = weekdays.filter((w) => w.closingsCount > 0);
   const best = active.length ? active.reduce((m, w) => (w.revenue > m.revenue ? w : m), active[0]) : null;
   const worst = active.length ? active.reduce((m, w) => (w.revenue < m.revenue ? w : m), active[0]) : null;
-
   return { weekdays, totalRevenue, best, worst };
 }
 
-/**
- * Valeur du stock courant (ingrédients suivis uniquement, R4.5).
- * Utilise getIngredientRealUnitCost (reference_unit_cost / yield_factor).
- * Renvoie : { totalValue, trackedCount, ingredients: [{ id, name,
- *   base_unit, stock_quantity, reference_unit_cost, real_unit_cost,
- *   value, alert }] } triés par value DESC.
- */
 export function getStockValue(dataset) {
   const { ingredients } = filterByRestaurant(dataset);
   const tracked = ingredients.filter((i) => i && i.track_stock !== false);
-
   const rows = tracked.map((ing) => {
     const stock = Number(ing.stock_quantity) || 0;
-    const refCost = Number.isFinite(ing.reference_unit_cost)
-      ? ing.reference_unit_cost
-      : (Number(ing.unit_cost) || 0);
+    const refCost = Number.isFinite(ing.reference_unit_cost) ? ing.reference_unit_cost : (Number(ing.unit_cost) || 0);
     const yf = Number.isFinite(ing.yield_factor) && ing.yield_factor > 0 ? ing.yield_factor : 1;
     const realCost = refCost / yf;
     const value = stock > 0 ? stock * realCost : 0;
     return {
-      id: ing.id,
-      name: ing.name,
-      base_unit: ing.base_unit || 'g',
-      stock_quantity: stock,
-      reference_unit_cost: refCost,
-      real_unit_cost: realCost,
-      value,
+      id: ing.id, name: ing.name, base_unit: ing.base_unit || 'g',
+      stock_quantity: stock, reference_unit_cost: refCost,
+      real_unit_cost: realCost, value,
       alert: ing.stock_alert === true || stock < 0,
     };
   }).sort((a, b) => b.value - a.value);
-
   const totalValue = rows.reduce((s, r) => s + r.value, 0);
   return { totalValue, trackedCount: tracked.length, ingredients: rows };
 }
 
-/**
- * Top ingrédients consommés — enrichissement de getIngredientCosts
- * avec quantity_in_base (v9) et yield_factor (R4.4).
- * Renvoie : { ingredients: [{ id, name, base_unit, quantityInBase,
- *   cost, costPct }], totalCost } (limite par défaut = 15).
- */
 export function getTopConsumedIngredients(dataset, period = null, limit = 15) {
   const { closings, dishes, ingredients, formulas } = filterByRestaurant(dataset);
   const filteredClosings = filterClosingsByPeriod(closings, period);
   const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
   const ingById = Object.fromEntries(ingredients.map((i) => [i.id, i]));
-
   const usage = {};
   for (const c of filteredClosings) {
     const expanded = expandFormulaSales(c, formulas);
@@ -1675,73 +1493,51 @@ export function getTopConsumedIngredients(dataset, period = null, limit = 15) {
       for (const r of dish.recipe) {
         const ing = ingById[r.ingredient_id];
         if (!ing) continue;
-        if (ing.track_stock === false) continue; // R4.5
+        if (ing.track_stock === false) continue;
         if (!usage[ing.id]) usage[ing.id] = { ingredient: ing, quantityInBase: 0, cost: 0 };
-        const qBase = Number.isFinite(r.quantity_in_base)
-          ? r.quantity_in_base
-          : (Number(r.quantity) || 0);
-        const refCost = Number.isFinite(ing.reference_unit_cost)
-          ? ing.reference_unit_cost
-          : (Number(ing.unit_cost) || 0);
+        const qBase = Number.isFinite(r.quantity_in_base) ? r.quantity_in_base : (Number(r.quantity) || 0);
+        const refCost = Number.isFinite(ing.reference_unit_cost) ? ing.reference_unit_cost : (Number(ing.unit_cost) || 0);
         const yf = Number.isFinite(ing.yield_factor) && ing.yield_factor > 0 ? ing.yield_factor : 1;
         usage[ing.id].quantityInBase += (soldQty * qBase) / yf;
         usage[ing.id].cost += (soldQty * qBase * refCost) / yf;
       }
     }
   }
-
   const totalCost = Object.values(usage).reduce((s, u) => s + u.cost, 0);
   const list = Object.values(usage)
     .map((u) => ({
-      id: u.ingredient.id,
-      name: u.ingredient.name,
+      id: u.ingredient.id, name: u.ingredient.name,
       base_unit: u.ingredient.base_unit || 'g',
-      quantityInBase: u.quantityInBase,
-      cost: u.cost,
+      quantityInBase: u.quantityInBase, cost: u.cost,
       costPct: totalCost > 0 ? (u.cost / totalCost) * 100 : 0,
     }))
     .sort((a, b) => b.cost - a.cost)
     .slice(0, limit);
-
   return { ingredients: list, totalCost };
 }
 
-/**
- * Comparateur prix fournisseurs par ingrédient (R4.7).
- * Renvoie : [{ ingredient, offers: [{ offerId, supplierName,
- *   purchaseOptionLabel, quantityInBase, cost, costPerBase,
- *   isPreferred, isAvailable, isBest, diffPct }], bestPrice,
- *   preferredPrice, savingPct }] trié par nombre d'offres DESC.
- */
 export function getSupplierPriceComparison(dataset) {
   const { ingredients, suppliers, supplierOffers } = filterByRestaurant(dataset);
   const ingById = Object.fromEntries(ingredients.map((i) => [i.id, i]));
   const supById = Object.fromEntries(suppliers.map((s) => [s.id, s]));
-
   const byIngredient = {};
   for (const offer of supplierOffers) {
     if (!offer || !offer.ingredient_id) continue;
     const ing = ingById[offer.ingredient_id];
     if (!ing) continue;
     const po = (ing.purchase_options || []).find((p) => p.id === offer.purchase_option_id);
-    const qtyBase = po && Number.isFinite(po.quantity_in_base) && po.quantity_in_base > 0
-      ? po.quantity_in_base
-      : 1;
+    const qtyBase = po && Number.isFinite(po.quantity_in_base) && po.quantity_in_base > 0 ? po.quantity_in_base : 1;
     const costPerBase = (Number(offer.cost) || 0) / qtyBase;
     if (!byIngredient[ing.id]) byIngredient[ing.id] = { ingredient: ing, offers: [] };
     byIngredient[ing.id].offers.push({
-      offerId: offer.id,
-      supplierId: offer.supplier_id,
+      offerId: offer.id, supplierId: offer.supplier_id,
       supplierName: supById[offer.supplier_id]?.name || '—',
       purchaseOptionLabel: po?.label || '',
-      quantityInBase: qtyBase,
-      cost: Number(offer.cost) || 0,
-      costPerBase,
+      quantityInBase: qtyBase, cost: Number(offer.cost) || 0, costPerBase,
       isPreferred: offer.is_preferred === true,
       isAvailable: offer.is_available !== false,
     });
   }
-
   const result = [];
   for (const ingId of Object.keys(byIngredient)) {
     const entry = byIngredient[ingId];
@@ -1752,35 +1548,21 @@ export function getSupplierPriceComparison(dataset) {
     const offers = entry.offers.map((o) => ({
       ...o,
       isBest: o.offerId === best.offerId,
-      diffPct: best.costPerBase > 0
-        ? ((o.costPerBase - best.costPerBase) / best.costPerBase) * 100
-        : 0,
+      diffPct: best.costPerBase > 0 ? ((o.costPerBase - best.costPerBase) / best.costPerBase) * 100 : 0,
     }));
     result.push({
-      ingredient: entry.ingredient,
-      offers,
-      bestPrice: best.costPerBase,
+      ingredient: entry.ingredient, offers, bestPrice: best.costPerBase,
       preferredPrice: preferred ? preferred.costPerBase : null,
-      savingPct: preferred && best.costPerBase > 0
-        ? ((preferred.costPerBase - best.costPerBase) / preferred.costPerBase) * 100
-        : 0,
+      savingPct: preferred && best.costPerBase > 0 ? ((preferred.costPerBase - best.costPerBase) / preferred.costPerBase) * 100 : 0,
     });
   }
   return result.sort((a, b) => b.offers.length - a.offers.length);
 }
 
-/**
- * Impact des promotions sur la période : compare base_price vs
- * getDishSellingPrice (promo active à la date de clôture).
- * Renvoie : { dishes: [{ dish, basePrice, promoPrice, discountPerUnit,
- *   discountPct, qtySold, discountTotal, daysDiscounted }],
- *   totalDiscount, totalQtySoldDiscounted } trié par discountTotal DESC.
- */
 export function getPromoImpact(dataset, period = 'month') {
   const { closings, dishes, formulas } = filterByRestaurant(dataset);
   const filtered = filterClosingsByPeriod(closings, period);
   const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
-
   const dishesImpact = {};
   for (const c of filtered) {
     const expanded = expandFormulaSales(c, formulas);
@@ -1794,100 +1576,192 @@ export function getPromoImpact(dataset, period = 'month') {
       const discountPerUnit = basePrice - promoPrice;
       if (discountPerUnit <= 0) continue;
       if (!dishesImpact[dish.id]) {
-        dishesImpact[dish.id] = {
-          dish,
-          basePrice,
-          promoPrice,
-          discountPerUnit,
-          qtySold: 0,
-          discountTotal: 0,
-          daysDiscounted: new Set(),
-        };
+        dishesImpact[dish.id] = { dish, basePrice, promoPrice, discountPerUnit, qtySold: 0, discountTotal: 0, daysDiscounted: new Set() };
       }
       dishesImpact[dish.id].qtySold += qty;
       dishesImpact[dish.id].discountTotal += qty * discountPerUnit;
       dishesImpact[dish.id].daysDiscounted.add(c.date);
     }
   }
-
   const dishesList = Object.values(dishesImpact)
     .map((d) => ({
-      dish: d.dish,
-      basePrice: d.basePrice,
-      promoPrice: d.promoPrice,
+      dish: d.dish, basePrice: d.basePrice, promoPrice: d.promoPrice,
       discountPerUnit: d.discountPerUnit,
       discountPct: d.basePrice > 0 ? (d.discountPerUnit / d.basePrice) * 100 : 0,
-      qtySold: d.qtySold,
-      discountTotal: d.discountTotal,
+      qtySold: d.qtySold, discountTotal: d.discountTotal,
       daysDiscounted: d.daysDiscounted.size,
     }))
     .sort((a, b) => b.discountTotal - a.discountTotal);
-
   const totalDiscount = dishesList.reduce((s, d) => s + d.discountTotal, 0);
   const totalQtySoldDiscounted = dishesList.reduce((s, d) => s + d.qtySold, 0);
   return { dishes: dishesList, totalDiscount, totalQtySoldDiscounted };
 }
 
-/**
- * Alertes stock par période. Faute d'historique de mouvement en v9,
- * renvoie l'état COURANT des alertes (stock_alert=true ou stock<0),
- * filtré par existence d'au moins une clôture dans la période
- * demandée (contexte indicatif).
- * Renvoie : { ingredients, count, periodStart, periodEnd }.
- */
 export function getStockAlertsByPeriod(dataset, period = null) {
   const { ingredients, closings } = filterByRestaurant(dataset);
   const filteredClosings = filterClosingsByPeriod(closings, period);
   const dates = filteredClosings.map((c) => c.date).sort();
   const periodStart = dates[0] || null;
   const periodEnd = dates[dates.length - 1] || null;
-
   const alerts = ingredients
     .filter((i) => i && i.track_stock !== false)
     .filter((i) => i.stock_alert === true || Number(i.stock_quantity) < 0)
     .map((i) => ({
-      id: i.id,
-      name: i.name,
-      base_unit: i.base_unit || 'g',
+      id: i.id, name: i.name, base_unit: i.base_unit || 'g',
       stock_quantity: Number(i.stock_quantity) || 0,
       min_stock: Number(i.min_stock) || 0,
       alert: i.stock_alert === true,
       negative: Number(i.stock_quantity) < 0,
     }))
     .sort((a, b) => a.stock_quantity - b.stock_quantity);
-
   return { ingredients: alerts, count: alerts.length, periodStart, periodEnd };
 }
 
-/**
- * Impact du rendement (yield_factor < 1) sur le coût réel.
- * Renvoie la liste triée par deltaPct DESC :
- * [{ id, name, base_unit, yield_factor, yield_pct, theoretical_cost,
- *    real_cost, delta, deltaPct }].
- */
 export function getYieldImpact(dataset) {
   const { ingredients } = filterByRestaurant(dataset);
   return ingredients
     .filter((i) => i && i.track_stock !== false)
     .filter((i) => Number.isFinite(i.yield_factor) && i.yield_factor < 1)
     .map((i) => {
-      const refCost = Number.isFinite(i.reference_unit_cost)
-        ? i.reference_unit_cost
-        : (Number(i.unit_cost) || 0);
+      const refCost = Number.isFinite(i.reference_unit_cost) ? i.reference_unit_cost : (Number(i.unit_cost) || 0);
       const yf = i.yield_factor;
       const realCost = refCost / yf;
       const delta = realCost - refCost;
       return {
-        id: i.id,
-        name: i.name,
-        base_unit: i.base_unit || 'g',
-        yield_factor: yf,
-        yield_pct: yf * 100,
-        theoretical_cost: refCost,
-        real_cost: realCost,
-        delta,
-        deltaPct: refCost > 0 ? (delta / refCost) * 100 : 0,
+        id: i.id, name: i.name, base_unit: i.base_unit || 'g',
+        yield_factor: yf, yield_pct: yf * 100,
+        theoretical_cost: refCost, real_cost: realCost,
+        delta, deltaPct: refCost > 0 ? (delta / refCost) * 100 : 0,
       };
     })
     .sort((a, b) => b.deltaPct - a.deltaPct);
+}
+
+// =====================================================================
+// CHANTIER 39 FUSION — Helpers pour drill-downs
+// =====================================================================
+
+/**
+ * Détail des shifts d'un employé sur une période.
+ * Renvoie : { employee, hoursPoints, costPoints, shiftRows, totalHours, totalCost }
+ */
+export function getEmployeeShiftsDetail(dataset, period = 'month', employeeId) {
+  const { employees, shifts, closings } = filterByRestaurant(dataset);
+  const emp = employees.find((e) => e.id === employeeId);
+  if (!emp) {
+    return { employee: null, hoursPoints: [], costPoints: [], shiftRows: [], totalHours: 0, totalCost: 0 };
+  }
+  const buckets = buildTimeBuckets(period, closings);
+  const periodStartIso = buckets[0]?.startIso || null;
+  const periodEndIso = buckets[buckets.length - 1]?.endIso || null;
+  const rate = Number(emp.hourly_rate) || 0;
+
+  const empShifts = shifts
+    .filter((s) => s.employee_id === employeeId)
+    .filter((s) => (!periodStartIso || s.date >= periodStartIso) && (!periodEndIso || s.date <= periodEndIso));
+
+  const hoursPoints = buckets.map((b) => ({
+    key: b.key,
+    date: b.date,
+    value: empShifts.filter((s) => s.date >= b.startIso && s.date <= b.endIso)
+      .reduce((sum, s) => sum + (Number(s.hours_worked) || 0), 0),
+  }));
+  const costPoints = hoursPoints.map((p) => ({ ...p, value: p.value * rate }));
+
+  const shiftRows = [...empShifts]
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+    .map((s) => ({
+      date: s.date,
+      hours: Number(s.hours_worked) || 0,
+      cost: (Number(s.hours_worked) || 0) * rate,
+    }));
+
+  return {
+    employee: emp,
+    hoursPoints,
+    costPoints,
+    shiftRows,
+    totalHours: shiftRows.reduce((s, r) => s + r.hours, 0),
+    totalCost: shiftRows.reduce((s, r) => s + r.cost, 0),
+  };
+}
+
+/**
+ * Détail d'une météo sur une période.
+ * Renvoie : { revenuePoints, target, allWeathers, daysCount }
+ */
+export function getWeatherDetail(dataset, period = 'month', weatherKey) {
+  const { closings, dishes } = filterByRestaurant(dataset);
+  const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
+  const filteredClosings = filterClosingsByPeriod(closings, period);
+  const buckets = buildTimeBuckets(period, closings);
+
+  const targetClosings = filteredClosings.filter((c) => (c.weather || 'unknown') === weatherKey);
+
+  const revenuePoints = buckets.map((b) => {
+    const matching = targetClosings.filter((c) => c.date >= b.startIso && c.date <= b.endIso);
+    const rev = matching.reduce((s, c) => s + closingRevenue(c, dishesById, null, dataset), 0);
+    return { key: b.key, date: b.date, value: rev };
+  });
+
+  const allWeather = getWeatherBreakdown(dataset, period);
+  const target = allWeather.weathers.find((w) => w.key === weatherKey) || null;
+
+  return { revenuePoints, target, allWeathers: allWeather.weathers, daysCount: targetClosings.length };
+}
+
+/**
+ * Détail d'un jour de la semaine sur une période.
+ * Renvoie : { dishes, evolution, target, daysCount }
+ */
+export function getWeekdayDetail(dataset, period = 'month', weekdayKey) {
+  const weekdayIdx = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].indexOf(weekdayKey);
+  if (weekdayIdx === -1) {
+    return { dishes: [], evolution: [], target: null, daysCount: 0 };
+  }
+
+  const { closings, dishes, ingredients, formulas } = filterByRestaurant(dataset);
+  const dishesById = Object.fromEntries(dishes.map((d) => [d.id, d]));
+  const filteredClosings = filterClosingsByPeriod(closings, period);
+
+  const dayClosings = filteredClosings.filter((c) => {
+    const d = parseLocalDate(c.date);
+    return d && ((d.getDay() + 6) % 7) === weekdayIdx;
+  });
+
+  const dishStats = {};
+  for (const c of dayClosings) {
+    const expanded = expandFormulaSales(c, formulas);
+    for (const s of expanded) {
+      const dish = dishesById[s.dish_id];
+      if (!dish) continue;
+      const qty = Number(s.quantity_sold) || 0;
+      if (qty <= 0) continue;
+      if (!dishStats[dish.id]) dishStats[dish.id] = { dish, qty: 0, revenue: 0, foodCost: 0 };
+      const price = getDishSellingPrice(dataset, dish, c.date);
+      dishStats[dish.id].qty += qty;
+      dishStats[dish.id].revenue += qty * price;
+      dishStats[dish.id].foodCost += qty * getDishFoodCost(dish, ingredients);
+    }
+  }
+
+  const dishList = Object.values(dishStats)
+    .map((s) => ({
+      ...s,
+      margin: s.revenue - s.foodCost,
+      marginPct: s.revenue > 0 ? ((s.revenue - s.foodCost) / s.revenue) * 100 : 0,
+    }))
+    .sort((a, b) => b.revenue - a.revenue);
+
+  const buckets = buildTimeBuckets(period, closings);
+  const evolutionPoints = buckets.map((b) => {
+    const matching = dayClosings.filter((c) => c.date >= b.startIso && c.date <= b.endIso);
+    const rev = matching.reduce((s, c) => s + closingRevenue(c, dishesById, null, dataset), 0);
+    return { key: b.key, date: b.date, value: rev };
+  });
+
+  const weekdayStats = getWeekdaySales(dataset, period);
+  const target = weekdayStats.weekdays.find((w) => w.key === weekdayKey) || null;
+
+  return { dishes: dishList, evolution: evolutionPoints, target, daysCount: dayClosings.length };
 }

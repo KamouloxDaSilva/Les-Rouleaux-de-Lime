@@ -1,90 +1,50 @@
+/* src/styles/theme.css */
 :root {
-  /* Nouvelle Charte */
   --color-cream: #FAEBD5;
+  --color-cream-soft: #FFF8E7;
   --color-surface: #FFFFFF;
-  --color-orange: #FF9800;
-  --color-blue: #3C91A6;
+  --color-surface-alt: #FAFAFA;
+  --color-surface-muted: #F0F0F0;
+  
   --color-text: #2C2C2C;
-  /* Chantier 32-A : #7A7A7A → #666666 (WCAG AA sur #FAEBD5) */
-  --color-text-muted: #666666;
-
-  /* Utilitaires */
-  --color-danger: #E53935;
-  --color-success: #43A047;
-
-  /* Chantier 32-A : tokens intermédiaires (surfaces & bordures) */
+  --color-text-muted: #7A7A7A;
+  
   --color-border: #EFEFEF;
   --color-border-strong: #E0E0E0;
-  --color-surface-muted: #F8F8F8;
-  --color-surface-alt: #FAFAFA;
-  --color-cream-soft: #FDF5E8;
 
-  /* Chantier 32-A : dégradés premium */
-  --gradient-orange: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
-  --gradient-blue: linear-gradient(135deg, #6BB5C6 0%, #3C91A6 100%);
-  --gradient-cream: linear-gradient(135deg, #FFFFFF 0%, #FAEBD5 100%);
-  --gradient-card: linear-gradient(135deg, #FFFFFF 0%, #FFF8EC 100%);
-  --gradient-hero: linear-gradient(135deg, #FFF4E0 0%, #FFFFFF 100%);
+  --color-orange: #FF9800;
+  --color-blue: #3C91A6;
+  --color-success: #43A047;
+  --color-danger: #E53935;
 
-  /* Polices */
-  --font-title: 'Baloo 2', cursive;
-  --font-body: 'Be Vietnam Pro', sans-serif;
+  --font-title: 'Baloo 2', system-ui, sans-serif;
+  --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
 
-  /* Layout PWA */
-  --header-height: 64px;
-  --nav-height: 70px;
-  --radius-sm: 10px;
-  --radius-md: 20px;
-  --radius-lg: 30px;
-
-  /* Chantier 29 — Design tokens enrichis */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
-  --shadow-orange: 0 4px 14px rgba(255, 152, 0, 0.30);
-  --shadow-blue: 0 4px 14px rgba(60, 145, 166, 0.30);
-
-  --transition-fast: 150ms;
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
   --transition-base: 250ms;
-  --transition-slow: 400ms;
+
+  --nav-height: 70px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
 }
 
-/* =========================================================
-   Chantier 32-A — MODE SOMBRE
-   Contraste WCAG AA garanti :
-   - #F5F5F5 sur #1A1A1D → ratio ≈ 15.8:1
-   - #B0B0B0 sur #1A1A1D → ratio ≈ 7.1:1
-   - #FFA733 sur #1A1A1D → ratio ≈ 9.2:1
-   - #5FBDD6 sur #1A1A1D → ratio ≈ 7.4:1
-   ========================================================= */
 body.theme-dark {
-  --color-cream: #1A1A1D;
-  --color-surface: #24242A;
-  --color-orange: #FFA733;
-  --color-blue: #5FBDD6;
+  --color-cream: #121212;
+  --color-cream-soft: #1E1E1E;
+  --color-surface: #1E1E1E;
+  --color-surface-alt: #2C2C2C;
+  --color-surface-muted: #383838;
+  
   --color-text: #F5F5F5;
-  --color-text-muted: #B0B0B0;
-  --color-danger: #EF5350;
+  --color-text-muted: #A0A0A0;
+  
+  --color-border: #333333;
+  --color-border-strong: #444444;
+  
+  --color-orange: #FFA726;
+  --color-blue: #5FBDD6;
   --color-success: #66BB6A;
-  --color-border: #3A3A45;
-  --color-border-strong: #4A4A55;
-  --color-surface-muted: #2E2E36;
-  --color-surface-alt: #2A2A32;
-  --color-cream-soft: #202025;
-
-  --gradient-orange: linear-gradient(135deg, #C97A14 0%, #FF9800 100%);
-  --gradient-blue: linear-gradient(135deg, #3A7A8A 0%, #5FBDD6 100%);
-  --gradient-cream: linear-gradient(135deg, #24242A 0%, #1A1A1D 100%);
-  --gradient-card: linear-gradient(135deg, #2A2A32 0%, #24242A 100%);
-  --gradient-hero: linear-gradient(135deg, #2A2520 0%, #24242A 100%);
-
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.40);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --color-danger: #EF5350;
 }

@@ -2,18 +2,18 @@
 .settings-page {
   padding: 16px;
   padding-bottom: 88px;
-  background: #FFF8E7;
-  color: #1A1A1A;
+  background: var(--color-cream);
+  color: var(--color-text);
   min-height: 100vh;
   font-family: 'Be Vietnam Pro', system-ui, sans-serif;
 }
 
 .settings-title {
   font-family: 'Baloo 2', system-ui, sans-serif;
-  color: #0B7A75;
+  color: var(--color-blue);
   font-size: 1.6rem;
   margin: 8px 0 16px;
-  text-align: center; /* Chantier 11-A */
+  text-align: center;
 }
 
 .settings-feedback {
@@ -21,37 +21,43 @@
   border-radius: 8px;
   margin-bottom: 12px;
   font-size: 0.95rem;
-  /* Chantier 11-C — fadeInUp global */
   animation: fadeInUp 0.3s ease-out both;
   animation-delay: 60ms;
 }
-.settings-feedback--success { background: #D9F2EE; color: #0B7A75; border: 1px solid #0B7A75; }
-.settings-feedback--error { background: #FDE2E2; color: #B00020; border: 1px solid #B00020; }
+.settings-feedback--success {
+  background: rgba(67, 160, 71, 0.12);
+  color: var(--color-success, #43A047);
+  border: 1px solid rgba(67, 160, 71, 0.35);
+}
+.settings-feedback--error {
+  background: rgba(229, 57, 53, 0.12);
+  color: var(--color-danger, #C62828);
+  border: 1px solid rgba(229, 57, 53, 0.35);
+}
 
 .settings-section {
-  background: #FFFFFF;
-  border: 1px solid #F0E5C8;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 16px;
-  /* Chantier 11-C — fadeInUp global */
   animation: fadeInUp 0.3s ease-out both;
 }
 .settings-section h2 {
   font-family: 'Baloo 2', system-ui, sans-serif;
-  color: #35B6E9;
+  color: var(--color-blue);
   font-size: 1.15rem;
   margin: 0 0 10px;
 }
 
 .settings-kv { display: flex; flex-direction: column; gap: 8px; margin: 0; }
 .settings-kv > div { display: flex; justify-content: space-between; gap: 12px; }
-.settings-kv dt { color: #6B6B6B; font-weight: 500; }
+.settings-kv dt { color: var(--color-text-muted); font-weight: 500; }
 .settings-kv dd { margin: 0; font-weight: 600; text-align: right; }
 
 .settings-data-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 .settings-file-btn { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-.settings-hints { padding-left: 18px; margin: 0; color: #6B6B6B; font-size: 0.9rem; }
+.settings-hints { padding-left: 18px; margin: 0; color: var(--color-text-muted); font-size: 0.9rem; }
 .settings-hints li { margin-bottom: 4px; }
 
 .btn {
@@ -69,22 +75,40 @@
   transition: filter 0.15s ease;
 }
 .btn:hover { filter: brightness(0.95); }
-.btn-primary { background: #F5A623; color: #1A1A1A; }
-.btn-secondary { background: #35B6E9; color: #FFFFFF; }
-.btn-ghost { background: transparent; color: #0B7A75; border: 1px solid #0B7A75; }
-.btn-danger { color: #B00020; border-color: #B00020; }
+.btn-primary { background: var(--color-orange); color: #fff; }
+.btn-secondary { background: var(--color-blue); color: #fff; }
+.btn-ghost {
+  background: transparent;
+  color: var(--color-blue);
+  border: 1px solid var(--color-blue);
+}
+.btn-danger {
+  color: var(--color-danger, #C62828);
+  border-color: var(--color-danger, #C62828);
+}
 
-/* =========================================================
-   Chantier 11-C — Stagger cascade via animation-delay
-   ========================================================= */
 .settings-page > .settings-section:nth-of-type(1) { animation-delay: 0ms; }
 .settings-page > .settings-section:nth-of-type(2) { animation-delay: 40ms; }
 .settings-page > .settings-section:nth-of-type(3) { animation-delay: 80ms; }
 
-/* Respect de la préférence système (accessibilité) */
 @media (prefers-reduced-motion: reduce) {
   .settings-section,
   .settings-feedback {
     animation: none;
   }
+}
+
+/* Chantier 34 — overrides dark */
+body.theme-dark .settings-feedback--success {
+  background: rgba(102, 187, 106, 0.16);
+  color: #A5D6A7;
+  border-color: rgba(102, 187, 106, 0.38);
+}
+body.theme-dark .settings-feedback--error {
+  background: rgba(229, 57, 53, 0.16);
+  color: #EF9A9A;
+  border-color: rgba(229, 57, 53, 0.38);
+}
+body.theme-dark .btn-ghost {
+  border-color: var(--color-border-strong);
 }

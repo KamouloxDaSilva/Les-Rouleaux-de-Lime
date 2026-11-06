@@ -12,12 +12,10 @@ body {
   line-height: 1.5;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
-  /* Chantier 32-A — transition douce au changement de thème */
   transition: background-color var(--transition-base) ease,
               color var(--transition-base) ease;
 }
 
-/* Application du titre avec la police script */
 h1, h2, h3, h4 {
   font-family: var(--font-title);
   font-weight: 700;
@@ -52,6 +50,18 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   max-width: 600px;
   margin: 0 auto;
   padding-bottom: var(--nav-height);
+}
+
+/* =========================================================
+   FIX LAYOUT : Espace pour le Header fixe
+   Empêche le titre "Bonjour !" d'être coupé
+   ========================================================= */
+.page-transition {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-top: 60px; /* Crée un espace sous le menu noir */
+  animation: pageFade 150ms ease-out both;
 }
 
 /* Utilitaires communs */
@@ -102,14 +112,8 @@ button:active:not(:disabled),
   to   { opacity: 1; }
 }
 
-.page-transition {
-  animation: pageFade 150ms ease-out both;
-}
-
 /* =========================================================
-   Chantier 32-A — Ripple effect (keyframes)
-   Utilisé par les boutons principaux + micro-interactions.
-   Le composant <Ripple/> et l'utilitaire seront livrés en 32-B.
+   Chantier 32-A — Ripple effect
    ========================================================= */
 @keyframes ripple {
   from { transform: scale(0);   opacity: 0.55; }
@@ -132,16 +136,12 @@ button:active:not(:disabled),
 }
 
 /* =========================================================
-   Chantier 32-A — Overrides MODE SOMBRE
-   Surfaces communes : body, .card, form controls.
-   NOTE : certains composants (StatsPage.css, MenuPage.css,
-   TeamPage.css) utilisent encore #FFFFFF codé en dur ; leur
-   migration vers var(--color-surface) est planifiée en 32-C.
+   OVERRIDES MODE SOMBRE
    ========================================================= */
 body.theme-dark input,
 body.theme-dark select,
 body.theme-dark textarea {
-  background-color: var(--color-surface);
+  background-color: var(--color-surface-alt);
   color: var(--color-text);
   border-color: var(--color-border);
 }
@@ -156,19 +156,12 @@ body.theme-dark .card {
 body.theme-dark .app-header {
   background-color: var(--color-cream);
 }
-
-/* =========================================================
-   Chantier 33 — Dark mode ErrorBoundary
-   (la carte + titre + bouton utilisent déjà les tokens
-   theme-aware via ErrorBoundary.css ; seule la description
-   doit être forcée pour garantir le contraste AA)
-   ========================================================= */
 body.theme-dark .error-boundary__desc {
   color: var(--color-text-muted);
 }
 
 /* =========================================================
-   Chantier 11-C — Filet de sécurité prefers-reduced-motion
+   Filet de sécurité prefers-reduced-motion
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
